@@ -1,4 +1,6 @@
 'use client'
+import Nav from './components/Nav'
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
 export default function Home() {
@@ -390,24 +392,7 @@ export default function Home() {
       `}</style>
 
       {/* NAV */}
-      <nav>
-        <div className="nav-inner">
-          <a className="nav-logo" href="/">
-            <div className="nav-logo-icon">🃏</div>
-            FoilCase
-          </a>
-          <ul className="nav-links">
-            <li><a href="/browse">Browse</a></li>
-            <li><a href="/collection">My Collection</a></li>
-            <li><a href="/search">Search</a></li>
-            <li><a href="/pricing">Pricing</a></li>
-          </ul>
-          <div className="nav-actions">
-            <a className="btn btn-ghost" href="#">Log in</a>
-            <a className="btn btn-primary" href="#">Get started free</a>
-          </div>
-        </div>
-      </nav>
+      <Nav />
 
       {/* HERO */}
       <div className="hero">
@@ -419,8 +404,8 @@ export default function Home() {
           <h1>The trading card vault <em>built for collectors</em></h1>
           <p className="hero-sub">Track your collection, discover every set, and trade with confidence. The definitive database for sports, gaming, and non-sport cards.</p>
           <div className="hero-actions">
-            <a className="btn btn-primary btn-xl" href="#">Start your vault free</a>
-            <a className="btn btn-outline btn-xl" href="/browse">Browse cards</a>
+            <Link className="btn btn-primary btn-xl" href="/collection">Start your vault free</Link>
+            <Link className="btn btn-outline btn-xl" href="/browse">Browse cards</Link>
           </div>
           <div className="hero-stats">
             <div>
@@ -647,8 +632,8 @@ export default function Home() {
               <p>Join thousands of collectors tracking millions of cards. Start free — no credit card required.</p>
             </div>
             <div className="cta-actions">
-              <a className="btn btn-white btn-xl" href="#">Create free vault</a>
-              <a className="btn btn-dim btn-xl" href="/browse">Browse cards</a>
+              <Link className="btn btn-white btn-xl" href="/collection">Create free vault</Link>
+              <Link className="btn btn-dim btn-xl" href="/browse">Browse cards</Link>
             </div>
           </div>
         </div>

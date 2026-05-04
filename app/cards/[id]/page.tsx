@@ -1,4 +1,5 @@
 'use client'
+import Nav from '../../components/Nav'
 import { useState } from 'react'
 
 const uid = () => Math.random().toString(36).slice(2,10)
@@ -254,20 +255,7 @@ export default function CardDetail() {
       `}</style>
 
       {/* NAV */}
-      <nav>
-        <div className="nav-inner">
-          <a className="nav-logo" href="/"><div className="nav-logo-icon">🃏</div>FoilCase</a>
-          <ul className="nav-links">
-            <li><a href="/browse">Browse</a></li>
-            <li><a href="/collection">My Collection</a></li>
-            <li><a href="/search">Search</a></li>
-          </ul>
-          <div className="nav-actions">
-            <a className="btn btn-ghost" href="#">Log in</a>
-            <a className="btn btn-primary" href="#">Get started free</a>
-          </div>
-        </div>
-      </nav>
+      <Nav />
 
       {/* BREADCRUMB */}
       <div className="breadcrumb-bar">

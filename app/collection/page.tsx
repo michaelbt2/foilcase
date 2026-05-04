@@ -1,4 +1,6 @@
 'use client'
+import Nav from '../components/Nav'
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
 const uid = () => Math.random().toString(36).slice(2,10)
@@ -387,28 +389,15 @@ export default function Collection() {
       `}</style>
 
       {/* NAV */}
-      <nav>
-        <div className="nav-inner">
-          <a className="nav-logo" href="/"><div className="nav-logo-icon">🃏</div>FoilCase</a>
-          <ul className="nav-links">
-            <li><a href="/browse">Browse</a></li>
-            <li><a href="/collection" className="active">My Collection</a></li>
-            <li><a href="/search">Search</a></li>
-          </ul>
-          <div className="nav-actions">
-            <a className="btn btn-ghost" href="#">Log in</a>
-            <button className="btn btn-primary" onClick={openAdd}>+ Add Card</button>
-          </div>
-        </div>
-      </nav>
+<Nav />
 
       {/* PAGE HEADER */}
       <div className="page-header">
         <div className="page-header-inner">
           <div className="breadcrumb">
-            <a href="/">Home</a><span>›</span>
-            <strong style={{color:'#0D0D0D'}}>My Collection</strong>
-          </div>
+  <Link href="/">Home</Link><span>›</span>
+  <strong style={{color:'#0D0D0D'}}>My Collection</strong>
+</div>
           <div style={{display:'flex',gap:'8px'}}>
             <button className="btn btn-outline btn-sm" onClick={() => setShowFolder(true)}>📁 Folders</button>
             <button className="btn btn-primary" onClick={openAdd}>+ Add Card</button>

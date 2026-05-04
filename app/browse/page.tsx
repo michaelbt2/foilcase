@@ -1,4 +1,6 @@
 'use client'
+import Nav from '../components/Nav'
+import Link from 'next/link'
 import { useState } from 'react'
 
 const brandData = [
@@ -291,41 +293,7 @@ export default function Browse() {
       `}</style>
 
       {/* NAV */}
-      <nav>
-        <div className="nav-inner">
-          <a className="nav-logo" href="/">
-            <div className="nav-logo-icon">🃏</div>FoilCase
-          </a>
-          <ul className="nav-links">
-            <li><a href="/browse" className="active">Browse</a></li>
-            <li><a href="/collection">My Collection</a></li>
-            <li><a href="/search">Search</a></li>
-          </ul>
-          <div className="nav-actions">
-            <a className="btn btn-ghost" href="#">Log in</a>
-            <a className="btn btn-primary" href="#">Get started free</a>
-          </div>
-        </div>
-      </nav>
-
-      {/* PAGE HEADER */}
-      <div className="page-header">
-        <div className="page-header-inner">
-          <div className="breadcrumb">
-            <a href="/">Home</a><span>›</span>
-            <span style={{color:'#0D0D0D',fontWeight:500}}>Browse</span>
-          </div>
-          <div className="sport-selector" style={{marginTop:'8px'}}>
-            {sports.map(s => (
-              <button
-                key={s.id}
-                className={`sport-tab${activeSport===s.id?' active':''}`}
-                onClick={() => setActiveSport(s.id)}
-              >{s.label}</button>
-            ))}
-          </div>
-        </div>
-      </div>
+<Nav />
 
       {/* MAIN LAYOUT */}
       <div className="main-layout">
@@ -424,7 +392,7 @@ export default function Browse() {
               <div className="spotlight-desc">The most collected football set of the year. Silver Prizms, rookie autos, and 40+ parallels.</div>
             </div>
             <div className="spotlight-actions">
-              <button className="btn-spotlight" onClick={() => setSelectedModal('prizm25')}>View Set</button>
+              <Link href="/cards/prizm25" className="btn-spotlight" style={{textDecoration:'none'}}>View Set</Link>
               <button className="btn-spotlight-outline" onClick={() => quickAdd('have','2025 Prizm')}>+ Add to Vault</button>
             </div>
           </div>
@@ -588,10 +556,10 @@ export default function Browse() {
                   ))}
                 </div>
                 <div className="modal-actions">
-                  <button className="btn btn-primary" onClick={() => { quickAdd('have', set.name); setSelectedModal(null) }}>+ Add to Vault</button>
-                  <button className="btn btn-outline" onClick={() => { toggleWishlist(set.id); setSelectedModal(null) }}>★ Wishlist</button>
-                  <button className="btn btn-outline" style={{flex:0,padding:'10px 14px'}}>☰</button>
-                </div>
+  <Link href={`/cards/${set.id}`} className="btn btn-outline" style={{flex:1,justifyContent:'center',textDecoration:'none',padding:'10px'}}>View Cards →</Link>
+  <button className="btn btn-primary" onClick={() => { quickAdd('have', set.name); setSelectedModal(null) }}>+ Add to Vault</button>
+  <button className="btn btn-outline" onClick={() => { toggleWishlist(set.id); setSelectedModal(null) }}>★</button>
+</div>
               </div>
             </div>
           </div>

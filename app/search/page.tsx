@@ -1,4 +1,6 @@
 'use client'
+import Nav from '../components/Nav'
+import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 
 interface CardResult {
@@ -295,20 +297,7 @@ export default function Search() {
       `}</style>
 
       {/* NAV */}
-      <nav>
-        <div className="nav-inner">
-          <a className="nav-logo" href="/"><div className="nav-logo-icon">🃏</div>FoilCase</a>
-          <ul className="nav-links">
-            <li><a href="/browse">Browse</a></li>
-            <li><a href="/collection">My Collection</a></li>
-            <li><a href="/search" className="active">Search</a></li>
-          </ul>
-          <div className="nav-actions">
-            <a className="btn btn-ghost" href="#">Log in</a>
-            <a className="btn btn-primary" href="#">Get started free</a>
-          </div>
-        </div>
-      </nav>
+      <Nav />
 
       {/* HERO SEARCH */}
       <div className="search-hero">
@@ -532,7 +521,7 @@ export default function Search() {
                       </div>
                     </div>
                     <div className="card-actions">
-                      <button className="act-btn act-view" onClick={()=>window.location.href='/cards/'+c.id}>View</button>
+                      <Link href={`/cards/${c.id}`} className="act-btn act-view" style={{textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center'}}>View</Link>
                       <button className="act-btn act-add" onClick={()=>showToast(`✅ ${c.player} added to vault!`)}>+ Have</button>
                       <button className="act-btn act-want" onClick={()=>showToast(`⭐ ${c.player} added to wishlist!`)}>★ Want</button>
                     </div>
@@ -558,7 +547,7 @@ export default function Search() {
                       <div className="lr-item"><div className="lr-lbl">Collectors</div><div className="lr-val">{c.collectors.toLocaleString()}</div></div>
                     </div>
                     <div className="list-actions">
-                      <button className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px'}} onClick={()=>window.location.href='/cards/'+c.id}>View</button>
+                      <Link href={`/cards/${c.id}`} className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px',textDecoration:'none'}}>View</Link>
                       <button className="btn btn-primary" style={{fontSize:'12px',padding:'5px 12px'}} onClick={()=>showToast(`✅ ${c.player} added to vault!`)}>+ Add</button>
                     </div>
                   </div>
