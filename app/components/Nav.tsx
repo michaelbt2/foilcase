@@ -1,6 +1,29 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useUser, UserButton } from '@clerk/nextjs'
+
+function NavActions() {
+  const { isSignedIn, isLoaded } = useUser()
+
+  if (!isLoaded) return null
+
+  if (isSignedIn) {
+    return (
+      <div className="nav-actions">
+        <Link className="btn btn-ghost" href="/collection">My Vault</Link>
+        <UserButton />
+      </div>
+    )
+  }
+
+  return (
+    <div className="nav-actions">
+      <Link className="btn btn-ghost" href="/sign-in">Log in</Link>
+      <Link className="btn btn-primary" href="/sign-up">Get started free</Link>
+    </div>
+  )
+}
 
 export default function Nav() {
   const path = usePathname()
@@ -33,10 +56,7 @@ export default function Nav() {
             <li><Link href="/collection" className={path==='/collection'?'active':''}>My Collection</Link></li>
             <li><Link href="/search" className={path==='/search'?'active':''}>Search</Link></li>
           </ul>
-          <div className="nav-actions">
-            <a className="btn btn-ghost" href="#">Log in</a>
-            <Link className="btn btn-primary" href="#">Get started free</Link>
-          </div>
+          <NavActions />
         </div>
       </nav>
     </>
