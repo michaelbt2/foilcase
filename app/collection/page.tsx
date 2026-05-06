@@ -1,12 +1,10 @@
 'use client'
-import Nav from '../components/Nav'
-import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/nextjs'
+import { supabase } from '../lib/supabase'
+import Nav from '../components/Nav'
 
 const uid = () => Math.random().toString(36).slice(2,10)
-
-const STORAGE_KEY = 'cardvault_collection'
-const FOLDER_KEY  = 'cardvault_folders'
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
@@ -21,12 +19,12 @@ const emojiMap: Record<string,string> = {
 }
 
 interface Card {
-  id:string; player:string; year:string; brand:string; set:string; sport:string;
-  cardnum:string; folder:string; status:string; grader:string; grade:string;
+  id:string; player:string; year:string; brand:string; set_name:string; sport:string;
+  cardnum:string; folder_id:string; status:string; grader:string; grade:string;
   qty:number; condition:string; cost:number; value:number; attrs:string[];
-  notes:string; added:number; img:string;
+  notes:string; created_at:string; img:string; user_id:string;
 }
-interface Folder { id:string; name:string; color:string; emoji:string }
+interface Folder { id:string; name:string; color:string; emoji:string; user_id:string }
 
 function cardBg(sport: string) {
   const bgs: Record<string,string> = {
@@ -54,75 +52,69 @@ function fmtNum(n: number) {
   return n.toFixed(0)
 }
 
-const SEED_CARDS: Card[] = [
-  { id:uid(), player:'Patrick Mahomes', year:'2024', brand:'Panini', set:'Prizm Football', sport:'Football', cardnum:'#200', folder:'', status:'have', grader:'PSA', grade:'10', qty:1, condition:'Mint (M)', cost:280, value:1250, attrs:['chrome'], notes:'Pulled from hobby box', added:Date.now()-5*86400000, img:'🏈' },
-  { id:uid(), player:'Shohei Ohtani', year:'2018', brand:'Topps', set:'Topps Chrome', sport:'Baseball', cardnum:'#200', folder:'', status:'have', grader:'Raw', grade:'', qty:1, condition:'Near Mint-Mint (NM-MT)', cost:85, value:340, attrs:['rc','chrome'], notes:'', added:Date.now()-12*86400000, img:'⚾' },
-  { id:uid(), player:'Victor Wembanyama', year:'2023', brand:'Panini', set:'Prizm Basketball', sport:'Basketball', cardnum:'#RC-1', folder:'', status:'have', grader:'BGS', grade:'9.5', qty:1, condition:'Mint (M)', cost:120, value:380, attrs:['rc','auto'], notes:'Pristine surface', added:Date.now()-18*86400000, img:'🏀' },
-  { id:uid(), player:'Connor McDavid', year:'2022', brand:'Upper Deck', set:'Young Guns', sport:'Hockey', cardnum:'/99', folder:'', status:'trade', grader:'Raw', grade:'', qty:1, condition:'Near Mint (NM)', cost:200, value:680, attrs:['rc','numbered'], notes:'Looking for football trade', added:Date.now()-30*86400000, img:'🏒' },
-  { id:uid(), player:'Charizard', year:'1999', brand:'Topps', set:'Pokemon Base Set', sport:'Gaming / TCG', cardnum:'#4', folder:'', status:'have', grader:'PSA', grade:'8', qty:1, condition:'Excellent-Mint (EX-MT)', cost:800, value:4500, attrs:['shortprint'], notes:'Holy grail pull', added:Date.now()-60*86400000, img:'🎮' },
-  { id:uid(), player:'Marvin Harrison Jr.', year:'2024', brand:'Panini', set:'Prizm Football', sport:'Football', cardnum:'#RC-20', folder:'', status:'have', grader:'Raw', grade:'', qty:2, condition:'Near Mint-Mint (NM-MT)', cost:55, value:220, attrs:['rc'], notes:'Grabbed two copies', added:Date.now()-2*86400000, img:'🏈' },
-  { id:uid(), player:'Caleb Williams', year:'2024', brand:'Panini', set:'Donruss Football', sport:'Football', cardnum:'#401', folder:'', status:'have', grader:'PSA', grade:'9', qty:1, condition:'Mint (M)', cost:40, value:160, attrs:['rc','auto'], notes:'', added:Date.now()-3*86400000, img:'🏈' },
-  { id:uid(), player:'Bijan Robinson', year:'2023', brand:'Panini', set:'Select Football', sport:'Football', cardnum:'/49', folder:'', status:'sold', grader:'Raw', grade:'', qty:1, condition:'Near Mint-Mint (NM-MT)', cost:65, value:145, attrs:['rc','numbered'], notes:'Sold for $145', added:Date.now()-45*86400000, img:'🏈' },
-]
-
-const SEED_FOLDERS: Folder[] = [
-  { id:'f1', name:'Rookie Cards', color:'green', emoji:'🌟' },
-  { id:'f2', name:'Grail Collection', color:'amber', emoji:'👑' },
-  { id:'f3', name:'For Trade', color:'blue', emoji:'📁' },
-]
-
 export default function Collection() {
-  const [cards, setCards]             = useState<Card[]>([])
-  const [folders, setFolders]         = useState<Folder[]>([])
+  const { user, isLoaded } = useUser()
+  const [cards, setCards]               = useState<Card[]>([])
+  const [folders, setFolders]           = useState<Folder[]>([])
+  const [loading, setLoading]           = useState(true)
   const [activeFolder, setActiveFolder] = useState('all')
-  const [filters, setFilters]         = useState({ sport:'all', grading:'all', status:'all', date:'all' })
-  const [searchVal, setSearchVal]     = useState('')
-  const [sortVal, setSortVal]         = useState('date-desc')
-  const [viewMode, setViewMode]       = useState<'grid'|'list'>('grid')
-  const [selected, setSelected]       = useState<Set<string>>(new Set())
-  const [showAdd, setShowAdd]         = useState(false)
-  const [showFolder, setShowFolder]   = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [editingId, setEditingId]     = useState<string|null>(null)
-  const [removingId, setRemovingId]   = useState<string|null>(null)
-  const [toast, setToast]             = useState<string|null>(null)
+  const [filters, setFilters]           = useState({ sport:'all', grading:'all', status:'all', date:'all' })
+  const [searchVal, setSearchVal]       = useState('')
+  const [sortVal, setSortVal]           = useState('date-desc')
+  const [viewMode, setViewMode]         = useState<'grid'|'list'>('grid')
+  const [selected, setSelected]         = useState<Set<string>>(new Set())
+  const [showAdd, setShowAdd]           = useState(false)
+  const [showFolder, setShowFolder]     = useState(false)
+  const [showConfirm, setShowConfirm]   = useState(false)
+  const [editingId, setEditingId]       = useState<string|null>(null)
+  const [removingId, setRemovingId]     = useState<string|null>(null)
+  const [toast, setToast]               = useState<string|null>(null)
   const [selectedGrader, setSelectedGrader] = useState('Raw')
   const [selectedScore, setSelectedScore]   = useState('')
   const [selectedStatus, setSelectedStatus] = useState('have')
   const [selectedColor, setSelectedColor]   = useState('blue')
   const [newFolderName, setNewFolderName]   = useState('')
   const [form, setForm] = useState({
-    player:'', year:'', brand:'', set:'', sport:'', cardnum:'',
-    folder:'', qty:'1', condition:'', cost:'', value:'', notes:''
+    player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
+    folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:''
   })
   const [formAttrs, setFormAttrs] = useState<string[]>([])
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-      const storedF = JSON.parse(localStorage.getItem(FOLDER_KEY) || 'null')
-      setCards(stored || SEED_CARDS)
-      setFolders(storedF || SEED_FOLDERS)
-    } catch { setCards(SEED_CARDS); setFolders(SEED_FOLDERS) }
-  }, [])
+    if (isLoaded && user) {
+      loadData()
+    }
+  }, [isLoaded, user])
 
-  const persist = (c: Card[]) => { setCards(c); localStorage.setItem(STORAGE_KEY, JSON.stringify(c)) }
-  const persistF = (f: Folder[]) => { setFolders(f); localStorage.setItem(FOLDER_KEY, JSON.stringify(f)) }
+  const loadData = async () => {
+    if (!user) return
+    setLoading(true)
+    const [{ data: cardsData }, { data: foldersData }] = await Promise.all([
+      supabase.from('cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('folders').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+    ])
+    setCards(cardsData || [])
+    setFolders(foldersData || [])
+    setLoading(false)
+  }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
 
   const filtered = cards.filter(c => {
-    if (searchVal && !['player','set','year','brand','cardnum'].some(k => String(c[k as keyof Card]).toLowerCase().includes(searchVal.toLowerCase()))) return false
+    if (searchVal && !['player','set_name','year','brand','cardnum'].some(k => String(c[k as keyof Card]).toLowerCase().includes(searchVal.toLowerCase()))) return false
     if (filters.sport !== 'all' && !c.sport.startsWith(filters.sport)) return false
     if (filters.grading === 'graded' && (!c.grader || c.grader === 'Raw')) return false
     if (filters.grading === 'raw' && c.grader && c.grader !== 'Raw') return false
     if (filters.status !== 'all' && c.status !== filters.status) return false
-    if (filters.date !== 'all') { const cutoff = Date.now() - parseInt(filters.date)*86400000; if (c.added < cutoff) return false }
-    if (activeFolder !== 'all' && c.folder !== activeFolder) return false
+    if (filters.date !== 'all') {
+      const cutoff = Date.now() - parseInt(filters.date)*86400000
+      if (new Date(c.created_at).getTime() < cutoff) return false
+    }
+    if (activeFolder !== 'all' && c.folder_id !== activeFolder) return false
     return true
   }).sort((a,b) => {
-    if (sortVal === 'date-desc') return b.added - a.added
-    if (sortVal === 'date-asc')  return a.added - b.added
+    if (sortVal === 'date-desc') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    if (sortVal === 'date-asc')  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     if (sortVal === 'value-desc') return (b.value||0) - (a.value||0)
     if (sortVal === 'value-asc')  return (a.value||0) - (b.value||0)
     if (sortVal === 'alpha') return a.player.localeCompare(b.player)
@@ -135,15 +127,15 @@ export default function Collection() {
   const totalValue  = activecards.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0)
   const totalCost   = activecards.reduce((s,c) => s+(c.cost||0)*(c.qty||1), 0)
   const totalGraded = activecards.filter(c => c.grader && c.grader !== 'Raw').length
-  const totalSets   = new Set(activecards.map(c => c.set)).size
+  const totalSets   = new Set(activecards.map(c => c.set_name)).size
   const gain        = totalValue - totalCost
   const gainPct     = totalCost > 0 ? ((gain/totalCost)*100).toFixed(0) : '0'
 
-  const folderCount = (fid: string) => cards.filter(c => c.folder === fid).reduce((s,c)=>s+(c.qty||1),0)
+  const folderCount = (fid: string) => cards.filter(c => c.folder_id === fid).reduce((s,c)=>s+(c.qty||1),0)
 
   const openAdd = () => {
     setEditingId(null)
-    setForm({ player:'', year:'', brand:'', set:'', sport:'', cardnum:'', folder:'', qty:'1', condition:'', cost:'', value:'', notes:'' })
+    setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'' })
     setFormAttrs([])
     setSelectedGrader('Raw')
     setSelectedScore('')
@@ -155,7 +147,7 @@ export default function Collection() {
     const c = cards.find(x => x.id === id)
     if (!c) return
     setEditingId(id)
-    setForm({ player:c.player, year:c.year, brand:c.brand, set:c.set, sport:c.sport, cardnum:c.cardnum, folder:c.folder, qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes })
+    setForm({ player:c.player, year:c.year, brand:c.brand, set_name:c.set_name, sport:c.sport, cardnum:c.cardnum, folder_id:c.folder_id||'', qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes||'' })
     setFormAttrs(c.attrs||[])
     setSelectedGrader(c.grader||'Raw')
     setSelectedScore(c.grade||'')
@@ -163,52 +155,69 @@ export default function Collection() {
     setShowAdd(true)
   }
 
-  const saveCard = () => {
-    if (!form.player || !form.set || !form.sport) { showToast('⚠️ Player, Set, and Sport are required'); return }
-    const card: Card = {
-      id: editingId || uid(),
-      player:form.player, year:form.year, brand:form.brand, set:form.set,
-      sport:form.sport, cardnum:form.cardnum, folder:form.folder,
+  const saveCard = async () => {
+    if (!user) return
+    if (!form.player || !form.set_name || !form.sport) { showToast('⚠️ Player, Set, and Sport are required'); return }
+    const card = {
+      user_id: user.id,
+      player:form.player, year:form.year, brand:form.brand, set_name:form.set_name,
+      sport:form.sport, cardnum:form.cardnum, folder_id:form.folder_id||null,
       status:selectedStatus, grader:selectedGrader, grade:selectedScore,
       qty:parseInt(form.qty)||1, condition:form.condition,
       cost:parseFloat(form.cost)||0, value:parseFloat(form.value)||0,
       attrs:formAttrs, notes:form.notes,
-      added: editingId ? (cards.find(c=>c.id===editingId)?.added||Date.now()) : Date.now(),
       img: sportEmoji[form.sport]||'🃏'
     }
-    const next = editingId ? cards.map(c=>c.id===editingId?card:c) : [card,...cards]
-    persist(next)
+    if (editingId) {
+      const { error } = await supabase.from('cards').update(card).eq('id', editingId)
+      if (error) { showToast('❌ Error: ' + error.message); console.error(error); return }
+      showToast('✏️ Card updated!')
+    } else {
+      const { error } = await supabase.from('cards').insert(card)
+      if (error) { showToast('❌ Error: ' + error.message); console.error(error); return }
+      showToast('✅ Card added to your vault!')
+    }
     setShowAdd(false)
-    showToast(editingId ? '✏️ Card updated!' : '✅ Card added to your vault!')
+    loadData()
   }
 
-  const markSold = (id: string) => {
-    const next = cards.map(c => c.id===id ? {...c, status: c.status==='sold'?'have':'sold'} : c)
-    persist(next)
-    const card = cards.find(c=>c.id===id)
-    showToast(card?.status==='sold' ? '↩ Moved back to vault' : '💰 Marked as sold')
+  const markSold = async (id: string) => {
+    const card = cards.find(c => c.id === id)
+    if (!card) return
+    const newStatus = card.status === 'sold' ? 'have' : 'sold'
+    await supabase.from('cards').update({ status: newStatus }).eq('id', id)
+    showToast(newStatus === 'sold' ? '💰 Marked as sold' : '↩ Moved back to vault')
+    loadData()
   }
 
-  const confirmRemove = () => {
+  const confirmRemove = async () => {
     if (!removingId) return
-    persist(cards.filter(c=>c.id!==removingId))
+    await supabase.from('cards').delete().eq('id', removingId)
     setRemovingId(null)
     setShowConfirm(false)
     showToast('🗑 Card removed')
+    loadData()
   }
 
-  const createFolder = () => {
+  const createFolder = async () => {
+    if (!user) return
     if (!newFolderName.trim()) { showToast('⚠️ Enter a folder name'); return }
-    const f: Folder = { id:uid(), name:newFolderName.trim(), color:selectedColor, emoji:emojiMap[selectedColor]||'📁' }
-    persistF([...folders, f])
+    await supabase.from('folders').insert({
+      user_id: user.id,
+      name: newFolderName.trim(),
+      color: selectedColor,
+      emoji: emojiMap[selectedColor]||'📁'
+    })
     setNewFolderName('')
-    showToast(`📁 "${f.name}" created`)
+    showToast(`📁 "${newFolderName}" created`)
+    loadData()
   }
 
-  const deleteFolder = (id: string) => {
-    persistF(folders.filter(f=>f.id!==id))
-    persist(cards.map(c=>c.folder===id?{...c,folder:''}:c))
+  const deleteFolder = async (id: string) => {
+    await supabase.from('folders').delete().eq('id', id)
+    await supabase.from('cards').update({ folder_id: null }).eq('folder_id', id)
     showToast('🗑 Folder removed')
+    loadData()
   }
 
   const toggleAttr = (a: string) => setFormAttrs(prev => prev.includes(a)?prev.filter(x=>x!==a):[...prev,a])
@@ -221,30 +230,25 @@ export default function Collection() {
   const statusMap: Record<string,string> = { have:'status-have', trade:'status-trade', sold:'status-sold' }
   const statusLbl: Record<string,string> = { have:'Have', trade:'Trade', sold:'Sold' }
 
+  if (!isLoaded || loading) {
+    return (
+      <>
+        <Nav />
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:'40px',marginBottom:'16px'}}>🃏</div>
+            <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading your vault...</div>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
       <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F7F7;color:#0D0D0D;-webkit-font-smoothing:antialiased}
-        nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid #EFEFEF;height:58px;display:flex;align-items:center}
-        .nav-inner{max-width:1240px;margin:0 auto;padding:0 24px;width:100%;display:flex;align-items:center;gap:20px}
-        .nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:#0D0D0D;font-weight:800;font-size:16px;letter-spacing:-.4px}
-        .nav-logo-icon{width:26px;height:26px;background:#1B6FF0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
-        .nav-links{display:flex;gap:2px;list-style:none}
-        .nav-links a{text-decoration:none;color:#555;font-size:14px;font-weight:500;padding:5px 10px;border-radius:6px;transition:all .15s}
-        .nav-links a:hover{color:#0D0D0D;background:#F7F7F7}
-        .nav-links a.active{color:#1B6FF0;background:#EBF2FF}
-        .nav-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
-        .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 14px;border-radius:100px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;border:none;white-space:nowrap}
-        .btn-ghost{background:transparent;color:#555}
-        .btn-ghost:hover{background:#F7F7F7;color:#0D0D0D}
-        .btn-primary{background:#1B6FF0;color:#fff}
-        .btn-primary:hover{background:#0A4DBF;transform:translateY(-1px)}
-        .btn-outline{background:transparent;color:#0D0D0D;border:1.5px solid #D8D8D8}
-        .btn-outline:hover{border-color:#0D0D0D}
-        .btn-danger{background:#FDECEA;color:#D93025;border:1.5px solid #FFBBB7}
-        .btn-danger:hover{background:#D93025;color:#fff}
-        .btn-sm{padding:5px 11px;font-size:12px}
         .page-header{background:#fff;border-bottom:1px solid #EFEFEF;padding:14px 24px}
         .page-header-inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
         .breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:#9A9A9A}
@@ -296,10 +300,11 @@ export default function Collection() {
         .bulk-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#EBF2FF;border-radius:100px;font-size:13px;font-weight:600;color:#1B6FF0}
         .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
         .cards-list{display:flex;flex-direction:column;gap:10px}
-        .card-tile{background:#fff;border:1px solid #EFEFEF;border-radius:20px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);position:relative;display:flex;flex-direction:column}
+        .card-tile{background:#fff;border:1px solid #EFEFEF;border-radius:20px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);position:relative;display:flex;flex-direction:column;animation:fadeUp .35s ease both}
         .card-tile:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.10);border-color:#D8D8D8}
         .card-tile.sold-card{opacity:.6}
         .card-tile.sel{border-color:#1B6FF0;box-shadow:0 0 0 2px #C5D8FF}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
         .card-cb{position:absolute;top:10px;left:10px;z-index:10;width:20px;height:20px;border-radius:5px;border:2px solid rgba(255,255,255,.8);background:rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;transition:all .15s;opacity:0}
         .card-tile:hover .card-cb,.card-tile.sel .card-cb{opacity:1}
         .card-tile.sel .card-cb{background:#1B6FF0;border-color:#1B6FF0}
@@ -336,9 +341,8 @@ export default function Collection() {
         .act-sold:hover{background:#E8820C;color:#fff}
         .act-rm{background:#FDECEA;color:#D93025}
         .act-rm:hover{background:#D93025;color:#fff}
-        .list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:14px;padding:0;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+        .list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:14px;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);animation:fadeUp .35s ease both}
         .list-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.07);border-color:#D8D8D8}
-        .list-tile.sel{border-color:#1B6FF0;box-shadow:0 0 0 2px #C5D8FF}
         .list-tile.sold-card{opacity:.6}
         .list-img{width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;margin:8px 0 8px 12px;border-radius:10px}
         .list-main{flex:1;padding:10px 12px;min-width:0}
@@ -347,9 +351,19 @@ export default function Collection() {
         .list-meta{display:flex;align-items:center;gap:20px;padding:0 16px;flex-shrink:0}
         .lm-lbl{font-size:10px;color:#9A9A9A;font-weight:600;text-transform:uppercase}
         .lm-val{font-size:14px;font-weight:800;color:#0D0D0D}
-        .list-acts{display:flex;gap:6px;padding:0 14px;flex-shrink:0;opacity:0;transition:opacity .15s}
+        .list-acts{display:flex;gap:6px;padding:0 14px;opacity:0;transition:opacity .15s;flex-shrink:0}
         .list-tile:hover .list-acts{opacity:1}
         .empty-state{background:#fff;border:1.5px dashed #D8D8D8;border-radius:20px;padding:64px 24px;text-align:center}
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 14px;border-radius:100px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;border:none;white-space:nowrap}
+        .btn-ghost{background:transparent;color:#555}
+        .btn-ghost:hover{background:#F7F7F7;color:#0D0D0D}
+        .btn-primary{background:#1B6FF0;color:#fff}
+        .btn-primary:hover{background:#0A4DBF;transform:translateY(-1px)}
+        .btn-outline{background:transparent;color:#0D0D0D;border:1.5px solid #D8D8D8}
+        .btn-outline:hover{border-color:#0D0D0D}
+        .btn-danger{background:#FDECEA;color:#D93025;border:1.5px solid #FFBBB7}
+        .btn-danger:hover{background:#D93025;color:#fff}
+        .btn-sm{padding:5px 11px;font-size:12px}
         .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
         .modal{background:#fff;border-radius:20px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)}
         .modal-lg{max-width:660px}
@@ -367,7 +381,6 @@ export default function Collection() {
         .form-input:focus,.form-select:focus{border-color:#1B6FF0;box-shadow:0 0 0 3px rgba(27,111,240,.1)}
         .grader-row{display:flex;gap:6px}
         .grader-btn{flex:1;padding:7px 0;border-radius:10px;border:1.5px solid #EFEFEF;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#555;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;text-align:center}
-        .grader-btn:hover{border-color:#D8D8D8;color:#0D0D0D}
         .g-Raw{background:#0D0D0D;color:#fff;border-color:#0D0D0D}
         .g-PSA{background:#002FA7;color:#fff;border-color:#002FA7}
         .g-BGS{background:#C41E3A;color:#fff;border-color:#C41E3A}
@@ -388,16 +401,15 @@ export default function Collection() {
         @media(max-width:960px){.app-layout{grid-template-columns:1fr}.sidebar{position:static}.dash-stats{grid-template-columns:1fr 1fr}}
       `}</style>
 
-      {/* NAV */}
-<Nav />
+      <Nav />
 
       {/* PAGE HEADER */}
       <div className="page-header">
         <div className="page-header-inner">
           <div className="breadcrumb">
-  <Link href="/">Home</Link><span>›</span>
-  <strong style={{color:'#0D0D0D'}}>My Collection</strong>
-</div>
+            <a href="/">Home</a><span>›</span>
+            <strong style={{color:'#0D0D0D'}}>My Collection</strong>
+          </div>
           <div style={{display:'flex',gap:'8px'}}>
             <button className="btn btn-outline btn-sm" onClick={() => setShowFolder(true)}>📁 Folders</button>
             <button className="btn btn-primary" onClick={openAdd}>+ Add Card</button>
@@ -411,10 +423,10 @@ export default function Collection() {
         <aside className="sidebar">
           <div className="sidebar-card">
             <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'14px',paddingBottom:'14px',borderBottom:'1px solid #EFEFEF'}}>
-              <div className="vault-avatar">JD</div>
+              <div className="vault-avatar">{user?.firstName?.[0] || user?.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() || '?'}</div>
               <div>
-                <div style={{fontSize:'14px',fontWeight:700}}>James D.'s Vault</div>
-                <div style={{fontSize:'11px',color:'#9A9A9A'}}>Collecting since 2019</div>
+                <div style={{fontSize:'14px',fontWeight:700}}>{user?.firstName ? `${user.firstName}'s Vault` : 'My Vault'}</div>
+                <div style={{fontSize:'11px',color:'#9A9A9A'}}>{user?.emailAddresses?.[0]?.emailAddress}</div>
               </div>
             </div>
             <div className="vs-grid">
@@ -456,11 +468,7 @@ export default function Collection() {
                 <div className="filter-group-label">{fg.label}</div>
                 <div className="fchips">
                   {fg.opts.map(o => (
-                    <button
-                      key={o.v}
-                      className={`fchip${filters[fg.key as keyof typeof filters]===o.v?' on':''}`}
-                      onClick={() => setFilters(prev => ({...prev,[fg.key]:o.v}))}
-                    >{o.l}</button>
+                    <button key={o.v} className={`fchip${filters[fg.key as keyof typeof filters]===o.v?' on':''}`} onClick={() => setFilters(prev => ({...prev,[fg.key]:o.v}))}>{o.l}</button>
                   ))}
                 </div>
               </div>
@@ -477,13 +485,13 @@ export default function Collection() {
               <div className="dash-icon" style={{background:'#EBF2FF'}}>🃏</div>
               <div className="dash-val">{totalCards}</div>
               <div className="dash-lbl">Total Cards</div>
-              <div className="dash-delta delta-up">↑ {cards.filter(c=>Date.now()-c.added<30*86400000).length} this month</div>
+              <div className="dash-delta delta-up">↑ {cards.filter(c=>{const d=new Date(c.created_at).getTime();return Date.now()-d<30*86400000}).length} this month</div>
             </div>
             <div className="dash-card">
               <div className="dash-icon" style={{background:'#E6F9F0'}}>💰</div>
               <div className="dash-val" style={{color:'#00A861'}}>${fmtNum(totalValue)}</div>
               <div className="dash-lbl">Est. Collection Value</div>
-              <div className={`dash-delta ${gain>=0?'delta-up':'delta-dn'}`}>{gain>=0?'+':''}{gain>=0?'':'−'}${fmtNum(Math.abs(gain))} ({gain>=0?'+':''}{gainPct}%)</div>
+              <div className={`dash-delta ${gain>=0?'delta-up':'delta-dn'}`}>{gain>=0?'+':'-'}${fmtNum(Math.abs(gain))} ({gain>=0?'+':''}{gainPct}%)</div>
             </div>
             <div className="dash-card">
               <div className="dash-icon" style={{background:'#F2ECFB'}}>🏅</div>
@@ -521,8 +529,8 @@ export default function Collection() {
             {selected.size > 0 && (
               <div className="bulk-bar">
                 {selected.size} selected
-                <button className="btn btn-sm" style={{background:'#FEF3E2',color:'#E8820C',border:'none'}} onClick={()=>{selected.forEach(id=>markSold(id));setSelected(new Set())}}>💰 Sell</button>
-                <button className="btn btn-sm btn-danger" onClick={()=>{persist(cards.filter(c=>!selected.has(c.id)));setSelected(new Set());showToast(`🗑 ${selected.size} cards removed`)}}>🗑 Remove</button>
+                <button className="btn btn-sm" style={{background:'#FEF3E2',color:'#E8820C',border:'none'}} onClick={async()=>{await Promise.all([...selected].map(id=>markSold(id)));setSelected(new Set())}}>💰 Sell</button>
+                <button className="btn btn-sm btn-danger" onClick={async()=>{await Promise.all([...selected].map(id=>supabase.from('cards').delete().eq('id',id)));setSelected(new Set());showToast(`🗑 ${selected.size} cards removed`);loadData()}}>🗑 Remove</button>
                 <button className="btn btn-sm btn-ghost" onClick={()=>setSelected(new Set())}>✕</button>
               </div>
             )}
@@ -532,9 +540,9 @@ export default function Collection() {
           {filtered.length === 0 ? (
             <div className="empty-state">
               <div style={{fontSize:'48px',marginBottom:'16px'}}>🗃️</div>
-              <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>No cards found</div>
-              <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>Try adjusting your filters or add a new card to your vault.</div>
-              <button className="btn btn-primary" onClick={openAdd}>+ Add Card</button>
+              <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>{cards.length === 0 ? 'Your vault is empty' : 'No cards found'}</div>
+              <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>{cards.length === 0 ? 'Start building your collection by adding your first card.' : 'Try adjusting your filters.'}</div>
+              <button className="btn btn-primary" onClick={openAdd}>+ Add Your First Card</button>
             </div>
           ) : viewMode === 'grid' ? (
             <div className="cards-grid">
@@ -554,10 +562,10 @@ export default function Collection() {
                     </div>
                     <div className="card-body">
                       <div className="card-player">{c.player}</div>
-                      <div className="card-set">{c.year} {c.brand} · {c.set}{c.cardnum?` · ${c.cardnum}`:''}</div>
+                      <div className="card-set">{c.year} {c.brand} · {c.set_name}{c.cardnum?` · ${c.cardnum}`:''}</div>
                       <div className="card-attrs">
                         {(c.attrs||[]).map(a => (
-                          <span key={a} className={`attr-tag tag-${a==='rc'||a==='auto'||a==='numbered'||a==='chrome'?a:'other'}`}>{attrLabel(a)}</span>
+                          <span key={a} className={`attr-tag tag-${['rc','auto','numbered','chrome'].includes(a)?a:'other'}`}>{attrLabel(a)}</span>
                         ))}
                       </div>
                       <div className="card-fins">
@@ -577,21 +585,21 @@ export default function Collection() {
             </div>
           ) : (
             <div className="cards-list">
-              {filtered.map(c => {
+              {filtered.map((c,i) => {
                 const gain = (c.value||0)-(c.cost||0)
                 const isSold = c.status==='sold'
                 const isSel = selected.has(c.id)
                 return (
-                  <div key={c.id} className={`list-tile${isSold?' sold-card':''}${isSel?' sel':''}`}>
+                  <div key={c.id} className={`list-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.025}s`}}>
                     <div style={{padding:'0 0 0 12px',cursor:'pointer'}} onClick={()=>toggleSelect(c.id)}>
                       <div className="card-cb" style={{position:'relative',top:0,left:0,opacity:1,width:18,height:18,fontSize:10}}>{isSel?'✓':''}</div>
                     </div>
                     <div className="list-img" style={{background:cardBg(c.sport)}}>{c.img||sportEmoji[c.sport]||'🃏'}</div>
                     <div className="list-main">
                       <div className="list-player">{c.player}</div>
-                      <div className="list-set">{c.year} {c.brand} {c.set} {c.cardnum?`· ${c.cardnum}`:''}</div>
+                      <div className="list-set">{c.year} {c.brand} {c.set_name} {c.cardnum?`· ${c.cardnum}`:''}</div>
                       <div className="card-attrs" style={{marginTop:'4px'}}>
-                        {(c.attrs||[]).map(a=><span key={a} className={`attr-tag tag-${a==='rc'||a==='auto'||a==='numbered'||a==='chrome'?a:'other'}`}>{attrLabel(a)}</span>)}
+                        {(c.attrs||[]).map(a=><span key={a} className={`attr-tag tag-${['rc','auto','numbered','chrome'].includes(a)?a:'other'}`}>{attrLabel(a)}</span>)}
                       </div>
                     </div>
                     <div className="list-meta">
@@ -632,7 +640,7 @@ export default function Collection() {
                     {['Panini','Topps','Bowman','Upper Deck','Leaf','SAGE','Donruss','Fleer','Score','Other'].map(b=><option key={b}>{b}</option>)}
                   </select>
                 </div>
-                <div className="form-group"><label className="form-label">Set Name *</label><input className="form-input" placeholder="e.g. Prizm Football" value={form.set} onChange={e=>setForm(p=>({...p,set:e.target.value}))}/></div>
+                <div className="form-group"><label className="form-label">Set Name *</label><input className="form-input" placeholder="e.g. Prizm Football" value={form.set_name} onChange={e=>setForm(p=>({...p,set_name:e.target.value}))}/></div>
                 <div className="form-group"><label className="form-label">Sport / Category *</label>
                   <select className="form-select" value={form.sport} onChange={e=>setForm(p=>({...p,sport:e.target.value}))}>
                     <option value="">Select...</option>
@@ -641,7 +649,7 @@ export default function Collection() {
                 </div>
                 <div className="form-group"><label className="form-label">Card Number</label><input className="form-input" placeholder="e.g. #200 or /99" value={form.cardnum} onChange={e=>setForm(p=>({...p,cardnum:e.target.value}))}/></div>
                 <div className="form-group"><label className="form-label">Folder</label>
-                  <select className="form-select" value={form.folder} onChange={e=>setForm(p=>({...p,folder:e.target.value}))}>
+                  <select className="form-select" value={form.folder_id} onChange={e=>setForm(p=>({...p,folder_id:e.target.value}))}>
                     <option value="">No folder</option>
                     {folders.map(f=><option key={f.id} value={f.id}>{emojiMap[f.color]} {f.name}</option>)}
                   </select>
