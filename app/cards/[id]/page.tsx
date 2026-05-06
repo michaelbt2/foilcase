@@ -1,6 +1,7 @@
 'use client'
 import Nav from '../../components/Nav'
 import { useState } from 'react'
+import { useEffect } from 'react'
 
 const uid = () => Math.random().toString(36).slice(2,10)
 
@@ -23,6 +24,25 @@ export default function CardDetail() {
     condition:'Near Mint-Mint (NM-MT)', qty:'1',
     cost:'', value:'340', folder:'', notes:''
   })
+  const [ebayListings, setEbayListings] = useState<any[]>([])
+  const [ebayLoading, setEbayLoading]   = useState(true)
+
+useEffect(() => {
+    async function fetchEbayData() {
+      try {
+        const res = await fetch('/api/ebay-search?q=Patrick+Mahomes+2024+Prizm+Silver&type=active')
+        const data = await res.json()
+        if (data.itemSummaries) {
+          setEbayListings(data.itemSummaries.slice(0, 5))
+        }
+      } catch (e) {
+        console.error('eBay fetch error:', e)
+      } finally {
+        setEbayLoading(false)
+      }
+    }
+    fetchEbayData()
+  }, [])
 
   const parallels = [
     { name:'Silver Prizm', run:'∞',    price:'$340',   priceNum:340  },
@@ -377,28 +397,42 @@ export default function CardDetail() {
               </div>
             </div>
 
-            {/* Sold Listings */}
-            <div className="panel panel-pad">
-              <div className="panel-header">
-                <div className="panel-title">Recent Sold Listings</div>
-                <a href="#" style={{fontSize:'13px',fontWeight:600,color:'#1B6FF0',textDecoration:'none'}}>View all on eBay →</a>
-              </div>
-              <div className="sold-list">
-                {soldListings.map((s,i) => (
-                  <div className="sold-item" key={i}>
-                    <div className="sold-platform">{s.platform}</div>
-                    <div className="sold-desc">
-                      <div className="sold-title">{s.title}</div>
-                      <div className="sold-meta">{s.meta}</div>
-                    </div>
-                    <div>
-                      <span className="sold-price">{s.price}</span>
-                      <span className="sold-badge" style={{background:s.badgeBg,color:s.badgeColor}}>{s.badge}</span>
-                    </div>
-                  </div>
-                ))}
+           {/* Sold Listings — Live eBay Data */}
+<div className="panel panel-pad">
+  <div className="panel-header">
+    <div className="panel-title">Live eBay Listings</div>
+    <a href="https://www.ebay.com/sch/i.html?_nkw=Patrick+Mahomes+2024+Prizm+Silver" target="_blank" rel="noopener noreferrer" style={{fontSize:'13px',fontWeight:600,color:'#1B6FF0',textDecoration:'none'}}>View all on eBay →</a>
+  </div>
+  {ebayLoading ? (
+    <div style={{padding:'20px',textAlign:'center',color:'#9A9A9A',fontSize:'13px'}}>Loading live listings...</div>
+  ) : ebayListings.length === 0 ? (
+    <div style={{padding:'20px',textAlign:'center',color:'#9A9A9A',fontSize:'13px'}}>No listings found</div>
+  ) : (
+    <div className="sold-list">
+      {ebayListings.map((item, i) => (
+        <a key={i} href={item.itemWebUrl} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit'}}>
+          <div className="sold-item" style={{cursor:'pointer'}}>
+            <div className="sold-platform">
+              {item.image?.imageUrl ? (
+                <img src={item.image.imageUrl} alt={item.title} style={{width:28,height:28,borderRadius:6,objectFit:'cover'}}/>
+              ) : '🛒'}
+            </div>
+            <div className="sold-desc">
+              <div className="sold-title">{item.title}</div>
+              <div className="sold-meta">
+                {item.condition} · {item.buyingOptions?.join(' / ')} · {item.seller?.username}
               </div>
             </div>
+            <div style={{display:'flex',alignItems:'center',gap:'6px',flexShrink:0}}>
+              <span className="sold-price">${parseFloat(item.price?.value||'0').toFixed(2)}</span>
+              <span className="sold-badge" style={{background:'#FFF0E0',color:'#E55C00'}}>eBay</span>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+</div>
 
             {/* Related Cards */}
             <div className="panel panel-pad">
