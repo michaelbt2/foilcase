@@ -230,19 +230,52 @@ export default function Collection() {
   const statusMap: Record<string,string> = { have:'status-have', trade:'status-trade', sold:'status-sold' }
   const statusLbl: Record<string,string> = { have:'Have', trade:'Trade', sold:'Sold' }
 
-  if (!isLoaded || loading) {
-    return (
-      <>
-        <Nav />
-        <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
-          <div style={{textAlign:'center'}}>
-            <div style={{fontSize:'40px',marginBottom:'16px'}}>🃏</div>
-            <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading your vault...</div>
+  if (!isLoaded) {
+  return (
+    <>
+      <Nav />
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:'40px',marginBottom:'16px'}}>🃏</div>
+          <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading...</div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+if (!user) {
+  return (
+    <>
+      <Nav />
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:'40px',marginBottom:'16px'}}>🔒</div>
+          <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px',color:'#0D0D0D'}}>Sign in to view your vault</div>
+          <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>Your collection is saved securely to your account.</div>
+          <div style={{display:'flex',gap:'10px',justifyContent:'center'}}>
+            <a href="/sign-in" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'10px 24px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:600,textDecoration:'none',transition:'all .15s'}}>Log in</a>
+            <a href="/sign-up" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'10px 24px',borderRadius:'100px',background:'transparent',color:'#0D0D0D',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:600,textDecoration:'none',border:'1.5px solid #D8D8D8',transition:'all .15s'}}>Create account</a>
           </div>
         </div>
-      </>
-    )
-  }
+      </div>
+    </>
+  )
+}
+
+if (loading) {
+  return (
+    <>
+      <Nav />
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:'40px',marginBottom:'16px'}}>🃏</div>
+          <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading your vault...</div>
+        </div>
+      </div>
+    </>
+  )
+}
 
   return (
     <>
