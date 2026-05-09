@@ -392,7 +392,11 @@ export default function Browse() {
               <div className="spotlight-desc">The most collected football set of the year. Silver Prizms, rookie autos, and 40+ parallels.</div>
             </div>
             <div className="spotlight-actions">
-              <Link href="/cards/prizm25" className="btn-spotlight" style={{textDecoration:'none'}}>View Set</Link>
+              <Link
+  href="/search?q=2025+Panini+Prizm+Football"
+  className="btn-spotlight"
+  style={{textDecoration:'none'}}
+>Search Cards</Link>
               <button className="btn-spotlight-outline" onClick={() => quickAdd('have','2025 Prizm')}>+ Add to Vault</button>
             </div>
           </div>
@@ -501,15 +505,17 @@ export default function Browse() {
                               )}
                             </div>
                             <div className="set-quick-add">
-                              <button
-                                className="set-quick-btn qb-have"
-                                onClick={e => { e.stopPropagation(); quickAdd('have', set.name) }}
-                              >+ Have</button>
-                              <button
-                                className="set-quick-btn qb-want"
-                                onClick={e => { e.stopPropagation(); quickAdd('want', set.name) }}
-                              >★ Want</button>
-                            </div>
+  <Link
+    href={`/search?q=${encodeURIComponent(set.name)}`}
+    className="set-quick-btn qb-have"
+    style={{textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center'}}
+    onClick={e => e.stopPropagation()}
+  >🔍 Search</Link>
+  <button
+    className="set-quick-btn qb-want"
+    onClick={e => { e.stopPropagation(); quickAdd('want', set.name) }}
+  >★ Want</button>
+</div>
                           </div>
                         ))}
                       </div>
@@ -556,7 +562,12 @@ export default function Browse() {
                   ))}
                 </div>
                 <div className="modal-actions">
-  <Link href={`/cards/${set.id}`} className="btn btn-outline" style={{flex:1,justifyContent:'center',textDecoration:'none',padding:'10px'}}>View Cards →</Link>
+  <Link
+    href={`/search?q=${encodeURIComponent(set.name)}`}
+    className="btn btn-outline"
+    style={{flex:1,justifyContent:'center',textDecoration:'none',padding:'10px'}}
+    onClick={() => setSelectedModal(null)}
+  >🔍 Search Cards</Link>
   <button className="btn btn-primary" onClick={() => { quickAdd('have', set.name); setSelectedModal(null) }}>+ Add to Vault</button>
   <button className="btn btn-outline" onClick={() => { toggleWishlist(set.id); setSelectedModal(null) }}>★</button>
 </div>
