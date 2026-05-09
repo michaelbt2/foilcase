@@ -229,22 +229,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* SPORT PILLS */}
-      <div className="logo-bar">
-        <div className="logo-bar-inner">
-          <span className="logo-bar-label">Browse by sport</span>
-          <div style={{width:'1px',height:'24px',background:'#D8D8D8',flexShrink:0}}></div>
-          <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-            {sports.map(s => (
-              <button
-                key={s}
-                className={`sport-pill${activeSport===s?' active':''}`}
-                onClick={() => setActiveSport(s)}
-              >{s}</button>
-            ))}
-          </div>
-        </div>
-      </div>
+
 
       {/* SEARCH SECTION */}
       <section className="section" style={{background:'#F7F7F7'}}>
