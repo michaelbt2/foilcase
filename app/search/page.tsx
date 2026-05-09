@@ -1,6 +1,6 @@
 'use client'
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Nav from '../components/Nav'
 
 const RECENT_SEARCHES = ['Patrick Mahomes','2024 Prizm Football','Charizard PSA 10','Shohei Ohtani RC','LeBron James']
@@ -25,7 +25,8 @@ function cardBg(sport: string) {
   return bgs[sport] || 'linear-gradient(135deg,#EBF2FF,#C5D8FF)'
 }
 
-export default function Search() {
+function SearchContent() {
+  const searchParams = useSearchParams()
   const [query, setQuery]             = useState('')
   const [submitted, setSubmitted]     = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
@@ -68,6 +69,14 @@ export default function Search() {
     }
   }
 
+  useEffect(() => {
+    const q = searchParams.get('q')
+    if (q) {
+      setQuery(q)
+      runSearch(q)
+    }
+  }, [])
+
   const filtered = liveResults.filter((c: any) => {
     if (sport !== 'all' && c.sport !== sport) return false
     if (grading === 'graded' && !c.grade) return false
@@ -88,7 +97,6 @@ export default function Search() {
 
   const hasActiveFilters = sport !== 'all' || grading !== 'all' || priceMin || priceMax || yearMin || yearMax || activeAttrs.length > 0
   const clearFilters = () => { setSport('all'); setGrading('all'); setPriceMin(''); setPriceMax(''); setYearMin(''); setYearMax(''); setActiveAttrs([]) }
-
   const fmtPrice = (p: number) => p ? `$${p.toFixed(2)}` : '—'
 
   return (
@@ -114,7 +122,7 @@ export default function Search() {
         .search-bar input::placeholder{color:#9A9A9A}
         .search-bar-btn{background:#1B6FF0;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap}
         .search-bar-btn:hover{background:#0A4DBF}
-        .search-clear{background:transparent;border:none;cursor:pointer;color:#9A9A9A;font-size:18px;padding:4px;display:flex;align-items:center;justify-content:center;transition:color .15s}
+        .search-clear{background:transparent;border:none;cursor:pointer;color:#9A9A9A;font-size:18px;padding:4px;display:flex;align-items:center;justify-content:center}
         .search-clear:hover{color:#0D0D0D}
         .search-dropdown{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:100;overflow:hidden;animation:dropIn .15s ease}
         @keyframes dropIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
@@ -122,9 +130,7 @@ export default function Search() {
         .dropdown-item{display:flex;align-items:center;gap:12px;padding:9px 16px;cursor:pointer;transition:background .12s}
         .dropdown-item:hover{background:#F7F7F7}
         .dropdown-item-img{width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#EFEFEF;display:flex;align-items:center;justify-content:center;font-size:18px}
-        .dropdown-item-name{font-size:13px;font-weight:600;color:#0D0D0D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
-        .dropdown-item-sub{font-size:11px;color:#9A9A9A;margin-top:1px}
-        .dropdown-item-price{font-size:13px;font-weight:800;color:#1B6FF0;flex-shrink:0}
+        .dropdown-item-name{font-size:13px;font-weight:600;color:#0D0D0D;flex:1}
         .search-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;justify-content:center}
         .search-pill{padding:5px 14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:12px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif}
         .search-pill:hover{background:rgba(255,255,255,.2);color:#fff}
@@ -165,8 +171,9 @@ export default function Search() {
         .card-tile{background:#fff;border:1px solid #EFEFEF;border-radius:16px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;flex-direction:column;animation:fadeUp .3s ease both}
         .card-tile:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.10);border-color:#D8D8D8}
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-        .card-img{height:140px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden}
+        .card-img{height:140px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden;background:#F7F7F7}
         .card-img img{width:100%;height:100%;object-fit:cover}
+        .card-img span{font-size:48px}
         .grade-chip{position:absolute;bottom:8px;left:8px;font-size:9px;font-weight:800;padding:3px 7px;border-radius:5px;background:#002FA7;color:#fff}
         .card-body{padding:11px 13px 8px;flex:1;display:flex;flex-direction:column}
         .card-player{font-size:13px;font-weight:700;color:#0D0D0D;line-height:1.2;margin-bottom:2px}
@@ -183,8 +190,8 @@ export default function Search() {
         .card-condition{font-size:10px;color:#9A9A9A}
         .card-actions{display:flex;gap:4px;padding:0 13px 11px;opacity:0;transition:opacity .15s}
         .card-tile:hover .card-actions{opacity:1}
-        .act-btn{flex:1;padding:5px 0;border-radius:6px;font-size:10px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;text-align:center}
-        .act-view{background:#EBF2FF;color:#1B6FF0;text-decoration:none;display:flex;align-items:center;justify-content:center}
+        .act-btn{flex:1;padding:5px 0;border-radius:6px;font-size:10px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;text-align:center;display:flex;align-items:center;justify-content:center;text-decoration:none}
+        .act-view{background:#EBF2FF;color:#1B6FF0}
         .act-view:hover{background:#1B6FF0;color:#fff}
         .act-add{background:#E6F9F0;color:#00A861}
         .act-add:hover{background:#00A861;color:#fff}
@@ -222,7 +229,6 @@ export default function Search() {
         <div className="search-hero-inner">
           <h1 className="search-hero-title">Find any card <em>instantly</em></h1>
           <p className="search-hero-sub">Search millions of cards with live eBay pricing</p>
-
           <div className="search-bar-wrap">
             <div className="search-bar">
               <span style={{fontSize:'20px',color:'#9A9A9A',flexShrink:0}}>🔍</span>
@@ -240,16 +246,13 @@ export default function Search() {
               <button className="search-bar-btn" onClick={() => runSearch(query)}>Search</button>
             </div>
 
-            {/* Dropdown suggestions */}
             {showDropdown && (
               <div className="search-dropdown">
                 <div className="dropdown-label">Recent searches</div>
                 {RECENT_SEARCHES.filter(r => r.toLowerCase().includes(query.toLowerCase())).slice(0,4).map(r => (
                   <div key={r} className="dropdown-item" onClick={() => runSearch(r)}>
                     <div className="dropdown-item-img">🕐</div>
-                    <div>
-                      <div className="dropdown-item-name">{r}</div>
-                    </div>
+                    <div className="dropdown-item-name">{r}</div>
                   </div>
                 ))}
               </div>
@@ -278,7 +281,11 @@ export default function Search() {
             {id:'Soccer',label:'⚽ Soccer'},
             {id:'Gaming',label:'🎮 Gaming'},
           ].map(s => (
-            <button key={s.id} className={`sport-tab${sport===s.id?' on':''}`} onClick={() => { setSport(s.id); runSearch(query) }}>{s.label}</button>
+            <button
+              key={s.id}
+              className={`sport-tab${sport===s.id?' on':''}`}
+              onClick={() => { setSport(s.id); runSearch(query) }}
+            >{s.label}</button>
           ))}
         </div>
       )}
@@ -338,11 +345,10 @@ export default function Search() {
           <main>
             <div className="results-header">
               <div className="results-count">
-                {searching ? (
-                  <span>Searching eBay for "<strong>{query}</strong>"...</span>
-                ) : (
-                  <>{filtered.length} result{filtered.length!==1?'s':''} <span>for "{query}"</span></>
-                )}
+                {searching
+                  ? <span>Searching for "<strong>{query}</strong>"...</span>
+                  : <>{filtered.length} result{filtered.length!==1?'s':''} <span>for "{query}"</span></>
+                }
               </div>
 
               {hasActiveFilters && (
@@ -372,7 +378,7 @@ export default function Search() {
             {searching ? (
               <div className="empty-state">
                 <div style={{fontSize:'40px',marginBottom:'16px'}}>🔍</div>
-                <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>Searching eBay for "{query}"...</div>
+                <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>Searching for "{query}"...</div>
                 <div style={{fontSize:'14px',color:'#9A9A9A'}}>Finding real cards with live pricing</div>
               </div>
             ) : searchError ? (
@@ -394,7 +400,7 @@ export default function Search() {
                   <div key={c.id} className="card-tile" style={{animationDelay:`${i*.04}s`}}>
                     <div className="card-img" style={{background:cardBg(c.sport)}}>
                       {c.image
-                        ? <img src={c.image} alt={c.title}/>
+                        ? <img src={c.image} alt={c.player}/>
                         : <span>{sportEmoji[c.sport]||'🃏'}</span>
                       }
                       {c.grade && <div className="grade-chip">{c.grade}</div>}
@@ -427,7 +433,7 @@ export default function Search() {
                   <div key={c.id} className="list-tile" style={{animationDelay:`${i*.03}s`}}>
                     <div className="list-img" style={{background:cardBg(c.sport)}}>
                       {c.image
-                        ? <img src={c.image} alt={c.title}/>
+                        ? <img src={c.image} alt={c.player}/>
                         : <span>{sportEmoji[c.sport]||'🃏'}</span>
                       }
                     </div>
@@ -476,10 +482,19 @@ export default function Search() {
           <div>
             <div className="disc-title">⭐ Popular Players</div>
             <div className="disc-grid">
-              {['Patrick Mahomes','Tom Brady','Shohei Ohtani','LeBron James','Charizard','Victor Wembanyama','Caleb Williams','Connor McDavid'].map(p => (
-                <div key={p} className="disc-card" onClick={() => runSearch(p)}>
-                  <div style={{fontSize:'28px',marginBottom:'8px'}}>{p.includes('Charizard')?'🎮':p.includes('Ohtani')?'⚾':p.includes('James')||p.includes('Wembanyama')?'🏀':p.includes('McDavid')?'🏒':'🏈'}</div>
-                  <div style={{fontSize:'13px',fontWeight:700,color:'#0D0D0D',lineHeight:1.2}}>{p}</div>
+              {[
+                {name:'Patrick Mahomes', emoji:'🏈'},
+                {name:'Tom Brady', emoji:'🏈'},
+                {name:'Shohei Ohtani', emoji:'⚾'},
+                {name:'LeBron James', emoji:'🏀'},
+                {name:'Charizard', emoji:'🎮'},
+                {name:'Victor Wembanyama', emoji:'🏀'},
+                {name:'Caleb Williams', emoji:'🏈'},
+                {name:'Connor McDavid', emoji:'🏒'},
+              ].map(p => (
+                <div key={p.name} className="disc-card" onClick={() => runSearch(p.name)}>
+                  <div style={{fontSize:'28px',marginBottom:'8px'}}>{p.emoji}</div>
+                  <div style={{fontSize:'13px',fontWeight:700,color:'#0D0D0D',lineHeight:1.2}}>{p.name}</div>
                   <div style={{fontSize:'11px',color:'#9A9A9A',marginTop:'2px'}}>Search cards →</div>
                 </div>
               ))}
@@ -490,5 +505,20 @@ export default function Search() {
 
       {toast && <div className="toast">{toast}</div>}
     </>
+  )
+}
+
+export default function Search() {
+  return (
+    <Suspense fallback={
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:'40px',marginBottom:'16px'}}>🔍</div>
+          <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading search...</div>
+        </div>
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   )
 }
