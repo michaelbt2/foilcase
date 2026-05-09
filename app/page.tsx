@@ -337,7 +337,7 @@ export default function Home() {
       </section>
 
       {/* PRICING */}
-      <section className="section" id="pricing" style={{background:'#fff'}}>
+      {/* <section className="section" id="pricing" style={{background:'#fff'}}>
         <div className="section-inner">
           <div style={{textAlign:'center',marginBottom:'48px'}}>
             <div className="section-eyebrow">Pricing</div>
@@ -365,7 +365,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA BANNER */}
       <section className="section" style={{background:'#F7F7F7'}}>
