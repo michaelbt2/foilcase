@@ -2,6 +2,8 @@
 import Nav from '../../components/Nav'
 import { useState } from 'react'
 import { useEffect } from 'react'
+import { useUser } from '@clerk/nextjs'
+import { supabase } from '../../lib/supabase'
 
 const uid = () => Math.random().toString(36).slice(2,10)
 
@@ -12,6 +14,7 @@ interface VaultForm {
 }
 
 export default function CardDetail() {
+  const { user } = useUser()
   const [flipped, setFlipped]           = useState(false)
   const [activeParallel, setActiveParallel] = useState(0)
   const [activeRange, setActiveRange]   = useState('30d')
@@ -86,24 +89,50 @@ useEffect(() => {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
 
-  const saveToVault = () => {
-    const card = {
-      id: uid(), player:'Patrick Mahomes II', year:'2024', brand:'Panini',
-      set:'Prizm Football', sport:'Football', cardnum:'#200',
-      folder:form.folder, status:form.status, grader:form.grader,
-      grade:form.score, qty:parseInt(form.qty)||1, condition:form.condition,
-      cost:parseFloat(form.cost)||0, value:parseFloat(form.value)||340,
-      attrs:['chrome'], notes:form.notes, added:Date.now(), img:'🏈'
+  const saveToVault = async () => {
+  if (!user) {
+    showToast('⚠️ Please sign in to add cards to your vault')
+    return
+  }
+
+  const currentParallel = parallels[activeParallel]
+
+  const card = {
+    user_id: user.id,
+    player: 'Patrick Mahomes II',
+    year: '2024',
+    brand: 'Panini',
+    set_name: 'Prizm Football',
+    sport: 'Football',
+    cardnum: '#200',
+    folder_id: form.folder || null,
+    status: form.status,
+    grader: form.grader,
+    grade: form.score,
+    qty: parseInt(form.qty) || 1,
+    condition: form.condition,
+    cost: parseFloat(form.cost) || 0,
+    value: parseFloat(form.value) || currentParallel.priceNum,
+    attrs: ['chrome'],
+    notes: form.notes,
+    img: '🏈',
+  }
+
+  try {
+    const { error } = await supabase.from('cards').insert(card)
+    if (error) {
+      showToast('❌ Error saving card: ' + error.message)
+      console.error(error)
+      return
     }
-    try {
-      const existing = JSON.parse(localStorage.getItem('cardvault_collection')||'[]')
-      existing.unshift(card)
-      localStorage.setItem('cardvault_collection', JSON.stringify(existing))
-    } catch {}
     setSaved(true)
     setVaultOpen(false)
     showToast('✅ Mahomes Prizm added to your vault!')
+  } catch (e: any) {
+    showToast('❌ Something went wrong. Please try again.')
+    console.error(e)
   }
+}
 
   const currentParallel = parallels[activeParallel]
 
