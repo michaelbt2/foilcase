@@ -2,6 +2,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Nav from '../components/Nav'
+import { useUser } from '@clerk/nextjs'
+import { supabase } from '../lib/supabase'
 
 const RECENT_SEARCHES = ['Patrick Mahomes','2024 Prizm Football','Charizard PSA 10','Shohei Ohtani RC','LeBron James']
 const TRENDING = ['Caleb Williams RC','2025 Prizm Football','Mahomes Gold /10','Wembanyama Prizm','Charizard 1st Edition']
@@ -26,6 +28,7 @@ function cardBg(sport: string) {
 }
 
 function SearchContent() {
+  const { user } = useUser()
   const searchParams = useSearchParams()
   const [query, setQuery]             = useState('')
   const [submitted, setSubmitted]     = useState(false)
@@ -45,6 +48,52 @@ function SearchContent() {
   const [toast, setToast]             = useState<string|null>(null)
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
+
+const addToVault = async (c: any) => {
+  if (!user) {
+    showToast('⚠️ Please sign in to add cards to your vault')
+    return
+  }
+
+  const card = {
+    user_id: user.id,
+    player: c.player,
+    year: String(c.year),
+    brand: c.brand !== 'Unknown' ? c.brand : '',
+    set_name: c.setName || '',
+    sport: c.sport !== 'Unknown' ? c.sport : '',
+    cardnum: c.cardNum || '',
+    folder_id: null,
+    status: 'have',
+    grader: 'Raw',
+    grade: c.grade || '',
+    qty: 1,
+    condition: c.condition || '',
+    cost: 0,
+    value: c.price || 0,
+    attrs: c.attrs || [],
+    notes: '',
+    img: c.sport === 'Football' ? '🏈'
+        : c.sport === 'Baseball' ? '⚾'
+        : c.sport === 'Basketball' ? '🏀'
+        : c.sport === 'Hockey' ? '🏒'
+        : c.sport === 'Gaming' ? '🎮' : '🃏',
+  }
+
+  try {
+    const { error } = await supabase.from('cards').insert(card)
+    if (error) {
+      showToast('❌ Error: ' + error.message)
+      console.error(error)
+      return
+    }
+    showToast(`✅ ${c.player} added to your vault!`)
+  } catch (e: any) {
+    showToast('❌ Something went wrong. Please try again.')
+    console.error(e)
+  }
+}
+
   const toggleAttr = (a: string) => setActiveAttrs(prev => prev.includes(a) ? prev.filter(x=>x!==a) : [...prev,a])
 
   const runSearch = async (q: string) => {
@@ -421,7 +470,7 @@ function SearchContent() {
                     </div>
                     <div className="card-actions">
                       <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-view">View on eBay</a>
-                      <button className="act-btn act-add" onClick={()=>showToast(`✅ ${c.player} added to vault!`)}>+ Have</button>
+                      <button className="act-btn act-add" onClick={()=>addToVault(c)}>+ Have</button>
                       <button className="act-btn act-want" onClick={()=>showToast(`⭐ ${c.player} wishlisted!`)}>★</button>
                     </div>
                   </div>
@@ -454,7 +503,7 @@ function SearchContent() {
                     </div>
                     <div className="list-actions">
                       <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px',textDecoration:'none'}}>eBay</a>
-                      <button className="btn btn-primary" style={{fontSize:'12px',padding:'5px 12px'}} onClick={()=>showToast(`✅ ${c.player} added to vault!`)}>+ Add</button>
+                      <button className="btn btn-primary" style={{fontSize:'12px',padding:'5px 12px'}} onClick={()=>addToVault(c)}>+ Add</button>
                     </div>
                   </div>
                 ))}

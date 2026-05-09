@@ -595,7 +595,10 @@ if (loading) {
                     </div>
                     <div className="card-body">
                       <div className="card-player">{c.player}</div>
-                      <div className="card-set">{c.year} {c.brand} · {c.set_name}{c.cardnum?` · ${c.cardnum}`:''}</div>
+                      <div className="card-set">
+  {[c.year, c.brand !== 'Unknown' ? c.brand : '', c.set_name !== 'Unknown' ? c.set_name : ''].filter(Boolean).join(' ')}
+  {c.cardnum ? ` · ${c.cardnum}` : ''}
+</div>
                       <div className="card-attrs">
                         {(c.attrs||[]).map(a => (
                           <span key={a} className={`attr-tag tag-${['rc','auto','numbered','chrome'].includes(a)?a:'other'}`}>{attrLabel(a)}</span>
@@ -630,7 +633,10 @@ if (loading) {
                     <div className="list-img" style={{background:cardBg(c.sport)}}>{c.img||sportEmoji[c.sport]||'🃏'}</div>
                     <div className="list-main">
                       <div className="list-player">{c.player}</div>
-                      <div className="list-set">{c.year} {c.brand} {c.set_name} {c.cardnum?`· ${c.cardnum}`:''}</div>
+                      <div className="list-set">
+  {[c.year, c.brand !== 'Unknown' ? c.brand : '', c.set_name !== 'Unknown' ? c.set_name : ''].filter(Boolean).join(' ')}
+  {c.cardnum ? ` · ${c.cardnum}` : ''}
+</div>
                       <div className="card-attrs" style={{marginTop:'4px'}}>
                         {(c.attrs||[]).map(a=><span key={a} className={`attr-tag tag-${['rc','auto','numbered','chrome'].includes(a)?a:'other'}`}>{attrLabel(a)}</span>)}
                       </div>
