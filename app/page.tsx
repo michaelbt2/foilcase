@@ -255,11 +255,7 @@ export default function Home() {
                 onClick={handleSearch}
               >Search</button>
             </div>
-            <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-              {['All Sports','⚾ Baseball','🏈 Football','🏀 Basketball','🎮 Gaming','Rookie Cards','Autographs'].map((chip,i) => (
-                <button key={chip} className={`filter-chip${i===0?' active':''}`}>{chip}</button>
-              ))}
-            </div>
+            
             {showResults && (
               <div className="search-results-box">
                 <div className="search-results-header">Showing live results — press Enter or click Search</div>
