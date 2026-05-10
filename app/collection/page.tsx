@@ -3,6 +3,29 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { supabase } from '../lib/supabase'
 import Nav from '../components/Nav'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faMagnifyingGlass,
+  faPlus,
+  faPen,
+  faTrash,
+  faTag,
+  faFolder,
+  faFolderOpen,
+  faLayerGroup,
+  faArrowUpRightFromSquare,
+  faStar,
+  faCircleCheck,
+  faArrowRightArrowLeft,
+  faBoxOpen,
+  faMedal,
+  faChartLine,
+  faGrip,
+  faBars,
+  faXmark,
+  faRotateLeft,
+} from '@fortawesome/free-solid-svg-icons'
+import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 
 const uid = () => Math.random().toString(36).slice(2,10)
 
@@ -444,8 +467,12 @@ if (loading) {
             <strong style={{color:'#0D0D0D'}}>My Collection</strong>
           </div>
           <div style={{display:'flex',gap:'8px'}}>
-            <button className="btn btn-outline btn-sm" onClick={() => setShowFolder(true)}>📁 Folders</button>
-            <button className="btn btn-primary" onClick={openAdd}>+ Add Card</button>
+            <button className="btn btn-outline btn-sm" onClick={() => setShowFolder(true)}>
+  <FontAwesomeIcon icon={faFolder} style={{marginRight:'5px'}}/>Folders
+</button>
+<button className="btn btn-primary" onClick={openAdd}>
+  <FontAwesomeIcon icon={faPlus} style={{marginRight:'5px'}}/>Add Card
+</button>
           </div>
         </div>
       </div>
@@ -474,7 +501,7 @@ if (loading) {
             <div className="sidebar-title">Folders</div>
             <div style={{display:'flex',flexDirection:'column',gap:'2px'}}>
               <div className={`folder-item${activeFolder==='all'?' active':''}`} onClick={() => setActiveFolder('all')}>
-                <span style={{fontSize:'15px',width:'22px',textAlign:'center'}}>🗃️</span>
+                <FontAwesomeIcon icon={faFolderOpen} style={{width:'22px',color:'#9A9A9A'}}/>
                 <span className="folder-name">All Cards</span>
                 <span className="folder-count">{cards.reduce((s,c)=>s+(c.qty||1),0)}</span>
               </div>
@@ -486,7 +513,9 @@ if (loading) {
                 </div>
               ))}
             </div>
-            <button className="add-folder-btn" onClick={() => setShowFolder(true)}>+ New Folder</button>
+            <button className="add-folder-btn" onClick={() => setShowFolder(true)}>
+  <FontAwesomeIcon icon={faPlus} style={{marginRight:'5px'}}/>New Folder
+</button>
           </div>
 
           <div className="sidebar-card">
@@ -515,25 +544,33 @@ if (loading) {
           {/* DASH STATS */}
           <div className="dash-stats">
             <div className="dash-card">
-              <div className="dash-icon" style={{background:'#EBF2FF'}}>🃏</div>
+              <div className="dash-icon" style={{background:'#EBF2FF'}}>
+  <FontAwesomeIcon icon={faLayerGroup} style={{color:'#1B6FF0'}}/>
+</div>
               <div className="dash-val">{totalCards}</div>
               <div className="dash-lbl">Total Cards</div>
               <div className="dash-delta delta-up">↑ {cards.filter(c=>{const d=new Date(c.created_at).getTime();return Date.now()-d<30*86400000}).length} this month</div>
             </div>
             <div className="dash-card">
-              <div className="dash-icon" style={{background:'#E6F9F0'}}>💰</div>
+              <div className="dash-icon" style={{background:'#E6F9F0'}}>
+  <FontAwesomeIcon icon={faChartLine} style={{color:'#00A861'}}/>
+</div>
               <div className="dash-val" style={{color:'#00A861'}}>${fmtNum(totalValue)}</div>
               <div className="dash-lbl">Est. Collection Value</div>
               <div className={`dash-delta ${gain>=0?'delta-up':'delta-dn'}`}>{gain>=0?'+':'-'}${fmtNum(Math.abs(gain))} ({gain>=0?'+':''}{gainPct}%)</div>
             </div>
             <div className="dash-card">
-              <div className="dash-icon" style={{background:'#F2ECFB'}}>🏅</div>
+              <div className="dash-icon" style={{background:'#F2ECFB'}}>
+  <FontAwesomeIcon icon={faMedal} style={{color:'#7B4FCA'}}/>
+</div>
               <div className="dash-val">{totalGraded}</div>
               <div className="dash-lbl">Graded Cards</div>
               <div className="dash-delta" style={{color:'#9A9A9A'}}>{totalCards>0?Math.round((totalGraded/totalCards)*100):0}% of total</div>
             </div>
             <div className="dash-card">
-              <div className="dash-icon" style={{background:'#FEF3E2'}}>📦</div>
+              <div className="dash-icon" style={{background:'#FEF3E2'}}>
+  <FontAwesomeIcon icon={faBoxOpen} style={{color:'#E8820C'}}/>
+</div>
               <div className="dash-val">{totalSets}</div>
               <div className="dash-lbl">Unique Sets</div>
               <div className="dash-delta" style={{color:'#9A9A9A'}}>{new Set(activecards.map(c=>c.brand).filter(Boolean)).size} brands</div>
@@ -543,7 +580,7 @@ if (loading) {
           {/* TOOLBAR */}
           <div className="toolbar">
             <div className="search-box">
-              <span style={{color:'#9A9A9A',fontSize:'15px'}}>🔍</span>
+              <FontAwesomeIcon icon={faMagnifyingGlass} style={{color:'#9A9A9A',width:'14px'}}/>
               <input type="text" placeholder="Search your vault..." value={searchVal} onChange={e=>setSearchVal(e.target.value)}/>
             </div>
             <select className="sort-select" value={sortVal} onChange={e=>setSortVal(e.target.value)}>
@@ -555,16 +592,26 @@ if (loading) {
               <option value="gain">Best Gain</option>
             </select>
             <div className="view-toggle">
-              <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}>⊞</button>
-              <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}>☰</button>
+              <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}>
+  <FontAwesomeIcon icon={faGrip}/>
+</button>
+<button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}>
+  <FontAwesomeIcon icon={faBars}/>
+</button>
             </div>
             <div className="results-lbl">{filtered.length} card{filtered.length!==1?'s':''}</div>
             {selected.size > 0 && (
               <div className="bulk-bar">
                 {selected.size} selected
-                <button className="btn btn-sm" style={{background:'#FEF3E2',color:'#E8820C',border:'none'}} onClick={async()=>{await Promise.all([...selected].map(id=>markSold(id)));setSelected(new Set())}}>💰 Sell</button>
-                <button className="btn btn-sm btn-danger" onClick={async()=>{await Promise.all([...selected].map(id=>supabase.from('cards').delete().eq('id',id)));setSelected(new Set());showToast(`🗑 ${selected.size} cards removed`);loadData()}}>🗑 Remove</button>
-                <button className="btn btn-sm btn-ghost" onClick={()=>setSelected(new Set())}>✕</button>
+                <button className="btn btn-sm" style={{background:'#FEF3E2',color:'#E8820C',border:'none'}} onClick={async()=>{await Promise.all([...selected].map(id=>markSold(id)));setSelected(new Set())}}>
+  <FontAwesomeIcon icon={faTag} style={{marginRight:'4px'}}/>Sell
+</button>
+<button className="btn btn-sm btn-danger" onClick={async()=>{await Promise.all([...selected].map(id=>supabase.from('cards').delete().eq('id',id)));setSelected(new Set());showToast(`🗑 ${selected.size} cards removed`);loadData()}}>
+  <FontAwesomeIcon icon={faTrash} style={{marginRight:'4px'}}/>Remove
+</button>
+<button className="btn btn-sm btn-ghost" onClick={()=>setSelected(new Set())}>
+  <FontAwesomeIcon icon={faXmark}/>
+</button>
               </div>
             )}
           </div>
@@ -572,7 +619,9 @@ if (loading) {
           {/* CARDS */}
           {filtered.length === 0 ? (
             <div className="empty-state">
-              <div style={{fontSize:'48px',marginBottom:'16px'}}>🗃️</div>
+              <div style={{fontSize:'48px',marginBottom:'16px',color:'#D8D8D8'}}>
+  <FontAwesomeIcon icon={faFolderOpen}/>
+</div>
               <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>{cards.length === 0 ? 'Your vault is empty' : 'No cards found'}</div>
               <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>{cards.length === 0 ? 'Start building your collection by adding your first card.' : 'Try adjusting your filters.'}</div>
               <button className="btn btn-primary" onClick={openAdd}>+ Add Your First Card</button>
@@ -611,9 +660,15 @@ if (loading) {
                       </div>
                     </div>
                     <div className="card-actions">
-                      <button className="act-btn act-edit" onClick={e=>{e.stopPropagation();openEdit(c.id)}}>✏️ Edit</button>
-                      <button className="act-btn act-sold" onClick={e=>{e.stopPropagation();markSold(c.id)}}>{isSold?'↩ Unsell':'💰 Sell'}</button>
-                      <button className="act-btn act-rm" onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}>🗑</button>
+                      <button className="act-btn act-edit" onClick={e=>{e.stopPropagation();openEdit(c.id)}}>
+  <FontAwesomeIcon icon={faPen} style={{marginRight:'3px'}}/>Edit
+</button>
+<button className="act-btn act-sold" onClick={e=>{e.stopPropagation();markSold(c.id)}}>
+  <FontAwesomeIcon icon={isSold?faRotateLeft:faTag} style={{marginRight:'3px'}}/>{isSold?'Unsell':'Sell'}
+</button>
+<button className="act-btn act-rm" onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}>
+  <FontAwesomeIcon icon={faTrash}/>
+</button>
                     </div>
                   </div>
                 )
@@ -649,9 +704,15 @@ if (loading) {
                       <div><div className="lm-lbl">Gain</div><div className={`lm-val ${gain>=0?'fin-pos':'fin-neg'}`}>{c.cost?(gain>=0?'+':'')+`$${Math.abs(gain)}`:'-'}</div></div>
                     </div>
                     <div className="list-acts">
-                      <button className="btn btn-sm btn-outline" onClick={()=>openEdit(c.id)}>Edit</button>
-                      <button className="btn btn-sm" style={{background:'#FEF3E2',color:'#E8820C',border:'none'}} onClick={()=>markSold(c.id)}>{isSold?'Unsell':'Sell'}</button>
-                      <button className="btn btn-sm btn-danger" onClick={()=>{setRemovingId(c.id);setShowConfirm(true)}}>🗑</button>
+                      <button className="btn btn-sm btn-outline" onClick={()=>openEdit(c.id)}>
+  <FontAwesomeIcon icon={faPen} style={{marginRight:'4px'}}/>Edit
+</button>
+<button className="btn btn-sm" style={{background:'#FEF3E2',color:'#E8820C',border:'none',display:'inline-flex',alignItems:'center',gap:'4px'}} onClick={()=>markSold(c.id)}>
+  <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Unsell':'Sell'}
+</button>
+<button className="btn btn-sm btn-danger" onClick={()=>{setRemovingId(c.id);setShowConfirm(true)}}>
+  <FontAwesomeIcon icon={faTrash}/>
+</button>
                     </div>
                   </div>
                 )
@@ -803,7 +864,9 @@ if (loading) {
               <button className="modal-close" onClick={()=>setShowConfirm(false)}>✕</button>
             </div>
             <div className="modal-body" style={{textAlign:'center'}}>
-              <div style={{fontSize:'40px',marginBottom:'12px'}}>🗑️</div>
+              <div style={{fontSize:'40px',marginBottom:'12px',color:'#D93025'}}>
+  <FontAwesomeIcon icon={faTrash}/>
+</div>
               <div style={{fontSize:'14px',color:'#555',marginBottom:'6px'}}>Are you sure you want to remove</div>
               <div style={{fontSize:'15px',fontWeight:700,marginBottom:'16px'}}>{cards.find(c=>c.id===removingId)?.player || 'this card'}?</div>
               <div style={{fontSize:'12px',color:'#D93025'}}>This action cannot be undone.</div>
