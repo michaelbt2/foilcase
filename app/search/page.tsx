@@ -4,6 +4,22 @@ import { useSearchParams } from 'next/navigation'
 import Nav from '../components/Nav'
 import { useUser } from '@clerk/nextjs'
 import { supabase } from '../lib/supabase'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faMagnifyingGlass,
+  faXmark,
+  faPlus,
+  faStar,
+  faArrowUpRightFromSquare,
+  faSliders,
+  faFire,
+  faCircleCheck,
+  faChevronUp,
+  faChevronDown,
+  faGrip,
+  faBars,
+} from '@fortawesome/free-solid-svg-icons'
+import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 
 const RECENT_SEARCHES = ['Patrick Mahomes','2024 Prizm Football','Charizard PSA 10','Shohei Ohtani RC','LeBron James']
 const TRENDING = ['Caleb Williams RC','2025 Prizm Football','Mahomes Gold /10','Wembanyama Prizm','Charizard 1st Edition']
@@ -247,20 +263,29 @@ const addToVault = async (c: any) => {
         .act-want{background:#F7F7F7;color:#555}
         .act-want:hover{background:#F2ECFB;color:#7B4FCA}
         .cards-list{display:flex;flex-direction:column;gap:10px}
-        .list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:14px;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);animation:fadeUp .3s ease both}
-        .list-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.07);border-color:#D8D8D8}
-        .list-img{width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;margin:10px 0 10px 14px;border-radius:10px;overflow:hidden;background:#EFEFEF}
-        .list-img img{width:100%;height:100%;object-fit:cover}
-        .list-main{flex:1;padding:10px 14px;min-width:0}
-        .list-player{font-size:14px;font-weight:700;color:#0D0D0D}
-        .list-set{font-size:12px;color:#9A9A9A;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .list-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
-        .list-right{display:flex;align-items:center;gap:16px;padding:0 16px;flex-shrink:0}
-        .lr-item{text-align:center}
-        .lr-lbl{font-size:10px;color:#9A9A9A;font-weight:600;text-transform:uppercase}
-        .lr-val{font-size:14px;font-weight:800;color:#0D0D0D}
-        .list-actions{display:flex;gap:6px;padding:0 14px;opacity:0;transition:opacity .15s;flex-shrink:0}
-        .list-tile:hover .list-actions{opacity:1}
+.list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:16px;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);animation:fadeUp .3s ease both}
+.list-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#D8D8D8;transform:translateY(-1px)}
+.list-img{width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;margin:12px 0 12px 16px;border-radius:12px;overflow:hidden;background:#EFEFEF}
+.list-img img{width:100%;height:100%;object-fit:cover}
+.list-main{flex:1;padding:12px 16px;min-width:0}
+.list-player{font-size:16px;font-weight:800;color:#0D0D0D;letter-spacing:-.3px;line-height:1.2;margin-bottom:3px}
+.list-set{font-size:12px;color:#9A9A9A;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-tags{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.list-pill{font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.03em;white-space:nowrap}
+.pill-parallel{background:#F0F0F0;color:#444}
+.pill-year{background:#EBF2FF;color:#1B6FF0}
+.pill-condition{background:#F7F7F7;color:#555;border:1px solid #EFEFEF}
+.pill-grade{background:#002FA7;color:#fff}
+.pill-rc{background:#E6F9F0;color:#00A861}
+.pill-auto{background:#FEF3E2;color:#E8820C}
+.pill-numbered{background:#F2ECFB;color:#7B4FCA}
+.pill-chrome{background:#EBF2FF;color:#1B6FF0}
+.pill-sealed{background:#FFF8E0;color:#92700A}
+.list-right{display:flex;align-items:center;gap:0;padding:0 20px 0 8px;flex-shrink:0;flex-direction:column;align-items:flex-end;gap:4px}
+.list-price{font-size:20px;font-weight:800;color:#0D0D0D;letter-spacing:-.5px}
+.list-price-lbl{font-size:10px;color:#9A9A9A;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.list-actions{display:flex;gap:6px;padding:0 14px;opacity:0;transition:opacity .15s;flex-shrink:0}
+.list-tile:hover .list-actions{opacity:1}
         .empty-state{background:#fff;border:1.5px dashed #D8D8D8;border-radius:20px;padding:64px 24px;text-align:center}
         .disc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:14px}
         .disc-card{background:#fff;border:1px solid #EFEFEF;border-radius:14px;padding:14px;cursor:pointer;transition:all .18s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
@@ -280,7 +305,7 @@ const addToVault = async (c: any) => {
           <p className="search-hero-sub">Search millions of cards with live eBay pricing</p>
           <div className="search-bar-wrap">
             <div className="search-bar">
-              <span style={{fontSize:'20px',color:'#9A9A9A',flexShrink:0}}>🔍</span>
+              <FontAwesomeIcon icon={faMagnifyingGlass} style={{color:'#1B6FF0',fontSize:'16px',flexShrink:0,width:'16px'}}/>
               <input
                 type="text"
                 placeholder="Player name, set, year, brand..."
@@ -290,9 +315,13 @@ const addToVault = async (c: any) => {
                 autoComplete="off"
               />
               {query && (
-                <button className="search-clear" onClick={() => { setQuery(''); setSubmitted(false); setLiveResults([]); setShowDropdown(false) }}>✕</button>
+                <button className="search-clear" onClick={() => { setQuery(''); setSubmitted(false); setLiveResults([]); setShowDropdown(false) }}>
+  <FontAwesomeIcon icon={faXmark} style={{fontSize:'14px'}}/>
+</button>
               )}
-              <button className="search-bar-btn" onClick={() => runSearch(query)}>Search</button>
+              <button className="search-bar-btn" onClick={() => runSearch(query)}>
+  <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'6px'}}/>Search
+</button>
             </div>
 
             {showDropdown && (
@@ -384,7 +413,7 @@ const addToVault = async (c: any) => {
                 <div key={t} className="trending-item" onClick={() => runSearch(t)}>
                   <span className="trending-rank">#{i+1}</span>
                   <span className="trending-name">{t}</span>
-                  <span style={{color:'#00A861',fontWeight:700,fontSize:'12px'}}>↑</span>
+                  <FontAwesomeIcon icon={faChevronUp} style={{color:'#00A861',fontSize:'11px'}}/>
                 </div>
               ))}
             </div>
@@ -419,8 +448,12 @@ const addToVault = async (c: any) => {
               </select>
 
               <div className="view-toggle">
-                <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}>⊞</button>
-                <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}>☰</button>
+                <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}>
+  <FontAwesomeIcon icon={faGrip}/>
+</button>
+<button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}>
+  <FontAwesomeIcon icon={faBars}/>
+</button>
               </div>
             </div>
 
@@ -469,9 +502,15 @@ const addToVault = async (c: any) => {
                       </div>
                     </div>
                     <div className="card-actions">
-                      <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-view">View on eBay</a>
-                      <button className="act-btn act-add" onClick={()=>addToVault(c)}>+ Have</button>
-                      <button className="act-btn act-want" onClick={()=>showToast(`⭐ ${c.player} wishlisted!`)}>★</button>
+                      <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-view">
+  <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{marginRight:'4px'}}/>eBay
+</a>
+<button className="act-btn act-add" onClick={()=>addToVault(c)}>
+  <FontAwesomeIcon icon={faPlus} style={{marginRight:'4px'}}/>Have
+</button>
+<button className="act-btn act-want" onClick={()=>showToast(`⭐ ${c.player} wishlisted!`)}>
+  <FontAwesomeIcon icon={faStarRegular}/>
+</button>
                     </div>
                   </div>
                 ))}
@@ -480,32 +519,73 @@ const addToVault = async (c: any) => {
               <div className="cards-list">
                 {filtered.map((c: any, i: number) => (
                   <div key={c.id} className="list-tile" style={{animationDelay:`${i*.03}s`}}>
-                    <div className="list-img" style={{background:cardBg(c.sport)}}>
-                      {c.image
-                        ? <img src={c.image} alt={c.player}/>
-                        : <span>{sportEmoji[c.sport]||'🃏'}</span>
-                      }
-                    </div>
-                    <div className="list-main">
-                      <div className="list-player">{c.player} — {c.parallel}</div>
-                      <div className="list-set">{c.year} {c.brand} {c.setName} {c.cardNum?`· ${c.cardNum}`:''}</div>
-                      <div className="list-tags">
-                        {(c.attrs||[]).map((a: string) => (
-                          <span key={a} className={`attr-tag tag-${['rc','auto','numbered','chrome'].includes(a)?a:'other'}`}>{attrLabel(a)}</span>
-                        ))}
-                        {c.grade && <span className="attr-tag" style={{background:'#EEF2FF',color:'#3730A3'}}>{c.grade}</span>}
-                      </div>
-                    </div>
-                    <div className="list-right">
-                      <div className="lr-item"><div className="lr-lbl">Price</div><div className="lr-val">{fmtPrice(c.price)}</div></div>
-                      <div className="lr-item"><div className="lr-lbl">Year</div><div className="lr-val">{c.year}</div></div>
-                      <div className="lr-item"><div className="lr-lbl">Condition</div><div className="lr-val" style={{fontSize:'11px'}}>{c.condition}</div></div>
-                    </div>
-                    <div className="list-actions">
-                      <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px',textDecoration:'none'}}>eBay</a>
-                      <button className="btn btn-primary" style={{fontSize:'12px',padding:'5px 12px'}} onClick={()=>addToVault(c)}>+ Add</button>
-                    </div>
-                  </div>
+  <div className="list-img" style={{background:cardBg(c.sport)}}>
+    {c.image
+      ? <img src={c.image} alt={c.player}/>
+      : <span>{sportEmoji[c.sport]||'🃏'}</span>
+    }
+  </div>
+  <div className="list-main">
+  <div className="list-player">
+    {[c.year, c.brand !== 'Unknown' ? c.brand : '', c.setName !== 'Unknown' ? c.setName : ''].filter(Boolean).join(' ')}
+    {c.cardNum ? ` · ${c.cardNum}` : ''}
+  </div>
+  <div className="list-set">
+    {c.player}
+    {c.parallel && c.parallel !== 'Base' ? ` · ${c.parallel}` : ''}
+    {c.sport && c.sport !== 'Unknown' ? ` · ${c.sport}` : ''}
+  </div>
+    <div className="list-tags">
+      {/* Parallel */}
+      {c.parallel && c.parallel !== 'Base' && (
+        <span className="list-pill pill-parallel">✦ {c.parallel}</span>
+      )}
+      {/* Year */}
+      {c.year && c.year !== 'Unknown' && (
+        <span className="list-pill pill-year">{c.year}</span>
+      )}
+      {/* Condition */}
+      {c.condition && c.condition !== 'Unknown' && (
+        <span className="list-pill pill-condition">
+          {c.condition === 'New/Factory Sealed' ? '🔒 Sealed'
+           : c.condition === 'Graded' ? '🏅 Graded'
+           : c.condition === 'Ungraded' ? 'Raw'
+           : c.condition}
+        </span>
+      )}
+      {/* Grade */}
+      {c.grade && (
+        <span className="list-pill pill-grade">{c.grade}</span>
+      )}
+      {/* Attrs */}
+      {(c.attrs||[]).map((a: string) => (
+        <span key={a} className={`list-pill pill-${a === 'rc' ? 'rc' : a === 'auto' ? 'auto' : a === 'numbered' ? 'numbered' : a === 'chrome' ? 'chrome' : 'condition'}`}>
+          {attrLabel(a)}
+        </span>
+      ))}
+      {/* Sport */}
+      {c.sport && c.sport !== 'Unknown' && (
+        <span className="list-pill pill-condition">{sportEmoji[c.sport]} {c.sport}</span>
+      )}
+    </div>
+  </div>
+  <div className="list-right">
+    <div className="list-price-lbl">Market Price</div>
+    <div className="list-price">{fmtPrice(c.price)}</div>
+    {c.printRun && (
+      <div style={{fontSize:'11px',color:'#7B4FCA',fontWeight:700}}>/{c.printRun}</div>
+    )}
+  </div>
+  <div className="list-actions">
+    
+      <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'5px'}}>
+  <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
+</a>
+<button className="btn btn-primary" style={{fontSize:'12px',padding:'5px 12px',display:'inline-flex',alignItems:'center',gap:'5px'}} onClick={()=>addToVault(c)}>
+  <FontAwesomeIcon icon={faPlus}/>Add
+</button>
+  </div>
+</div>
                 ))}
               </div>
             )}
@@ -516,20 +596,24 @@ const addToVault = async (c: any) => {
         /* DISCOVERY */
         <div style={{maxWidth:'1200px',margin:'0 auto',padding:'28px 24px'}}>
           <div style={{marginBottom:'32px'}}>
-            <div className="disc-title">🔥 Trending Searches</div>
+            <div className="disc-title">
+  <FontAwesomeIcon icon={faFire} style={{color:'#E8820C'}}/>Trending Searches
+</div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'8px'}}>
               {TRENDING.map((t,i) => (
                 <div key={t} className="trending-item" onClick={() => runSearch(t)}>
                   <span className="trending-rank">#{i+1}</span>
                   <span className="trending-name">{t}</span>
-                  <span style={{color:'#00A861',fontWeight:700,fontSize:'12px'}}>↑</span>
+                  <FontAwesomeIcon icon={faChevronUp} style={{color:'#00A861',fontSize:'11px'}}/>
                 </div>
               ))}
             </div>
           </div>
 
           <div>
-            <div className="disc-title">⭐ Popular Players</div>
+            <div className="disc-title">
+  <FontAwesomeIcon icon={faStar} style={{color:'#F5A623'}}/>Popular Players
+</div>
             <div className="disc-grid">
               {[
                 {name:'Patrick Mahomes', emoji:'🏈'},
