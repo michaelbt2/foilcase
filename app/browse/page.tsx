@@ -2,6 +2,21 @@
 import Nav from '../components/Nav'
 import Link from 'next/link'
 import { useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faMagnifyingGlass,
+  faPlus,
+  faStar,
+  faGrip,
+  faBars,
+  faFire,
+  faLayerGroup,
+  faFilter,
+  faArrowUpRightFromSquare,
+  faChevronRight,
+  faCircleCheck,
+} from '@fortawesome/free-solid-svg-icons'
+import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 
 const brandData = [
   {
@@ -324,7 +339,7 @@ export default function Browse() {
               <div className="sidebar-title" style={{margin:0}}>Brand</div>
             </div>
             <div className="brand-search">
-              <span style={{color:'#9A9A9A'}}>🔍</span>
+              <FontAwesomeIcon icon={faMagnifyingGlass} style={{color:'#9A9A9A',width:'14px'}}/>
               <input type="text" placeholder="Search brands..."/>
             </div>
             <div>
@@ -368,13 +383,13 @@ export default function Browse() {
           {/* STATS BAR */}
           <div className="stats-bar">
             {[
-              {icon:'🎴', val:'3.07M', lbl:'Football cards'},
-              {icon:'📦', val:totalSets.toString(), lbl:'Sets catalogued'},
-              {icon:'🏷️', val:'3', lbl:'Active brands'},
-              {icon:'🆕', val:'2025', lbl:'Latest year'},
-            ].map(s => (
-              <div className="stat-bar-item" key={s.lbl}>
-                <span style={{fontSize:'18px'}}>{s.icon}</span>
+  {icon:faLayerGroup, color:'#1B6FF0', val:'3.07M', lbl:'Football cards'},
+  {icon:faFire, color:'#E8820C', val:totalSets.toString(), lbl:'Sets catalogued'},
+  {icon:faFilter, color:'#7B4FCA', val:'3', lbl:'Active brands'},
+  {icon:faStar, color:'#F5A623', val:'2025', lbl:'Latest year'},
+].map(s => (
+  <div className="stat-bar-item" key={s.lbl}>
+    <FontAwesomeIcon icon={s.icon} style={{fontSize:'18px',color:s.color,width:'18px'}}/>
                 <div>
                   <div className="stat-bar-val">{s.val}</div>
                   <div className="stat-bar-lbl">{s.lbl}</div>
@@ -397,14 +412,16 @@ export default function Browse() {
   className="btn-spotlight"
   style={{textDecoration:'none'}}
 >Search Cards</Link>
-              <button className="btn-spotlight-outline" onClick={() => quickAdd('have','2025 Prizm')}>+ Add to Vault</button>
+              <button className="btn-spotlight-outline" onClick={() => quickAdd('have','2025 Prizm')}>
+  <FontAwesomeIcon icon={faPlus} style={{marginRight:'5px'}}/>Add to Vault
+</button>
             </div>
           </div>
 
           {/* TOOLBAR */}
           <div className="toolbar">
             <div className="search-box">
-              <span style={{color:'#9A9A9A'}}>🔍</span>
+              <FontAwesomeIcon icon={faMagnifyingGlass} style={{color:'#9A9A9A',width:'14px'}}/>
               <input
                 type="text"
                 placeholder='Search sets...'
@@ -423,8 +440,12 @@ export default function Browse() {
               <option value="alpha">A–Z</option>
             </select>
             <div className="view-toggle">
-              <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={() => setViewMode('grid')}>⊞</button>
-              <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={() => setViewMode('list')}>☰</button>
+              <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={() => setViewMode('grid')}>
+  <FontAwesomeIcon icon={faGrip}/>
+</button>
+<button className={`vbtn${viewMode==='list'?' on':''}`} onClick={() => setViewMode('list')}>
+  <FontAwesomeIcon icon={faBars}/>
+</button>
             </div>
             <div className="results-label">
               Showing <strong>{filteredBrands.reduce((s,b)=>s+b.years.reduce((ss,y)=>ss+y.sets.filter(set=>!searchVal||set.name.toLowerCase().includes(searchVal.toLowerCase())).length,0),0)}</strong> sets
@@ -449,7 +470,9 @@ export default function Browse() {
                       <div className="brand-section-meta">{brand.meta}</div>
                     </div>
                   </div>
-                  <a className="brand-view-all">View all {brand.name} →</a>
+                  <a className="brand-view-all">
+  View all {brand.name} <FontAwesomeIcon icon={faChevronRight} style={{fontSize:'11px',marginLeft:'2px'}}/>
+</a>
                 </div>
 
                 {brand.years.map(yr => {
@@ -506,15 +529,19 @@ export default function Browse() {
                             </div>
                             <div className="set-quick-add">
   <Link
-    href={`/search?q=${encodeURIComponent(set.name)}`}
-    className="set-quick-btn qb-have"
-    style={{textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center'}}
-    onClick={e => e.stopPropagation()}
-  >🔍 Search</Link>
-  <button
-    className="set-quick-btn qb-want"
-    onClick={e => { e.stopPropagation(); quickAdd('want', set.name) }}
-  >★ Want</button>
+  href={`/search?q=${encodeURIComponent(set.name)}`}
+  className="set-quick-btn qb-have"
+  style={{textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}
+  onClick={e => e.stopPropagation()}
+>
+  <FontAwesomeIcon icon={faMagnifyingGlass} style={{fontSize:'10px'}}/>Search
+</Link>
+<button
+  className="set-quick-btn qb-want"
+  onClick={e => { e.stopPropagation(); quickAdd('want', set.name) }}
+>
+  <FontAwesomeIcon icon={faStarRegular} style={{marginRight:'3px'}}/>Want
+</button>
 </div>
                           </div>
                         ))}
@@ -568,8 +595,12 @@ export default function Browse() {
     style={{flex:1,justifyContent:'center',textDecoration:'none',padding:'10px'}}
     onClick={() => setSelectedModal(null)}
   >🔍 Search Cards</Link>
-  <button className="btn btn-primary" onClick={() => { quickAdd('have', set.name); setSelectedModal(null) }}>+ Add to Vault</button>
-  <button className="btn btn-outline" onClick={() => { toggleWishlist(set.id); setSelectedModal(null) }}>★</button>
+  <button className="btn btn-primary" onClick={() => { quickAdd('have', set.name); setSelectedModal(null) }}>
+  <FontAwesomeIcon icon={faPlus} style={{marginRight:'5px'}}/>Add to Vault
+</button>
+<button className="btn btn-outline" onClick={() => { toggleWishlist(set.id); setSelectedModal(null) }}>
+  <FontAwesomeIcon icon={wishlisted.has(set.id) ? faStar : faStarRegular}/>
+</button>
 </div>
               </div>
             </div>
