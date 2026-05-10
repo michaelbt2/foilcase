@@ -24,6 +24,9 @@ import {
   faBars,
   faXmark,
   faRotateLeft,
+  faShield,
+  faRightToBracket,
+  faUserPlus
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 
@@ -271,15 +274,53 @@ if (!user) {
   return (
     <>
       <Nav />
-      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
-        <div style={{textAlign:'center'}}>
-          <div style={{fontSize:'40px',marginBottom:'16px'}}>🔒</div>
-          <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px',color:'#0D0D0D'}}>Sign in to view your vault</div>
-          <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>Your collection is saved securely to your account.</div>
-          <div style={{display:'flex',gap:'10px',justifyContent:'center'}}>
-            <a href="/sign-in" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'10px 24px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:600,textDecoration:'none',transition:'all .15s'}}>Log in</a>
-            <a href="/sign-up" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'10px 24px',borderRadius:'100px',background:'transparent',color:'#0D0D0D',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:600,textDecoration:'none',border:'1.5px solid #D8D8D8',transition:'all .15s'}}>Create account</a>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'80vh',fontFamily:'Plus Jakarta Sans,sans-serif',background:'#F7F7F7'}}>
+        <div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:'24px',padding:'48px 40px',maxWidth:'440px',width:'100%',textAlign:'center',boxShadow:'0 4px 24px rgba(0,0,0,.06)'}}>
+          
+          {/* Logo */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginBottom:'32px'}}>
+            <div style={{width:'32px',height:'32px',background:'#1B6FF0',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <FontAwesomeIcon icon={faLayerGroup} style={{color:'#fff',fontSize:'14px'}}/>
+            </div>
+            <span style={{fontSize:'18px',fontWeight:800,letterSpacing:'-.4px',color:'#0D0D0D'}}>FoilCase</span>
           </div>
+
+          {/* Icon */}
+          <div style={{width:'64px',height:'64px',background:'#EBF2FF',borderRadius:'16px',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px'}}>
+            <FontAwesomeIcon icon={faShield} style={{color:'#1B6FF0',fontSize:'28px'}}/>
+          </div>
+
+          {/* Headline */}
+          <div style={{fontSize:'22px',fontWeight:800,letterSpacing:'-.5px',color:'#0D0D0D',marginBottom:'8px'}}>Your vault awaits</div>
+          <div style={{fontSize:'14px',color:'#9A9A9A',lineHeight:1.6,marginBottom:'28px'}}>Sign in to access your personal card collection, track values, and manage your vault from any device.</div>
+
+          {/* Value props */}
+          <div style={{display:'flex',flexDirection:'column',gap:'10px',marginBottom:'28px',textAlign:'left'}}>
+            {[
+              {icon:faLayerGroup, color:'#1B6FF0', bg:'#EBF2FF', text:'Track your entire card collection in one place'},
+              {icon:faChartLine, color:'#00A861', bg:'#E6F9F0', text:'Monitor real-time market values from eBay'},
+              {icon:faMedal, color:'#7B4FCA', bg:'#F2ECFB', text:'Manage graded cards, folders, and wishlists'},
+            ].map((item, i) => (
+              <div key={i} style={{display:'flex',alignItems:'center',gap:'12px',padding:'10px 14px',background:'#F7F7F7',borderRadius:'12px'}}>
+                <div style={{width:'32px',height:'32px',background:item.bg,borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <FontAwesomeIcon icon={item.icon} style={{color:item.color,fontSize:'13px'}}/>
+                </div>
+                <div style={{fontSize:'13px',fontWeight:600,color:'#555'}}>{item.text}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Buttons */}
+          <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+            <a href="/sign-in" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'12px 24px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:700,textDecoration:'none'}}>
+              <FontAwesomeIcon icon={faRightToBracket}/>Log in to your vault
+            </a>
+            <a href="/sign-up" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'12px 24px',borderRadius:'100px',background:'transparent',color:'#0D0D0D',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:600,textDecoration:'none',border:'1.5px solid #D8D8D8'}}>
+              <FontAwesomeIcon icon={faUserPlus}/>Create a free account
+            </a>
+          </div>
+
+          <div style={{fontSize:'12px',color:'#9A9A9A',marginTop:'20px'}}>Free to start · No credit card required</div>
         </div>
       </div>
     </>
