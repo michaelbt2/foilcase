@@ -2,6 +2,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useUser, UserButton } from '@clerk/nextjs'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faMagnifyingGlass,
+  faLayerGroup,
+  faRightToBracket,
+  faUserPlus,
+  faTableCells,
+} from '@fortawesome/free-solid-svg-icons'
 
 function NavActions() {
   const { isSignedIn, isLoaded } = useUser()
@@ -19,8 +27,12 @@ function NavActions() {
 
   return (
     <div className="nav-actions">
-      <Link className="btn btn-ghost" href="/sign-in">Log in</Link>
-      <Link className="btn btn-primary" href="/sign-up">Get started free</Link>
+      <Link className="btn btn-ghost" href="/sign-in">
+  <FontAwesomeIcon icon={faRightToBracket} style={{marginRight:'5px'}}/>Log in
+</Link>
+<Link className="btn btn-primary" href="/sign-up">
+  <FontAwesomeIcon icon={faUserPlus} style={{marginRight:'5px'}}/>Get started free
+</Link>
     </div>
   )
 }
@@ -49,12 +61,18 @@ export default function Nav() {
       <nav className="nav">
         <div className="nav-inner">
           <Link className="nav-logo" href="/">
-            <div className="nav-logo-icon">🃏</div>FoilCase
+            <div className="nav-logo-icon">
+  <FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'12px',color:'#fff'}}/>
+</div>FoilCase
           </Link>
           <ul className="nav-links">
             <li><Link href="/browse" className={path==='/browse'?'active':''}>Browse</Link></li>
-            <li><Link href="/collection" className={path==='/collection'?'active':''}>My Collection</Link></li>
-            <li><Link href="/search" className={path==='/search'?'active':''}>Search</Link></li>
+<li><Link href="/collection" className={path==='/collection'?'active':''}>
+  <FontAwesomeIcon icon={faTableCells} style={{marginRight:'5px'}}/>My Collection
+</Link></li>
+<li><Link href="/search" className={path==='/search'?'active':''}>
+  <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'5px'}}/>Search
+</Link></li>
           </ul>
           <NavActions />
         </div>
