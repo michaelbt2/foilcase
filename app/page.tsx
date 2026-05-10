@@ -3,6 +3,18 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Nav from './components/Nav'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faMagnifyingGlass,
+  faXmark,
+  faChevronRight,
+  faRocket,
+  faLayerGroup,
+  faBolt,
+  faChartLine,
+  faUsers,
+  faShield,
+} from '@fortawesome/free-solid-svg-icons'
 
 export default function Home() {
   const [activeSport, setActiveSport] = useState('⚾ Baseball')
@@ -165,19 +177,28 @@ export default function Home() {
             <Link className="btn btn-outline btn-xl" href="/browse">Browse cards</Link>
           </div>
           <div className="hero-stats">
-            <div>
-              <div className="hero-stat-val">2.4M+</div>
-              <div className="hero-stat-lbl">Cards in database</div>
-            </div>
-            <div>
-              <div className="hero-stat-val">18K+</div>
-              <div className="hero-stat-lbl">Sets catalogued</div>
-            </div>
-            <div>
-              <div className="hero-stat-val">Free</div>
-              <div className="hero-stat-lbl">To start collecting</div>
-            </div>
-          </div>
+  <div>
+    <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+      <FontAwesomeIcon icon={faLayerGroup} style={{color:'#1B6FF0',fontSize:'14px'}}/>
+      <div className="hero-stat-val">2.4M+</div>
+    </div>
+    <div className="hero-stat-lbl">Cards in database</div>
+  </div>
+  <div>
+    <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+      <FontAwesomeIcon icon={faShield} style={{color:'#1B6FF0',fontSize:'14px'}}/>
+      <div className="hero-stat-val">18K+</div>
+    </div>
+    <div className="hero-stat-lbl">Sets catalogued</div>
+  </div>
+  <div>
+    <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+      <FontAwesomeIcon icon={faBolt} style={{color:'#1B6FF0',fontSize:'14px'}}/>
+      <div className="hero-stat-val">Free</div>
+    </div>
+    <div className="hero-stat-lbl">To start collecting</div>
+  </div>
+</div>
         </div>
 
         <div className="hero-visual">
@@ -235,13 +256,15 @@ export default function Home() {
       <section className="section" style={{background:'#F7F7F7'}}>
         <div className="section-inner">
           <div style={{maxWidth:'720px',margin:'0 auto',textAlign:'center'}}>
-            <div className="section-eyebrow">Powerful Search</div>
+            <div className="section-eyebrow">
+  <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'6px'}}/>Powerful Search
+</div>
             <h2 className="section-title">Find any card <em>instantly</em></h2>
             <p className="section-sub" style={{margin:'0 auto 36px'}}>Search across millions of cards by player, year, brand, set, parallel, or card number — powered by live eBay data.</p>
           </div>
           <div style={{maxWidth:'640px',margin:'0 auto'}}>
             <div className="search-hero-box">
-              <span style={{fontSize:'18px'}}>🔍</span>
+              <FontAwesomeIcon icon={faMagnifyingGlass} style={{color:'#1B6FF0',fontSize:'16px',width:'16px',flexShrink:0}}/>
               <input
                 type="text"
                 placeholder="Search by player, set, card number..."
@@ -287,7 +310,9 @@ export default function Home() {
       <section className="section" style={{background:'#fff'}}>
         <div className="section-inner">
           <div style={{textAlign:'center',marginBottom:'56px'}}>
-            <div className="section-eyebrow">How it works</div>
+            <div className="section-eyebrow">
+  <FontAwesomeIcon icon={faRocket} style={{marginRight:'6px'}}/>How it works
+</div>
             <h2 className="section-title">Start collecting in <em>minutes</em></h2>
             <p className="section-sub" style={{margin:'0 auto'}}>FoilCase makes it effortless to catalog, track, and grow your collection — whether you have 10 cards or 10,000.</p>
           </div>
@@ -298,7 +323,9 @@ export default function Home() {
               {n:'3',title:'Track, trade, and grow',desc:'Monitor set completion, discover your collection\'s value, and connect with other collectors to find your next great card.'},
             ].map(step => (
               <div className="step" key={step.n}>
-                <div className="step-num">{step.n}</div>
+                <div className="step-num" style={{display:'flex',alignItems:'center',justifyContent:'center'}}>
+  {step.n === '1' ? <FontAwesomeIcon icon={faRocket}/> : step.n === '2' ? <FontAwesomeIcon icon={faMagnifyingGlass}/> : <FontAwesomeIcon icon={faChartLine}/>}
+</div>
                 <div className="step-title">{step.title}</div>
                 <div className="step-desc">{step.desc}</div>
               </div>
@@ -311,7 +338,9 @@ export default function Home() {
       <section className="section" style={{background:'#F7F7F7'}}>
         <div className="section-inner">
           <div style={{textAlign:'center',marginBottom:'48px'}}>
-            <div className="section-eyebrow">Community</div>
+            <div className="section-eyebrow">
+  <FontAwesomeIcon icon={faUsers} style={{marginRight:'6px'}}/>Community
+</div>
             <h2 className="section-title">Loved by <em>collectors</em></h2>
           </div>
           <div className="testimonials-grid">
@@ -376,8 +405,12 @@ export default function Home() {
               <p>Join thousands of collectors tracking millions of cards. Start free — no credit card required.</p>
             </div>
             <div className="cta-actions">
-              <Link className="btn btn-white btn-xl" href="/collection">Create free vault</Link>
-              <Link className="btn btn-dim btn-xl" href="/browse">Browse cards</Link>
+              <Link className="btn btn-white btn-xl" href="/collection">
+  <FontAwesomeIcon icon={faRocket} style={{marginRight:'6px'}}/>Create free vault
+</Link>
+<Link className="btn btn-dim btn-xl" href="/browse">
+  <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'6px'}}/>Browse cards
+</Link>
             </div>
           </div>
         </div>
