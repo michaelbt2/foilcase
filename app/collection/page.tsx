@@ -26,7 +26,13 @@ import {
   faRotateLeft,
   faShield,
   faRightToBracket,
-  faUserPlus
+  faUserPlus,
+  faFootball,
+  faBaseball,
+  faBasketball,
+  faHockeyPuck,
+  faFutbol,
+  faGamepad,
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 
@@ -148,7 +154,7 @@ export default function Collection() {
     if (sortVal === 'gain') return ((b.value||0)-(b.cost||0)) - ((a.value||0)-(a.cost||0))
     return 0
   })
-
+const hasActiveFilters = filters.sport !== 'all' || filters.grading !== 'all' || filters.status !== 'all' || filters.date !== 'all'
   const activecards = cards.filter(c => c.status !== 'sold')
   const totalCards  = activecards.reduce((s,c) => s+(c.qty||1), 0)
   const totalValue  = activecards.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0)
@@ -554,23 +560,140 @@ if (loading) {
           </div>
 
           <div className="sidebar-card">
-            <div className="sidebar-title">Filters</div>
-            {[
-              { label:'Sport', key:'sport', opts:[{v:'all',l:'All'},{v:'Football',l:'🏈 Football'},{v:'Baseball',l:'⚾ Baseball'},{v:'Basketball',l:'🏀 Basketball'},{v:'Hockey',l:'🏒 Hockey'},{v:'Gaming',l:'🎮 Gaming'}] },
-              { label:'Grading', key:'grading', opts:[{v:'all',l:'All'},{v:'graded',l:'Graded'},{v:'raw',l:'Raw'}] },
-              { label:'Status', key:'status', opts:[{v:'all',l:'All'},{v:'have',l:'✅ Have'},{v:'trade',l:'🔄 Trade'},{v:'sold',l:'💰 Sold'}] },
-              { label:'Date Added', key:'date', opts:[{v:'all',l:'All Time'},{v:'7',l:'7 days'},{v:'30',l:'30 days'},{v:'90',l:'90 days'},{v:'365',l:'This year'}] },
-            ].map(fg => (
-              <div className="filter-group" key={fg.key}>
-                <div className="filter-group-label">{fg.label}</div>
-                <div className="fchips">
-                  {fg.opts.map(o => (
-                    <button key={o.v} className={`fchip${filters[fg.key as keyof typeof filters]===o.v?' on':''}`} onClick={() => setFilters(prev => ({...prev,[fg.key]:o.v}))}>{o.l}</button>
-                  ))}
-                </div>
-              </div>
-            ))}
+  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
+    <div className="sidebar-title" style={{margin:0}}>Filters</div>
+    {hasActiveFilters && (
+      <button
+        onClick={() => setFilters({sport:'all',grading:'all',status:'all',date:'all'})}
+        style={{fontSize:'11px',fontWeight:600,color:'#1B6FF0',background:'none',border:'none',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}
+      >Clear all</button>
+    )}
+  </div>
+
+  {/* SPORT */}
+  <div style={{marginBottom:'16px',paddingBottom:'16px',borderBottom:'1px solid #EFEFEF'}}>
+    <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#9A9A9A',marginBottom:'10px'}}>Sport</div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {[
+        {v:'all', l:'All Sports', icon:null},
+        {v:'Football', l:'Football', icon:faFootball},
+        {v:'Baseball', l:'Baseball', icon:faBaseball},
+        {v:'Basketball', l:'Basketball', icon:faBasketball},
+        {v:'Hockey', l:'Hockey', icon:faHockeyPuck},
+        {v:'Gaming', l:'Gaming / TCG', icon:faGamepad},
+      ].map(o => (
+        <label key={o.v} style={{display:'flex',alignItems:'center',gap:'10px',cursor:'pointer',fontSize:'13px',fontWeight:500,color:filters.sport===o.v?'#0D0D0D':'#555'}}>
+          <div
+            onClick={() => setFilters(prev => ({...prev, sport:o.v}))}
+            style={{
+              width:'18px',height:'18px',borderRadius:'5px',border:`2px solid ${filters.sport===o.v?'#1B6FF0':'#D8D8D8'}`,
+              background:filters.sport===o.v?'#1B6FF0':'#fff',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              flexShrink:0,cursor:'pointer',transition:'all .15s'
+            }}
+          >
+            {filters.sport===o.v && <FontAwesomeIcon icon={faXmark} style={{color:'#fff',fontSize:'10px'}}/>}
           </div>
+          {o.icon && <FontAwesomeIcon icon={o.icon} style={{color:filters.sport===o.v?'#1B6FF0':'#9A9A9A',fontSize:'13px',width:'14px'}}/>}
+          <span onClick={() => setFilters(prev => ({...prev, sport:o.v}))} style={{flex:1}}>{o.l}</span>
+          <span style={{fontSize:'11px',color:'#9A9A9A',fontWeight:400}}>
+            {o.v === 'all' ? cards.length : cards.filter(c => c.sport.startsWith(o.v)).length}
+          </span>
+        </label>
+      ))}
+    </div>
+  </div>
+
+  {/* GRADING */}
+  <div style={{marginBottom:'16px',paddingBottom:'16px',borderBottom:'1px solid #EFEFEF'}}>
+    <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#9A9A9A',marginBottom:'10px'}}>Grading</div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {[
+        {v:'all', l:'All'},
+        {v:'graded', l:'Graded'},
+        {v:'raw', l:'Raw'},
+      ].map(o => (
+        <label key={o.v} style={{display:'flex',alignItems:'center',gap:'10px',cursor:'pointer',fontSize:'13px',fontWeight:500,color:filters.grading===o.v?'#0D0D0D':'#555'}}>
+          <div
+            onClick={() => setFilters(prev => ({...prev, grading:o.v}))}
+            style={{
+              width:'18px',height:'18px',borderRadius:'5px',border:`2px solid ${filters.grading===o.v?'#1B6FF0':'#D8D8D8'}`,
+              background:filters.grading===o.v?'#1B6FF0':'#fff',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              flexShrink:0,cursor:'pointer',transition:'all .15s'
+            }}
+          >
+            {filters.grading===o.v && <FontAwesomeIcon icon={faXmark} style={{color:'#fff',fontSize:'10px'}}/>}
+          </div>
+          <span onClick={() => setFilters(prev => ({...prev, grading:o.v}))} style={{flex:1}}>{o.l}</span>
+          <span style={{fontSize:'11px',color:'#9A9A9A',fontWeight:400}}>
+            {o.v === 'all' ? cards.length : o.v === 'graded' ? cards.filter(c => c.grader && c.grader !== 'Raw').length : cards.filter(c => !c.grader || c.grader === 'Raw').length}
+          </span>
+        </label>
+      ))}
+    </div>
+  </div>
+
+  {/* STATUS */}
+  <div style={{marginBottom:'16px',paddingBottom:'16px',borderBottom:'1px solid #EFEFEF'}}>
+    <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#9A9A9A',marginBottom:'10px'}}>Status</div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {[
+        {v:'all', l:'All'},
+        {v:'have', l:'In Vault'},
+        {v:'trade', l:'For Trade'},
+        {v:'sold', l:'Sold'},
+      ].map(o => (
+        <label key={o.v} style={{display:'flex',alignItems:'center',gap:'10px',cursor:'pointer',fontSize:'13px',fontWeight:500,color:filters.status===o.v?'#0D0D0D':'#555'}}>
+          <div
+            onClick={() => setFilters(prev => ({...prev, status:o.v}))}
+            style={{
+              width:'18px',height:'18px',borderRadius:'5px',border:`2px solid ${filters.status===o.v?'#1B6FF0':'#D8D8D8'}`,
+              background:filters.status===o.v?'#1B6FF0':'#fff',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              flexShrink:0,cursor:'pointer',transition:'all .15s'
+            }}
+          >
+            {filters.status===o.v && <FontAwesomeIcon icon={faXmark} style={{color:'#fff',fontSize:'10px'}}/>}
+          </div>
+          <span onClick={() => setFilters(prev => ({...prev, status:o.v}))} style={{flex:1}}>{o.l}</span>
+          <span style={{fontSize:'11px',color:'#9A9A9A',fontWeight:400}}>
+            {o.v === 'all' ? cards.length : cards.filter(c => c.status === o.v).length}
+          </span>
+        </label>
+      ))}
+    </div>
+  </div>
+
+  {/* DATE ADDED */}
+  <div>
+    <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#9A9A9A',marginBottom:'10px'}}>Date Added</div>
+    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+      {[
+        {v:'all', l:'All Time'},
+        {v:'7', l:'Last 7 days'},
+        {v:'30', l:'Last 30 days'},
+        {v:'90', l:'Last 90 days'},
+        {v:'365', l:'This year'},
+      ].map(o => (
+        <label key={o.v} style={{display:'flex',alignItems:'center',gap:'10px',cursor:'pointer',fontSize:'13px',fontWeight:500,color:filters.date===o.v?'#0D0D0D':'#555'}}>
+          <div
+            onClick={() => setFilters(prev => ({...prev, date:o.v}))}
+            style={{
+              width:'18px',height:'18px',borderRadius:'5px',border:`2px solid ${filters.date===o.v?'#1B6FF0':'#D8D8D8'}`,
+              background:filters.date===o.v?'#1B6FF0':'#fff',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              flexShrink:0,cursor:'pointer',transition:'all .15s'
+            }}
+          >
+            {filters.date===o.v && <FontAwesomeIcon icon={faXmark} style={{color:'#fff',fontSize:'10px'}}/>}
+          </div>
+          <span onClick={() => setFilters(prev => ({...prev, date:o.v}))} style={{flex:1}}>{o.l}</span>
+        </label>
+      ))}
+    </div>
+  </div>
+</div>
         </aside>
 
         {/* MAIN */}
