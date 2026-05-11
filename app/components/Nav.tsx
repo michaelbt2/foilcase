@@ -66,14 +66,11 @@ export default function Nav() {
 </div>FoilCase
           </Link>
           <ul className="nav-links">
-            <li><Link href="/browse" className={path==='/browse'?'active':''}>Browse</Link></li>
-<li><Link href="/collection" className={path==='/collection'?'active':''}>
-  <FontAwesomeIcon icon={faTableCells} style={{marginRight:'5px'}}/>My Collection
-</Link></li>
-<li><Link href="/search" className={path==='/search'?'active':''}>
-  <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'5px'}}/>Search
-</Link></li>
-          </ul>
+  <li><Link href="/browse" className={path==='/browse'?'active':''}>Browse</Link></li>
+  <li><Link href="/search" className={path==='/search'?'active':''}>
+    <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'5px'}}/>Search
+  </Link></li>
+</ul>
           <NavActions />
         </div>
       </nav>
