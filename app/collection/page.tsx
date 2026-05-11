@@ -524,18 +524,11 @@ if (loading) {
         {/* SIDEBAR */}
         <aside className="sidebar">
           <div className="sidebar-card">
-            <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'14px',paddingBottom:'14px',borderBottom:'1px solid #EFEFEF'}}>
-              <div className="vault-avatar">{user?.firstName?.[0] || user?.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() || '?'}</div>
+<div style={{display:'flex',alignItems:'center',gap:'10px'}}>              <div className="vault-avatar">{user?.firstName?.[0] || user?.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() || '?'}</div>
               <div>
                 <div style={{fontSize:'14px',fontWeight:700}}>{user?.firstName ? `${user.firstName}'s Vault` : 'My Vault'}</div>
                 <div style={{fontSize:'11px',color:'#9A9A9A'}}>{user?.emailAddresses?.[0]?.emailAddress}</div>
               </div>
-            </div>
-            <div className="vs-grid">
-              <div className="vs-item"><div className="vs-val">{totalCards}</div><div className="vs-lbl">Cards</div></div>
-              <div className="vs-item"><div className="vs-val" style={{color:'#00A861'}}>${fmtNum(totalValue)}</div><div className="vs-lbl">Value</div></div>
-              <div className="vs-item"><div className="vs-val">{totalSets}</div><div className="vs-lbl">Sets</div></div>
-              <div className="vs-item"><div className="vs-val">{totalGraded}</div><div className="vs-lbl">Graded</div></div>
             </div>
           </div>
 
