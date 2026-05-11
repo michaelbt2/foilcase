@@ -73,8 +73,7 @@ export default function Home() {
         .search-result-item:hover{background:#F7F7F7}
         .section{padding:80px 24px}
         .section-inner{max-width:1160px;margin:0 auto}
-        .section-eyebrow{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#1B6FF0;margin-bottom:12px;display:flex;align-items:center;gap:6px}
-        .section-title{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-1px;line-height:1.12;color:#0D0D0D;margin-bottom:16px}
+.section-eyebrow{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#1B6FF0;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px}        .section-title{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-1px;line-height:1.12;color:#0D0D0D;margin-bottom:16px}
         .section-title em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:#1B6FF0}
         .section-sub{font-size:16px;color:#555;line-height:1.65;max-width:520px;margin-bottom:48px}
         .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
