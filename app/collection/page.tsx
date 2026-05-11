@@ -48,7 +48,7 @@ interface Card {
   id:string; player:string; year:string; brand:string; set_name:string; sport:string;
   cardnum:string; folder_id:string; status:string; grader:string; grade:string;
   qty:number; condition:string; cost:number; value:number; attrs:string[];
-  notes:string; created_at:string; img:string; user_id:string;
+  notes:string; created_at:string; img:string; user_id:string; card_image_url:string;
 }
 interface Folder { id:string; name:string; color:string; emoji:string; user_id:string }
 
@@ -101,9 +101,10 @@ export default function Collection() {
   const [selectedColor, setSelectedColor]   = useState('blue')
   const [newFolderName, setNewFolderName]   = useState('')
   const [form, setForm] = useState({
-    player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
-    folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:''
-  })
+  player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
+  folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'',
+  card_image_url:''
+})
   const [formAttrs, setFormAttrs] = useState<string[]>([])
 
   useEffect(() => {
@@ -160,22 +161,22 @@ export default function Collection() {
   const folderCount = (fid: string) => cards.filter(c => c.folder_id === fid).reduce((s,c)=>s+(c.qty||1),0)
 
   const openAdd = () => {
-    setEditingId(null)
-    setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'' })
-    setFormAttrs([])
-    setSelectedGrader('Raw')
-    setSelectedScore('')
-    setSelectedStatus('have')
-    setShowAdd(true)
-  }
+  setEditingId(null)
+  setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'' })
+  setFormAttrs([])
+  setSelectedGrader('Raw')
+  setSelectedScore('')
+  setSelectedStatus('have')
+  setShowAdd(true)
+}
 
   const openEdit = (id: string) => {
     const c = cards.find(x => x.id === id)
     if (!c) return
     setEditingId(id)
-    setForm({ player:c.player, year:c.year, brand:c.brand, set_name:c.set_name, sport:c.sport, cardnum:c.cardnum, folder_id:c.folder_id||'', qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes||'' })
-    setFormAttrs(c.attrs||[])
-    setSelectedGrader(c.grader||'Raw')
+setForm({ player:c.player, year:c.year, brand:c.brand, set_name:c.set_name, sport:c.sport, cardnum:c.cardnum, folder_id:c.folder_id||'', qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes||'', card_image_url:c.card_image_url||'' })
+setFormAttrs(c.attrs||[])    
+setSelectedGrader(c.grader||'Raw')
     setSelectedScore(c.grade||'')
     setSelectedStatus(c.status||'have')
     setShowAdd(true)
@@ -192,7 +193,8 @@ export default function Collection() {
       qty:parseInt(form.qty)||1, condition:form.condition,
       cost:parseFloat(form.cost)||0, value:parseFloat(form.value)||0,
       attrs:formAttrs, notes:form.notes,
-      img: sportEmoji[form.sport]||'🃏'
+img: sportEmoji[form.sport]||'🃏',
+card_image_url: form.card_image_url || null,
     }
     if (editingId) {
       const { error } = await supabase.from('cards').update(card).eq('id', editingId)
@@ -395,8 +397,7 @@ if (loading) {
         .vbtn.on{background:#fff;color:#0D0D0D;box-shadow:0 1px 3px rgba(0,0,0,.06)}
         .results-lbl{font-size:12px;color:#9A9A9A;white-space:nowrap}
         .bulk-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#EBF2FF;border-radius:100px;font-size:13px;font-weight:600;color:#1B6FF0}
-        .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
-        .cards-list{display:flex;flex-direction:column;gap:10px}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}        .cards-list{display:flex;flex-direction:column;gap:10px}
         .card-tile{background:#fff;border:1px solid #EFEFEF;border-radius:20px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);position:relative;display:flex;flex-direction:column;animation:fadeUp .35s ease both}
         .card-tile:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.10);border-color:#D8D8D8}
         .card-tile.sold-card{opacity:.6}
@@ -409,8 +410,8 @@ if (loading) {
         .status-have{background:#E6F9F0;color:#00A861}
         .status-trade{background:#FEF3E2;color:#E8820C}
         .status-sold{background:#E5E5E5;color:#777}
-        .card-img{height:120px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;flex-shrink:0}
-        .grade-chip{position:absolute;bottom:8px;left:8px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:5px}
+.card-img{aspect-ratio:2.5/3.5;width:100%;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;flex-shrink:0;overflow:hidden;background:#F7F7F7}
+.card-img img{width:100%;height:100%;object-fit:cover}        .grade-chip{position:absolute;bottom:8px;left:8px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:5px}
         .grade-PSA{background:#002FA7;color:#fff}
         .grade-BGS{background:#C41E3A;color:#fff}
         .grade-SGC{background:#1A6B2A;color:#fff}
@@ -677,12 +678,20 @@ if (loading) {
                   <div key={c.id} className={`card-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.03}s`}}>
                     <div className="card-cb" onClick={e=>{e.stopPropagation();toggleSelect(c.id)}}>{isSel?'✓':''}</div>
                     <div className={`card-status ${statusMap[c.status]||'status-have'}`}>{statusLbl[c.status]||'Have'}</div>
-                    <div className="card-img" style={{background:cardBg(c.sport)}}>
-                      {c.img||sportEmoji[c.sport]||'🃏'}
-                      {c.grader && c.grader!=='Raw' && (
-                        <div className={`grade-chip grade-${c.grader}`}>{c.grader} {c.grade}</div>
-                      )}
-                    </div>
+                    <div className="card-img" style={{background:c.card_image_url ? '#000' : cardBg(c.sport)}}>
+  {c.card_image_url ? (
+    <img
+      src={c.card_image_url}
+      alt={c.player}
+      onError={e=>{(e.target as HTMLImageElement).style.display='none'}}
+    />
+  ) : (
+    <span style={{fontSize:'48px'}}>{sportEmoji[c.sport]||'🃏'}</span>
+  )}
+  {c.grader && c.grader!=='Raw' && (
+    <div className={`grade-chip grade-${c.grader}`}>{c.grader} {c.grade}</div>
+  )}
+</div>
                     <div className="card-body">
                       <div className="card-player">{c.player}</div>
                       <div className="card-set">
@@ -726,8 +735,13 @@ if (loading) {
                     <div style={{padding:'0 0 0 12px',cursor:'pointer'}} onClick={()=>toggleSelect(c.id)}>
                       <div className="card-cb" style={{position:'relative',top:0,left:0,opacity:1,width:18,height:18,fontSize:10}}>{isSel?'✓':''}</div>
                     </div>
-                    <div className="list-img" style={{background:cardBg(c.sport)}}>{c.img||sportEmoji[c.sport]||'🃏'}</div>
-                    <div className="list-main">
+<div className="list-img" style={{background:c.card_image_url ? '#000' : cardBg(c.sport),overflow:'hidden'}}>
+  {c.card_image_url ? (
+    <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+  ) : (
+    <span>{sportEmoji[c.sport]||'🃏'}</span>
+  )}
+</div>                    <div className="list-main">
                       <div className="list-player">{c.player}</div>
                       <div className="list-set">
   {[c.year, c.brand !== 'Unknown' ? c.brand : '', c.set_name !== 'Unknown' ? c.set_name : ''].filter(Boolean).join(' ')}
@@ -838,6 +852,28 @@ if (loading) {
                     ))}
                   </div>
                 </div>
+                <div className="form-group full">
+  <label className="form-label">Card Image URL</label>
+  <input
+    className="form-input"
+    placeholder="Paste an image URL from eBay, COMC, or any image host..."
+    value={form.card_image_url}
+    onChange={e=>setForm(p=>({...p,card_image_url:e.target.value}))}
+  />
+  {form.card_image_url && (
+    <div style={{marginTop:'8px',display:'flex',alignItems:'flex-start',gap:'12px'}}>
+      <img
+        src={form.card_image_url}
+        alt="Card preview"
+        style={{width:'60px',height:'84px',objectFit:'cover',borderRadius:'6px',border:'1px solid #EFEFEF'}}
+        onError={e=>{(e.target as HTMLImageElement).style.display='none'}}
+      />
+      <div style={{fontSize:'12px',color:'#9A9A9A',lineHeight:1.5,paddingTop:'4px'}}>
+        Preview above. If the image doesn't appear the URL may not be publicly accessible.
+      </div>
+    </div>
+  )}
+</div>
                 <div className="form-group full"><label className="form-label">Notes</label><textarea className="form-input" style={{minHeight:'64px',resize:'vertical'}} placeholder="Serial number, purchase story, condition notes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/></div>
               </div>
             </div>
