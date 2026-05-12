@@ -399,8 +399,7 @@ export default function Collection() {
         .card-tile.sold-card{opacity:.6}
         .card-tile.sel{border-color:#1B6FF0;box-shadow:0 0 0 2px #C5D8FF}
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-        .card-cb{position:absolute;top:10px;left:10px;z-index:10;width:20px;height:20px;border-radius:4px;border:2px solid rgba(255,255,255,.8);background:rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;transition:all .15s;opacity:0}
-        .card-tile:hover .card-cb,.card-tile.sel .card-cb{opacity:1}
+.card-cb{position:absolute;top:10px;left:10px;z-index:10;width:20px;height:20px;border-radius:4px;border:2px solid #D8D8D8;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;transition:all .15s;opacity:0;box-shadow:0 1px 3px rgba(0,0,0,.15)}        .card-tile:hover .card-cb,.card-tile.sel .card-cb{opacity:1}
         .card-tile.sel .card-cb{background:#1B6FF0;border-color:#1B6FF0}
         .card-status{position:absolute;top:10px;right:10px;z-index:10;font-size:9px;font-weight:700;padding:3px 7px;border-radius:100px;letter-spacing:.04em;text-transform:uppercase}
         .status-have{background:#E6F9F0;color:#00A861}
