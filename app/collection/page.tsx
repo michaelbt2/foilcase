@@ -33,6 +33,7 @@ import {
   faHockeyPuck,
   faFutbol,
   faGamepad,
+  faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 
@@ -262,8 +263,7 @@ card_image_url: form.card_image_url || null,
     : ['10','9','8','7','6','5','4','3','2','1','A']
 
   const statusMap: Record<string,string> = { have:'status-have', trade:'status-trade', sold:'status-sold' }
-  const statusLbl: Record<string,string> = { have:'Have', trade:'Trade', sold:'Sold' }
-
+const statusLbl: Record<string,string> = { have:'Owned', trade:'Trade', sold:'Sold' }
   if (!isLoaded) {
   return (
     <>
@@ -425,12 +425,8 @@ if (loading) {
         .card-player{font-size:13px;font-weight:700;color:#0D0D0D;line-height:1.2;margin-bottom:2px}
         .card-set{font-size:11px;color:#9A9A9A;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .card-attrs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
-        .attr-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px}
-        .tag-rc{background:#E6F9F0;color:#00A861}
-        .tag-auto{background:#FEF3E2;color:#E8820C}
-        .tag-numbered{background:#F2ECFB;color:#7B4FCA}
-        .tag-chrome{background:#EBF2FF;color:#1B6FF0}
-        .tag-other{background:#F7F7F7;color:#555}
+       .attr-tag{font-size:11px;font-weight:600;padding:3px 8px;border-radius:100px;background:#F0F0F0;color:#444;border:1px solid #E0E0E0}
+.tag-unified{background:#F0F0F0;color:#444;border:1px solid #E0E0E0}
         .card-fins{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;padding-top:8px;border-top:1px solid #EFEFEF}
         .fin-lbl{font-size:9px;color:#9A9A9A;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
         .fin-val{font-size:13px;font-weight:800;color:#0D0D0D}
@@ -438,13 +434,13 @@ if (loading) {
         .fin-neg{color:#D93025}
         .card-actions{display:flex;gap:4px;padding:0 13px 11px;opacity:0;transition:opacity .15s}
         .card-tile:hover .card-actions{opacity:1}
-        .act-btn{flex:1;padding:5px 0;border-radius:6px;font-size:10px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;text-align:center}
-        .act-edit{background:#F7F7F7;color:#555}
-        .act-edit:hover{background:#EFEFEF;color:#0D0D0D}
-        .act-sold{background:#FEF3E2;color:#E8820C}
-        .act-sold:hover{background:#E8820C;color:#fff}
-        .act-rm{background:#FDECEA;color:#D93025}
-        .act-rm:hover{background:#D93025;color:#fff}
+.act-btn{flex:1;padding:8px 0;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px}        
+.act-edit{background:#F7F7F7;color:#555}
+.act-edit:hover{background:#EFEFEF;color:#0D0D0D}
+.act-sold{background:#F7F7F7;color:#555}
+.act-sold:hover{background:#EFEFEF;color:#0D0D0D}
+.act-rm{background:#FDECEA;color:#D93025}
+.act-rm:hover{background:#D93025;color:#fff}
         .list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:14px;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);animation:fadeUp .35s ease both}
         .list-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.07);border-color:#D8D8D8}
         .list-tile.sold-card{opacity:.6}
@@ -454,7 +450,7 @@ if (loading) {
         .list-set{font-size:12px;color:#9A9A9A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .list-meta{display:flex;align-items:center;gap:20px;padding:0 16px;flex-shrink:0}
         .lm-lbl{font-size:10px;color:#9A9A9A;font-weight:600;text-transform:uppercase}
-        .lm-val{font-size:14px;font-weight:800;color:#0D0D0D}
+        .lm-val{font-size:14px;font-weight:800}
         .list-acts{display:flex;gap:6px;padding:0 14px;opacity:0;transition:opacity .15s;flex-shrink:0}
         .list-tile:hover .list-acts{opacity:1}
         .empty-state{background:#fff;border:1.5px dashed #D8D8D8;border-radius:20px;padding:64px 24px;text-align:center}
@@ -592,7 +588,7 @@ if (loading) {
               flexShrink:0,cursor:'pointer',transition:'all .15s'
             }}
           >
-            {filters.sport===o.v && <FontAwesomeIcon icon={faXmark} style={{color:'#fff',fontSize:'10px'}}/>}
+            {filters.sport===o.v && <FontAwesomeIcon icon={faCheck} style={{color:'#fff',fontSize:'10px'}}/>}
           </div>
           {o.icon && <FontAwesomeIcon icon={o.icon} style={{color:filters.sport===o.v?'#1B6FF0':'#9A9A9A',fontSize:'13px',width:'14px'}}/>}
           <span onClick={() => setFilters(prev => ({...prev, sport:o.v}))} style={{flex:1}}>{o.l}</span>
@@ -623,7 +619,7 @@ if (loading) {
               flexShrink:0,cursor:'pointer',transition:'all .15s'
             }}
           >
-            {filters.grading===o.v && <FontAwesomeIcon icon={faXmark} style={{color:'#fff',fontSize:'10px'}}/>}
+            {filters.grading===o.v && <FontAwesomeIcon icon={faCheck} style={{color:'#fff',fontSize:'10px'}}/>}
           </div>
           <span onClick={() => setFilters(prev => ({...prev, grading:o.v}))} style={{flex:1}}>{o.l}</span>
           <span style={{fontSize:'11px',color:'#9A9A9A',fontWeight:400}}>
@@ -654,7 +650,7 @@ if (loading) {
               flexShrink:0,cursor:'pointer',transition:'all .15s'
             }}
           >
-            {filters.status===o.v && <FontAwesomeIcon icon={faXmark} style={{color:'#fff',fontSize:'10px'}}/>}
+            {filters.status===o.v && <FontAwesomeIcon icon={faCheck} style={{color:'#fff',fontSize:'10px'}}/>}
           </div>
           <span onClick={() => setFilters(prev => ({...prev, status:o.v}))} style={{flex:1}}>{o.l}</span>
           <span style={{fontSize:'11px',color:'#9A9A9A',fontWeight:400}}>
@@ -686,7 +682,7 @@ if (loading) {
               flexShrink:0,cursor:'pointer',transition:'all .15s'
             }}
           >
-            {filters.date===o.v && <FontAwesomeIcon icon={faXmark} style={{color:'#fff',fontSize:'10px'}}/>}
+            {filters.date===o.v && <FontAwesomeIcon icon={faCheck} style={{color:'#fff',fontSize:'10px'}}/>}
           </div>
           <span onClick={() => setFilters(prev => ({...prev, date:o.v}))} style={{flex:1}}>{o.l}</span>
         </label>
@@ -815,9 +811,9 @@ if (loading) {
   {c.cardnum ? ` · ${c.cardnum}` : ''}
 </div>
                       <div className="card-attrs">
-                        {(c.attrs||[]).map(a => (
-                          <span key={a} className={`attr-tag tag-${['rc','auto','numbered','chrome'].includes(a)?a:'other'}`}>{attrLabel(a)}</span>
-                        ))}
+                       {(c.attrs||[]).map(a => (
+  <span key={a} className="attr-tag tag-unified">{attrLabel(a)}</span>
+))}
                       </div>
                       <div className="card-fins">
                         <div><div className="fin-lbl">Cost</div><div className="fin-val">{c.cost?`$${c.cost}`:'-'}</div></div>
@@ -827,10 +823,10 @@ if (loading) {
                     </div>
                     <div className="card-actions">
                       <button className="act-btn act-edit" onClick={e=>{e.stopPropagation();openEdit(c.id)}}>
-  <FontAwesomeIcon icon={faPen} style={{marginRight:'3px'}}/>Edit
+  <FontAwesomeIcon icon={faPen}/>Edit
 </button>
 <button className="act-btn act-sold" onClick={e=>{e.stopPropagation();markSold(c.id)}}>
-  <FontAwesomeIcon icon={isSold?faRotateLeft:faTag} style={{marginRight:'3px'}}/>{isSold?'Unsell':'Sell'}
+  <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
 </button>
 <button className="act-btn act-rm" onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}>
   <FontAwesomeIcon icon={faTrash}/>
@@ -878,8 +874,8 @@ if (loading) {
                       <button className="btn btn-sm btn-outline" onClick={()=>openEdit(c.id)}>
   <FontAwesomeIcon icon={faPen} style={{marginRight:'4px'}}/>Edit
 </button>
-<button className="btn btn-sm" style={{background:'#FEF3E2',color:'#E8820C',border:'none',display:'inline-flex',alignItems:'center',gap:'4px'}} onClick={()=>markSold(c.id)}>
-  <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Unsell':'Sell'}
+<button className="btn btn-sm" style={{background:'#F7F7F7',color:'#555',border:'1px solid #EFEFEF',display:'inline-flex',alignItems:'center',gap:'4px'}} onClick={()=>markSold(c.id)}>
+  <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
 </button>
 <button className="btn btn-sm btn-danger" onClick={()=>{setRemovingId(c.id);setShowConfirm(true)}}>
   <FontAwesomeIcon icon={faTrash}/>
