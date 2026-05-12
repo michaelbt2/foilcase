@@ -89,6 +89,7 @@ export default function Collection() {
   const [selectedStatus, setSelectedStatus] = useState('have')
   const [newFolderName, setNewFolderName]   = useState('')
   const [expandedFilters, setExpandedFilters] = useState<string[]>(['sport','grading','status','date'])
+  const [selectedCard, setSelectedCard] = useState<Card|null>(null)
   const [form, setForm] = useState({
     player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
     folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:''
@@ -702,7 +703,7 @@ export default function Collection() {
                 const isSold = c.status==='sold'
                 const isSel = selected.has(c.id)
                 return (
-                  <div key={c.id} className={`card-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.03}s`}}>
+                  <div key={c.id} className={`card-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.03}s`}} onClick={() => setSelectedCard(c)}>
                     <div className="card-cb" onClick={e=>{e.stopPropagation();toggleSelect(c.id)}}>{isSel?'✓':''}</div>
                     <div className={`card-status ${statusMap[c.status]||'status-have'}`}>{statusLbl[c.status]||'Owned'}</div>
                     <div className="card-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
@@ -743,7 +744,7 @@ export default function Collection() {
                 const isSold = c.status==='sold'
                 const isSel = selected.has(c.id)
                 return (
-                  <div key={c.id} className={`list-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.025}s`}}>
+                  <div key={c.id} className={`list-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.025}s`}} onClick={() => setSelectedCard(c)}>
                     <div style={{padding:'0 0 0 12px',cursor:'pointer'}} onClick={()=>toggleSelect(c.id)}>
                       <div className="card-cb" style={{position:'relative',top:0,left:0,opacity:1,width:18,height:18,fontSize:10}}>{isSel?'✓':''}</div>
                     </div>
@@ -771,11 +772,11 @@ export default function Collection() {
                       <div><div className="lm-lbl">Gain</div><div className={`lm-val ${gain>=0?'fin-pos':'fin-neg'}`}>{c.cost?(gain>=0?'+':'')+`$${Math.abs(gain)}`:'-'}</div></div>
                     </div>
                     <div className="list-acts">
-                      <button className="btn btn-sm btn-outline" onClick={()=>openEdit(c.id)}><FontAwesomeIcon icon={faPen}/>Edit</button>
-                      <button className="btn btn-sm" style={{background:'#F7F7F7',color:'#555',border:'1px solid #EFEFEF',display:'inline-flex',alignItems:'center',gap:'4px'}} onClick={()=>markSold(c.id)}>
-                        <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
+                      <button className="btn btn-sm btn-outline" onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
+                      <button className="btn btn-sm" style={{background:'#F7F7F7',color:'#555',border:'1px solid #EFEFEF',display:'inline-flex',alignItems:'center',gap:'4px'}} onClick={e=>{e.stopPropagation();markSold(c.id)}}>
+                      <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
                       </button>
-                      <button className="btn btn-sm btn-danger" onClick={()=>{setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
+                      <button className="btn btn-sm btn-danger" onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
                     </div>
                   </div>
                 )
@@ -937,6 +938,96 @@ export default function Collection() {
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowConfirm(false)}>Cancel</button>
               <button className="btn btn-danger" onClick={confirmRemove}>Remove Card</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CARD DETAIL MODAL */}
+      {selectedCard && (
+        <div className="overlay" onClick={() => setSelectedCard(null)}>
+          <div className="modal modal-lg" style={{maxWidth:'700px'}} onClick={e => e.stopPropagation()}>
+            <div className="modal-hdr">
+              <div className="modal-hdr-title">{selectedCard.player}</div>
+              <button className="modal-close" onClick={() => setSelectedCard(null)}>
+                <FontAwesomeIcon icon={faXmark}/>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div style={{display:'grid',gridTemplateColumns:'200px 1fr',gap:'24px'}}>
+                <div style={{aspectRatio:'2.5/3.5',borderRadius:'8px',overflow:'hidden',background:selectedCard.card_image_url?'#000':cardBg(selectedCard.sport),display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  {selectedCard.card_image_url
+                    ? <img src={selectedCard.card_image_url} alt={selectedCard.player} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                    : <span style={{fontSize:'64px'}}>{sportEmoji[selectedCard.sport]||'🃏'}</span>
+                  }
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+                  <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                    <span className={`card-status ${statusMap[selectedCard.status]||'status-have'}`} style={{position:'static',fontSize:'11px'}}>
+                      {statusLbl[selectedCard.status]||'Owned'}
+                    </span>
+                    {selectedCard.grader && selectedCard.grader !== 'Raw' && (
+                      <span className={`grade-chip grade-${selectedCard.grader}`} style={{position:'static',fontSize:'11px'}}>
+                        {selectedCard.grader} {selectedCard.grade}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <div style={{fontSize:'22px',fontWeight:800,letterSpacing:'-.5px',color:'#0D0D0D',marginBottom:'4px'}}>{selectedCard.player}</div>
+                    <div style={{fontSize:'14px',color:'#9A9A9A'}}>
+                      {[selectedCard.year, selectedCard.brand, selectedCard.set_name].filter(Boolean).join(' ')}
+                      {selectedCard.cardnum ? ` · ${selectedCard.cardnum}` : ''}
+                    </div>
+                  </div>
+                  {(selectedCard.attrs||[]).length > 0 && (
+                    <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+                      {(selectedCard.attrs||[]).map(a => <span key={a} className="attr-tag">{attrLabel(a)}</span>)}
+                    </div>
+                  )}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px'}}>
+                    {[
+                      {lbl:'Cost Paid', val:selectedCard.cost?`$${selectedCard.cost}`:'-', color:'#0D0D0D'},
+                      {lbl:'Current Value', val:selectedCard.value?`$${selectedCard.value}`:'-', color:'#1B6FF0'},
+                      {lbl:'Gain/Loss', val:selectedCard.cost?(((selectedCard.value||0)-(selectedCard.cost||0))>=0?'+':'')+`$${Math.abs((selectedCard.value||0)-(selectedCard.cost||0))}`:'-', color:(selectedCard.value||0)>=(selectedCard.cost||0)?'#00A861':'#D93025'},
+                    ].map(s => (
+                      <div key={s.lbl} style={{background:'#F7F7F7',borderRadius:'8px',padding:'12px',textAlign:'center'}}>
+                        <div style={{fontSize:'10px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'4px'}}>{s.lbl}</div>
+                        <div style={{fontSize:'18px',fontWeight:800,color:s.color}}>{s.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                    {[
+                      {lbl:'Sport', val:selectedCard.sport},
+                      {lbl:'Condition', val:selectedCard.condition||'-'},
+                      {lbl:'Quantity', val:String(selectedCard.qty||1)},
+                      {lbl:'Grading', val:selectedCard.grader&&selectedCard.grader!=='Raw'?`${selectedCard.grader} ${selectedCard.grade}`:'Raw (Ungraded)'},
+                      {lbl:'Added', val:new Date(selectedCard.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},
+                    ].map(row => (
+                      <div key={row.lbl} style={{display:'flex',justifyContent:'space-between',fontSize:'13px',paddingBottom:'8px',borderBottom:'1px solid #EFEFEF'}}>
+                        <span style={{color:'#9A9A9A',fontWeight:500}}>{row.lbl}</span>
+                        <span style={{fontWeight:600,color:'#0D0D0D'}}>{row.val}</span>
+                      </div>
+                    ))}
+                    {selectedCard.notes && (
+                      <div style={{fontSize:'13px',paddingBottom:'8px',borderBottom:'1px solid #EFEFEF'}}>
+                        <div style={{color:'#9A9A9A',fontWeight:500,marginBottom:'4px'}}>Notes</div>
+                        <div style={{fontWeight:500,color:'#0D0D0D',lineHeight:1.5}}>{selectedCard.notes}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setSelectedCard(null)}>Close</button>
+              <button className="btn btn-outline" onClick={() => { setSelectedCard(null); markSold(selectedCard.id) }}>
+                <FontAwesomeIcon icon={selectedCard.status==='sold'?faRotateLeft:faTag}/>
+                {selectedCard.status==='sold'?'Mark Owned':'Mark Sold'}
+              </button>
+              <button className="btn btn-primary" onClick={() => { setSelectedCard(null); openEdit(selectedCard.id) }}>
+                <FontAwesomeIcon icon={faPen}/>Edit Card
+              </button>
             </div>
           </div>
         </div>
