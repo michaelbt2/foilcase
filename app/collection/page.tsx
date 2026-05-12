@@ -9,7 +9,7 @@ import {
   faLayerGroup, faBoxOpen, faMedal, faChartLine, faGrip, faBars, faXmark,
   faRotateLeft, faShield, faRightToBracket, faUserPlus, faFootball, faBaseball,
   faBasketball, faHockeyPuck, faFutbol, faGamepad, faCheck, faFlagCheckered,
-  faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp,
+  faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft,
 } from '@fortawesome/free-solid-svg-icons'
 
 const sportEmoji: Record<string,string> = {
@@ -796,83 +796,145 @@ export default function Collection() {
             </div>
             <div className="modal-body">
               <div className="form-grid">
-                <div className="form-group"><label className="form-label">Player / Subject *</label><input className="form-input" placeholder="e.g. Patrick Mahomes" value={form.player} onChange={e=>setForm(p=>({...p,player:e.target.value}))}/></div>
-                <div className="form-group"><label className="form-label">Year</label><input className="form-input" type="number" placeholder="2024" value={form.year} onChange={e=>setForm(p=>({...p,year:e.target.value}))}/></div>
-                <div className="form-group"><label className="form-label">Brand</label>
-                  <select className="form-select" value={form.brand} onChange={e=>setForm(p=>({...p,brand:e.target.value}))}>
-                    <option value="">Select...</option>
-                    {['Panini','Topps','Bowman','Upper Deck','Leaf','SAGE','Donruss','Fleer','Score','Other'].map(b=><option key={b}>{b}</option>)}
-                  </select>
-                </div>
-                <div className="form-group"><label className="form-label">Set Name *</label><input className="form-input" placeholder="e.g. Prizm Football" value={form.set_name} onChange={e=>setForm(p=>({...p,set_name:e.target.value}))}/></div>
-                <div className="form-group"><label className="form-label">Sport / Category *</label>
-                  <select className="form-select" value={form.sport} onChange={e=>setForm(p=>({...p,sport:e.target.value}))}>
-                    <option value="">Select...</option>
-                    {['Football','Baseball','Basketball','Hockey','Soccer','Gaming / TCG','Wrestling','Racing','Tennis','UFC','Golf','Boxing','Non-Sport','Other'].map(s=><option key={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div className="form-group"><label className="form-label">Card Number</label><input className="form-input" placeholder="e.g. #200 or /99" value={form.cardnum} onChange={e=>setForm(p=>({...p,cardnum:e.target.value}))}/></div>
-                <div className="form-group"><label className="form-label">Folder</label>
-                  <select className="form-select" value={form.folder_id} onChange={e=>setForm(p=>({...p,folder_id:e.target.value}))}>
-                    <option value="">No folder</option>
-                    {folders.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-group"><label className="form-label">Quantity</label><input className="form-input" type="number" min="1" value={form.qty} onChange={e=>setForm(p=>({...p,qty:e.target.value}))}/></div>
-                <div className="form-group full">
-                  <label className="form-label">Status</label>
-                  <div className="status-sel">
-                    {[{v:'have',l:'✅ In My Vault'},{v:'trade',l:'🔄 For Trade'},{v:'sold',l:'💰 Sold'}].map(s=>(
-                      <button key={s.v} className={`status-opt${selectedStatus===s.v?' s-'+s.v:''}`} onClick={()=>setSelectedStatus(s.v)}>{s.l}</button>
-                    ))}
-                  </div>
-                </div>
-                <div className="form-group full">
-                  <label className="form-label">Grading</label>
-                  <div className="grader-row">
-                    {['Raw','PSA','BGS','SGC'].map(g=>(
-                      <button key={g} className={`grader-btn${selectedGrader===g?' g-'+g:''}`} onClick={()=>{setSelectedGrader(g);setSelectedScore('')}}>{g==='Raw'?'Ungraded':g}</button>
-                    ))}
-                  </div>
-                </div>
-                {selectedGrader !== 'Raw' && (
-                  <div className="form-group full">
-                    <label className="form-label">Grade Score</label>
-                    <div className="score-row">
-                      {gradeScores(selectedGrader).map(s=>(
-                        <button key={s} className={`score-btn${selectedScore===s?' sel':''}`} onClick={()=>setSelectedScore(s)}>{s}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="form-group"><label className="form-label">Condition</label>
-                  <select className="form-select" value={form.condition} onChange={e=>setForm(p=>({...p,condition:e.target.value}))}>
-                    <option value="">Select...</option>
-                    {['Mint (M)','Near Mint-Mint (NM-MT)','Near Mint (NM)','Excellent-Mint (EX-MT)','Excellent (EX)','Very Good (VG)','Good (G)'].map(c=><option key={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="form-group"><label className="form-label">Cost Paid ($)</label><input className="form-input" type="number" placeholder="0.00" value={form.cost} onChange={e=>setForm(p=>({...p,cost:e.target.value}))}/></div>
-                <div className="form-group"><label className="form-label">Current Value ($)</label><input className="form-input" type="number" placeholder="0.00" value={form.value} onChange={e=>setForm(p=>({...p,value:e.target.value}))}/></div>
-                <div className="form-group full">
-                  <label className="form-label">Card Attributes</label>
-                  <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                    {[{v:'rc',l:'Rookie (RC)'},{v:'auto',l:'Autograph'},{v:'patch',l:'Patch/Relic'},{v:'numbered',l:'Numbered'},{v:'chrome',l:'Chrome'},{v:'refractor',l:'Refractor'},{v:'shortprint',l:'Short Print'},{v:'1of1',l:'1 of 1'}].map(a=>(
-                      <button key={a.v} className={`fchip${formAttrs.includes(a.v)?' on':''}`} onClick={()=>toggleAttr(a.v)}>{a.l}</button>
-                    ))}
-                  </div>
-                </div>
-                <div className="form-group full">
-                  <label className="form-label">Card Image URL</label>
-                  <input className="form-input" placeholder="Paste an image URL from eBay, COMC, or any image host..." value={form.card_image_url} onChange={e=>setForm(p=>({...p,card_image_url:e.target.value}))}/>
-                  {form.card_image_url && (
-                    <div style={{marginTop:'8px',display:'flex',alignItems:'flex-start',gap:'12px'}}>
-                      <img src={form.card_image_url} alt="Card preview" style={{width:'60px',height:'84px',objectFit:'cover',borderRadius:'6px',border:'1px solid #EFEFEF'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-                      <div style={{fontSize:'12px',color:'#9A9A9A',lineHeight:1.5,paddingTop:'4px'}}>Preview above. If the image doesn't appear the URL may not be publicly accessible.</div>
-                    </div>
-                  )}
-                </div>
-                <div className="form-group full"><label className="form-label">Notes</label><textarea className="form-input" style={{minHeight:'64px',resize:'vertical'}} placeholder="Serial number, purchase story, condition notes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/></div>
-              </div>
+  {/* Required fields first */}
+  <div className="form-group">
+    <label className="form-label">Player / Subject <span style={{color:'#D93025'}}>*</span></label>
+    <input className="form-input" placeholder="e.g. Patrick Mahomes" value={form.player} onChange={e=>setForm(p=>({...p,player:e.target.value}))}/>
+  </div>
+  <div className="form-group">
+    <label className="form-label">Set Name <span style={{color:'#D93025'}}>*</span></label>
+    <input className="form-input" placeholder="e.g. Prizm Football" value={form.set_name} onChange={e=>setForm(p=>({...p,set_name:e.target.value}))}/>
+  </div>
+  <div className="form-group">
+    <label className="form-label">Sport / Category <span style={{color:'#D93025'}}>*</span></label>
+    <select className="form-select" value={form.sport} onChange={e=>setForm(p=>({...p,sport:e.target.value}))}>
+      <option value="">Select...</option>
+      {['Football','Baseball','Basketball','Hockey','Soccer','Gaming / TCG','Wrestling','Racing','Tennis','UFC','Golf','Boxing','Non-Sport','Other'].map(s=><option key={s}>{s}</option>)}
+    </select>
+  </div>
+  <div className="form-group">
+    <label className="form-label">Year</label>
+    <input className="form-input" type="number" placeholder="2024" value={form.year} onChange={e=>setForm(p=>({...p,year:e.target.value}))}/>
+  </div>
+
+  {/* Optional fields */}
+  <div className="form-group">
+    <label className="form-label">Brand</label>
+    <select className="form-select" value={form.brand} onChange={e=>setForm(p=>({...p,brand:e.target.value}))}>
+      <option value="">Select...</option>
+      {['Panini','Topps','Bowman','Upper Deck','Leaf','SAGE','Donruss','Fleer','Score','Other'].map(b=><option key={b}>{b}</option>)}
+    </select>
+  </div>
+  <div className="form-group">
+    <label className="form-label">Card Number</label>
+    <input className="form-input" placeholder="e.g. #200 or /99" value={form.cardnum} onChange={e=>setForm(p=>({...p,cardnum:e.target.value}))}/>
+  </div>
+  <div className="form-group">
+    <label className="form-label">Folder</label>
+    <select className="form-select" value={form.folder_id} onChange={e=>setForm(p=>({...p,folder_id:e.target.value}))}>
+      <option value="">No folder</option>
+      {folders.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
+    </select>
+  </div>
+  <div className="form-group">
+    <label className="form-label">Quantity</label>
+    <input className="form-input" type="number" min="1" value={form.qty} onChange={e=>setForm(p=>({...p,qty:e.target.value}))}/>
+  </div>
+
+  {/* Status */}
+  <div className="form-group full">
+    <label className="form-label">Status</label>
+    <div className="status-sel">
+      {[
+        {v:'have', l:'In My Vault', icon:faLayerGroup, color:'#00A861', bg:'#E6F9F0', border:'#A8DFC4'},
+        {v:'trade', l:'For Trade', icon:faArrowRightArrowLeft, color:'#E8820C', bg:'#FEF3E2', border:'#F5C880'},
+        {v:'sold', l:'Sold', icon:faTag, color:'#D93025', bg:'#FDECEA', border:'#FFBBB7'},
+      ].map(s=>(
+        <button
+          key={s.v}
+          onClick={()=>setSelectedStatus(s.v)}
+          style={{
+            padding:'10px',
+            borderRadius:'6px',
+            border:`1.5px solid ${selectedStatus===s.v?s.border:'#EFEFEF'}`,
+            background:selectedStatus===s.v?s.bg:'#fff',
+            color:selectedStatus===s.v?s.color:'#555',
+            fontFamily:'Plus Jakarta Sans,sans-serif',
+            fontSize:'12px',
+            fontWeight:600,
+            cursor:'pointer',
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+            gap:'6px',
+            transition:'all .15s',
+          }}
+        >
+          <FontAwesomeIcon icon={s.icon} style={{fontSize:'12px'}}/>
+          {s.l}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  {/* Grading */}
+  <div className="form-group full">
+    <label className="form-label">Grading</label>
+    <div className="grader-row">
+      {['Raw','PSA','BGS','SGC'].map(g=>(
+        <button key={g} className={`grader-btn${selectedGrader===g?' g-'+g:''}`} onClick={()=>{setSelectedGrader(g);setSelectedScore('')}}>{g==='Raw'?'Ungraded':g}</button>
+      ))}
+    </div>
+  </div>
+  {selectedGrader !== 'Raw' && (
+    <div className="form-group full">
+      <label className="form-label">Grade Score</label>
+      <div className="score-row">
+        {gradeScores(selectedGrader).map(s=>(
+          <button key={s} className={`score-btn${selectedScore===s?' sel':''}`} onClick={()=>setSelectedScore(s)}>{s}</button>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <div className="form-group">
+    <label className="form-label">Condition</label>
+    <select className="form-select" value={form.condition} onChange={e=>setForm(p=>({...p,condition:e.target.value}))}>
+      <option value="">Select...</option>
+      {['Mint (M)','Near Mint-Mint (NM-MT)','Near Mint (NM)','Excellent-Mint (EX-MT)','Excellent (EX)','Very Good (VG)','Good (G)'].map(c=><option key={c}>{c}</option>)}
+    </select>
+  </div>
+  <div className="form-group">
+    <label className="form-label">Cost Paid ($)</label>
+    <input className="form-input" type="number" placeholder="0.00" value={form.cost} onChange={e=>setForm(p=>({...p,cost:e.target.value}))}/>
+  </div>
+  <div className="form-group">
+    <label className="form-label">Current Value ($)</label>
+    <input className="form-input" type="number" placeholder="0.00" value={form.value} onChange={e=>setForm(p=>({...p,value:e.target.value}))}/>
+  </div>
+  <div className="form-group full">
+    <label className="form-label">Card Attributes</label>
+    <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+      {[{v:'rc',l:'Rookie (RC)'},{v:'auto',l:'Autograph'},{v:'patch',l:'Patch/Relic'},{v:'numbered',l:'Numbered'},{v:'chrome',l:'Chrome'},{v:'refractor',l:'Refractor'},{v:'shortprint',l:'Short Print'},{v:'1of1',l:'1 of 1'}].map(a=>(
+        <button key={a.v} className={`fchip${formAttrs.includes(a.v)?' on':''}`} onClick={()=>toggleAttr(a.v)}>{a.l}</button>
+      ))}
+    </div>
+  </div>
+  <div className="form-group full">
+    <label className="form-label">Card Image URL</label>
+    <input className="form-input" placeholder="Paste an image URL from eBay, COMC, or any image host..." value={form.card_image_url} onChange={e=>setForm(p=>({...p,card_image_url:e.target.value}))}/>
+    {form.card_image_url && (
+      <div style={{marginTop:'8px',display:'flex',alignItems:'flex-start',gap:'12px'}}>
+        <img src={form.card_image_url} alt="Card preview" style={{width:'60px',height:'84px',objectFit:'cover',borderRadius:'6px',border:'1px solid #EFEFEF'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+        <div style={{fontSize:'12px',color:'#9A9A9A',lineHeight:1.5,paddingTop:'4px'}}>Preview above. If the image doesn't appear the URL may not be publicly accessible.</div>
+      </div>
+    )}
+  </div>
+  <div className="form-group full">
+    <label className="form-label">Notes</label>
+    <textarea className="form-input" style={{minHeight:'64px',resize:'vertical'}} placeholder="Serial number, purchase story, condition notes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/>
+  </div>
+</div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowAdd(false)}>Cancel</button>
