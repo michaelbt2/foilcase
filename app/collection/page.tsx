@@ -353,8 +353,8 @@ export default function Collection() {
       <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F7F7;color:#0D0D0D;-webkit-font-smoothing:antialiased}
-        .page-header{background:#fff;border-bottom:1px solid #EFEFEF;padding:14px 24px}
-        .page-header-inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
+        .page-header{background:#fff;border-bottom:1px solid #EFEFEF;padding:14px 0}
+        .page-header-inner{max-width:1240px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
         .breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:#9A9A9A}
         .breadcrumb a{color:#9A9A9A;text-decoration:none}
         .breadcrumb a:hover{color:#1B6FF0}
