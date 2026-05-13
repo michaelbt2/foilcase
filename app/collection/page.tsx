@@ -423,8 +423,9 @@ export default function Collection() {
         .fin-neg{color:#D93025}
         .card-actions{display:flex;gap:4px;padding:0 13px 11px;opacity:0;transition:opacity .15s}
         .card-tile:hover .card-actions{opacity:1}
-        .act-btn{flex:1;padding:8px 0;border-radius:6px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px}
-        .act-edit{background:#F7F7F7;color:#555}
+.act-btn{flex:1;padding:8px 4px;border-radius:6px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;text-align:center;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
+.act-rm{background:#FDECEA;color:#D93025;flex:0 0 36px}
+.act-rm:hover{background:#D93025;color:#fff}        .act-edit{background:#F7F7F7;color:#555}
         .act-edit:hover{background:#EFEFEF;color:#0D0D0D}
         .act-sold{background:#F7F7F7;color:#555}
         .act-sold:hover{background:#EFEFEF;color:#0D0D0D}
@@ -500,12 +501,12 @@ export default function Collection() {
             <strong style={{color:'#0D0D0D'}}>My Vault</strong>
           </div>
           <div style={{display:'flex',gap:'8px'}}>
-            <button className="btn btn-outline btn-sm" onClick={() => setShowFolder(true)}>
-              <FontAwesomeIcon icon={faFolder}/>Folders
-            </button>
-            <button className="btn btn-primary" onClick={openAdd}>
-              <FontAwesomeIcon icon={faPlus}/>Add Card
-            </button>
+            <button className="btn btn-sm" style={{background:'#F7F7F7',color:'#0D0D0D',border:'1.5px solid #D8D8D8',display:'inline-flex',alignItems:'center',gap:'6px'}} onClick={() => setShowFolder(true)}>
+  <FontAwesomeIcon icon={faPlus} style={{color:'#9A9A9A'}}/>New Folder
+</button>
+<button className="btn btn-primary" onClick={openAdd}>
+  <FontAwesomeIcon icon={faPlus}/>Add Card
+</button>
           </div>
         </div>
       </div>
@@ -668,7 +669,6 @@ export default function Collection() {
               <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}><FontAwesomeIcon icon={faGrip}/></button>
               <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}><FontAwesomeIcon icon={faBars}/></button>
             </div>
-            <div className="results-lbl">{filtered.length} card{filtered.length!==1?'s':''}</div>
             {selected.size > 0 && (
               <div className="bulk-bar">
                 {selected.size} selected
@@ -764,19 +764,18 @@ export default function Collection() {
                       </div>
                     </div>
                     <div className="list-meta">
-                      <div><div className="lm-lbl">Grade</div><div className="lm-val" style={{fontSize:'12px'}}>{c.grader&&c.grader!=='Raw'?`${c.grader} ${c.grade}`:'Raw'}</div></div>
-                      <div><div className="lm-lbl">Qty</div><div className="lm-val">{c.qty||1}</div></div>
-                      <div><div className="lm-lbl">Cost</div><div className="lm-val">{c.cost?`$${c.cost}`:'-'}</div></div>
-                      <div><div className="lm-lbl">Value</div><div className="lm-val" style={{color:'#1B6FF0'}}>{c.value?`$${c.value}`:'-'}</div></div>
-                      <div><div className="lm-lbl">Gain</div><div className={`lm-val ${gain>=0?'fin-pos':'fin-neg'}`}>{c.cost?(gain>=0?'+':'')+`$${Math.abs(gain)}`:'-'}</div></div>
-                    </div>
+  <div><div className="lm-lbl">Grade</div><div className="lm-val" style={{fontSize:'12px'}}>{c.grader&&c.grader!=='Raw'?`${c.grader} ${c.grade}`:'Raw'}</div></div>
+  <div><div className="lm-lbl">Cost</div><div className="lm-val">{c.cost?`$${c.cost}`:'-'}</div></div>
+  <div><div className="lm-lbl">Value</div><div className="lm-val" style={{color:'#1B6FF0'}}>{c.value?`$${c.value}`:'-'}</div></div>
+  <div><div className="lm-lbl">Gain</div><div className={`lm-val ${gain>=0?'fin-pos':'fin-neg'}`}>{c.cost?(gain>=0?'+':'')+`$${Math.abs(gain)}`:'-'}</div></div>
+</div>
                     <div className="list-acts">
-                      <button className="btn btn-sm btn-outline" onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
-                      <button className="btn btn-sm" style={{background:'#F7F7F7',color:'#555',border:'1px solid #EFEFEF',display:'inline-flex',alignItems:'center',gap:'4px'}} onClick={e=>{e.stopPropagation();markSold(c.id)}}>
-                      <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
-                      </button>
-                      <button className="btn btn-sm btn-danger" onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
-                    </div>
+  <button className="act-btn act-edit" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
+  <button className="act-btn act-sold" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();markSold(c.id)}}>
+    <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
+  </button>
+  <button className="act-btn act-rm" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
+</div>
                   </div>
                 )
               })}
@@ -1059,12 +1058,16 @@ export default function Collection() {
                   </div>
                   <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                     {[
-                      {lbl:'Sport', val:selectedCard.sport},
-                      {lbl:'Condition', val:selectedCard.condition||'-'},
-                      {lbl:'Quantity', val:String(selectedCard.qty||1)},
-                      {lbl:'Grading', val:selectedCard.grader&&selectedCard.grader!=='Raw'?`${selectedCard.grader} ${selectedCard.grade}`:'Raw (Ungraded)'},
-                      {lbl:'Added', val:new Date(selectedCard.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},
-                    ].map(row => (
+  {lbl:'Sport', val:selectedCard.sport},
+  {lbl:'Year', val:selectedCard.year||'-'},
+  {lbl:'Brand', val:selectedCard.brand||'-'},
+  {lbl:'Set Name', val:selectedCard.set_name||'-'},
+  {lbl:'Card Number', val:selectedCard.cardnum||'-'},
+  {lbl:'Condition', val:selectedCard.condition||'-'},
+  {lbl:'Quantity', val:String(selectedCard.qty||1)},
+  {lbl:'Grading', val:selectedCard.grader&&selectedCard.grader!=='Raw'?`${selectedCard.grader} ${selectedCard.grade}`:'Raw (Ungraded)'},
+  {lbl:'Added', val:new Date(selectedCard.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},
+].map(row => (
                       <div key={row.lbl} style={{display:'flex',justifyContent:'space-between',fontSize:'13px',paddingBottom:'8px',borderBottom:'1px solid #EFEFEF'}}>
                         <span style={{color:'#9A9A9A',fontWeight:500}}>{row.lbl}</span>
                         <span style={{fontWeight:600,color:'#0D0D0D'}}>{row.val}</span>
