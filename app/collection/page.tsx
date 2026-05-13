@@ -99,9 +99,9 @@ export default function Collection() {
   const toggleFilterSection = (key: string) =>
     setExpandedFilters(prev => prev.includes(key) ? prev.filter(k=>k!==key) : [...prev,key])
 
-  useEffect(() => {
-    if (isLoaded && user) loadData()
-  }, [isLoaded, user])
+ useEffect(() => {
+  if (isLoaded && user) loadData()
+}, [isLoaded, user?.id])
 
   const loadData = async () => {
     if (!user) return
@@ -359,7 +359,7 @@ export default function Collection() {
         .breadcrumb a{color:#9A9A9A;text-decoration:none}
         .breadcrumb a:hover{color:#1B6FF0}
         .app-layout{max-width:1240px;margin:0 auto;padding:24px;display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start}
-        .sidebar{display:flex;flex-direction:column;gap:12px;position:sticky;top:78px}
+        .sidebar{display:flex;flex-direction:column;gap:12px;position:sticky;top:78px;max-height:calc(100vh - 98px);overflow-y:auto}
         .sidebar-card{background:#fff;border:1px solid #EFEFEF;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
         .sidebar-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9A9A9A;margin-bottom:10px}
         .vault-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1B6FF0,#7EB6FF);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0}
@@ -744,9 +744,9 @@ export default function Collection() {
                 const isSel = selected.has(c.id)
                 return (
                   <div key={c.id} className={`list-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.025}s`}} onClick={() => setSelectedCard(c)}>
-                    <div style={{padding:'0 0 0 12px',cursor:'pointer'}} onClick={()=>toggleSelect(c.id)}>
-                      <div className="card-cb" style={{position:'relative',top:0,left:0,opacity:1,width:18,height:18,fontSize:10}}>{isSel?'✓':''}</div>
-                    </div>
+                    <div style={{padding:'0 0 0 12px',cursor:'pointer'}} onClick={e=>{e.stopPropagation();toggleSelect(c.id)}}>
+  <div className="card-cb" style={{position:'relative',top:0,left:0,opacity:1,width:18,height:18,fontSize:10,background:isSel?'#1B6FF0':'#fff',borderColor:isSel?'#1B6FF0':'#D8D8D8'}}>{isSel?'✓':''}</div>
+</div>
                     <div className="list-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
                       {c.card_image_url
                         ? <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
