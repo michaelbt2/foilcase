@@ -8,7 +8,7 @@ import {
   faMagnifyingGlass, faPlus, faPen, faTrash, faTag, faFolder, faFolderOpen,
   faLayerGroup, faBoxOpen, faMedal, faChartLine, faGrip, faBars, faXmark,
   faRotateLeft, faShield, faRightToBracket, faUserPlus, faFootball, faBaseball,
-  faBasketball, faHockeyPuck, faFutbol, faGamepad, faCheck, faFlagCheckered,
+  faBasketball, faHockeyPuck, faFutbol, faGamepad, faCheck, faFlagCheckered, faChevronLeft, faChevronRight,
   faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft,
 } from '@fortawesome/free-solid-svg-icons'
 
@@ -96,6 +96,9 @@ export default function Collection() {
   })
   const [formAttrs, setFormAttrs] = useState<string[]>([])
 
+const [currentPage, setCurrentPage] = useState(1)
+const CARDS_PER_PAGE = 24
+
   const toggleFilterSection = (key: string) =>
     setExpandedFilters(prev => prev.includes(key) ? prev.filter(k=>k!==key) : [...prev,key])
 
@@ -138,8 +141,12 @@ export default function Collection() {
     if (sortVal === 'gain') return ((b.value||0)-(b.cost||0)) - ((a.value||0)-(a.cost||0))
     return 0
   })
-
+const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE)
+const paginated = filtered.slice((currentPage - 1) * CARDS_PER_PAGE, currentPage * CARDS_PER_PAGE)
   const hasActiveFilters = filters.sport !== 'all' || filters.grading !== 'all' || filters.status !== 'all' || filters.date !== 'all'
+  useEffect(() => {
+  setCurrentPage(1)
+}, [filters, searchVal, activeFolder, sortVal])
   const activecards = cards.filter(c => c.status !== 'sold')
   const totalCards  = activecards.reduce((s,c) => s+(c.qty||1), 0)
   const totalValue  = activecards.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0)
@@ -692,7 +699,7 @@ export default function Collection() {
             </div>
           ) : viewMode === 'grid' ? (
             <div className="cards-grid">
-              {filtered.map((c,i) => {
+              {paginated.map((c,i) => {
                 const gain = (c.value||0)-(c.cost||0)
                 const isSold = c.status==='sold'
                 const isSel = selected.has(c.id)
@@ -733,7 +740,7 @@ export default function Collection() {
             </div>
           ) : (
             <div className="cards-list">
-              {filtered.map((c,i) => {
+              {paginated.map((c,i) => {
                 const gain = (c.value||0)-(c.cost||0)
                 const isSold = c.status==='sold'
                 const isSel = selected.has(c.id)
@@ -776,6 +783,45 @@ export default function Collection() {
               })}
             </div>
           )}
+          {/* PAGINATION */}
+{totalPages > 1 && (
+  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 0',borderTop:'1px solid #EFEFEF',marginTop:'8px'}}>
+    <div style={{fontSize:'13px',color:'#9A9A9A'}}>
+      Showing <strong style={{color:'#0D0D0D'}}>{((currentPage-1)*CARDS_PER_PAGE)+1}–{Math.min(currentPage*CARDS_PER_PAGE, filtered.length)}</strong> of <strong style={{color:'#0D0D0D'}}>{filtered.length}</strong> cards
+    </div>
+    <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
+      <button
+        onClick={() => setCurrentPage(p => Math.max(1, p-1))}
+        disabled={currentPage === 1}
+        style={{width:'32px',height:'32px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:currentPage===1?'#F7F7F7':'#fff',color:currentPage===1?'#D8D8D8':'#0D0D0D',cursor:currentPage===1?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}
+      >
+        <FontAwesomeIcon icon={faChevronLeft}/>
+      </button>
+      {Array.from({length:totalPages},(_,i)=>i+1).filter(p => p===1 || p===totalPages || Math.abs(p-currentPage)<=1).reduce((acc:number[],p,i,arr)=>{
+        if(i>0 && p-arr[i-1]>1) acc.push(-1)
+        acc.push(p)
+        return acc
+      },[] as number[]).map((p,i) => p===-1 ? (
+        <span key={`ellipsis-${i}`} style={{width:'32px',height:'32px',display:'flex',alignItems:'center',justifyContent:'center',color:'#9A9A9A',fontSize:'13px'}}>...</span>
+      ) : (
+        <button
+          key={p}
+          onClick={() => setCurrentPage(p)}
+          style={{width:'32px',height:'32px',borderRadius:'6px',border:`1.5px solid ${currentPage===p?'#1B6FF0':'#EFEFEF'}`,background:currentPage===p?'#1B6FF0':'#fff',color:currentPage===p?'#fff':'#0D0D0D',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}
+        >
+          {p}
+        </button>
+      ))}
+      <button
+        onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))}
+        disabled={currentPage === totalPages}
+        style={{width:'32px',height:'32px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:currentPage===totalPages?'#F7F7F7':'#fff',color:currentPage===totalPages?'#D8D8D8':'#0D0D0D',cursor:currentPage===totalPages?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}
+      >
+        <FontAwesomeIcon icon={faChevronRight}/>
+      </button>
+    </div>
+  </div>
+)}
         </main>
       </div>
 
