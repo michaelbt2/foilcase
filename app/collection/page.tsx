@@ -518,14 +518,9 @@ export default function Collection() {
 
           {/* User info */}
           <div className="sidebar-card">
-            <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-              <div className="vault-avatar">{user?.firstName?.[0] || user?.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() || '?'}</div>
-              <div>
-                <div style={{fontSize:'14px',fontWeight:700}}>{user?.firstName ? `${user.firstName}'s Vault` : 'My Vault'}</div>
-                <div style={{fontSize:'11px',color:'#9A9A9A'}}>{user?.emailAddresses?.[0]?.emailAddress}</div>
-              </div>
-            </div>
-          </div>
+  <div style={{fontSize:'14px',fontWeight:700,marginBottom:'2px'}}>{user?.firstName ? `${user.firstName}'s Vault` : 'My Vault'}</div>
+  <div style={{fontSize:'11px',color:'#9A9A9A'}}>{user?.emailAddresses?.[0]?.emailAddress}</div>
+</div>
 
           {/* Folders */}
           <div className="sidebar-card">
