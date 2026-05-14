@@ -8,7 +8,7 @@ import {
   faLayerGroup,
   faRightToBracket,
   faUserPlus,
-  faTableCells,
+  faTableCells, faUsers
 } from '@fortawesome/free-solid-svg-icons'
 
 function NavActions() {
@@ -69,6 +69,9 @@ export default function Nav() {
   <li><Link href="/browse" className={path==='/browse'?'active':''}>Browse</Link></li>
   <li><Link href="/search" className={path==='/search'?'active':''}>
     <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'5px'}}/>Search
+  </Link></li>
+  <li><Link href="/community" className={path==='/community'?'active':''}>
+    <FontAwesomeIcon icon={faUsers} style={{marginRight:'5px'}}/>Community
   </Link></li>
 </ul>
           <NavActions />
