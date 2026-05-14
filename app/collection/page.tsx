@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faMagnifyingGlass, faPlus, faPen, faTrash, faTag, faFolder, faFolderOpen,
   faLayerGroup, faBoxOpen, faMedal, faChartLine, faGrip, faBars, faXmark,
-  faRotateLeft, faShield, faRightToBracket, faUserPlus, faFootball, faBaseball,
+  faRotateLeft, faShield, faRightToBracket, faUserPlus, faFootball, faBaseball, faUpload,
   faBasketball, faHockeyPuck, faFutbol, faGamepad, faCheck, faFlagCheckered, faChevronLeft, faChevronRight,
   faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft,
 } from '@fortawesome/free-solid-svg-icons'
@@ -119,7 +119,46 @@ const CARDS_PER_PAGE = 24
   }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
+const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file || !user) return
 
+  // Validate file size (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('⚠️ Image must be under 5MB')
+    return
+  }
+
+  setUploadLoading(true)
+  try {
+    const ext = file.name.split('.').pop()
+    const fileName = `${user.id}/${Date.now()}.${ext}`
+
+    const { error } = await supabase.storage
+      .from('card-images')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    if (error) {
+      showToast('❌ Upload failed: ' + error.message)
+      return
+    }
+
+    const { data } = supabase.storage
+      .from('card-images')
+      .getPublicUrl(fileName)
+
+    setForm(p => ({...p, card_image_url: data.publicUrl}))
+    showToast('✅ Image uploaded successfully!')
+  } catch (err) {
+    showToast('❌ Upload failed. Please try again.')
+    console.error(err)
+  } finally {
+    setUploadLoading(false)
+  }
+}
   const filtered = cards.filter(c => {
     if (searchVal && !['player','set_name','year','brand','cardnum'].some(k => String(c[k as keyof Card]).toLowerCase().includes(searchVal.toLowerCase()))) return false
     if (filters.sport !== 'all' && !c.sport.startsWith(filters.sport)) return false
@@ -156,7 +195,7 @@ const paginated = filtered.slice((currentPage - 1) * CARDS_PER_PAGE, currentPage
   const gain        = totalValue - totalCost
   const gainPct     = totalCost > 0 ? ((gain/totalCost)*100).toFixed(0) : '0'
   const folderCount = (fid: string) => cards.filter(c => c.folder_id === fid).reduce((s,c)=>s+(c.qty||1),0)
-
+const [uploadLoading, setUploadLoading] = useState(false)
   const openAdd = () => {
     setEditingId(null)
     setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'' })
@@ -960,15 +999,63 @@ const paginated = filtered.slice((currentPage - 1) * CARDS_PER_PAGE, currentPage
     </div>
   </div>
   <div className="form-group full">
-    <label className="form-label">Card Image URL</label>
-    <input className="form-input" placeholder="Paste an image URL from eBay, COMC, or any image host..." value={form.card_image_url} onChange={e=>setForm(p=>({...p,card_image_url:e.target.value}))}/>
+  <label className="form-label">Card Image</label>
+  <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+    
+    {/* Upload button */}
+    <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+      <label style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'6px',background:'#F7F7F7',border:'1.5px solid #EFEFEF',color:'#0D0D0D',fontSize:'13px',fontWeight:600,cursor:'pointer',transition:'all .15s',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+        <FontAwesomeIcon icon={faUpload} style={{color:'#1B6FF0'}}/>
+        {uploadLoading ? 'Uploading...' : 'Upload Photo'}
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{display:'none'}}
+          onChange={handleImageUpload}
+          disabled={uploadLoading}
+        />
+      </label>
+      <span style={{fontSize:'12px',color:'#9A9A9A'}}>JPG, PNG or WebP · Max 5MB</span>
+    </div>
+
+    {/* Divider */}
+    <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+      <div style={{flex:1,height:'1px',background:'#EFEFEF'}}></div>
+      <span style={{fontSize:'11px',color:'#9A9A9A',fontWeight:600}}>OR</span>
+      <div style={{flex:1,height:'1px',background:'#EFEFEF'}}></div>
+    </div>
+
+    {/* URL input */}
+    <input
+      className="form-input"
+      placeholder="Paste an image URL from eBay, COMC, or any image host..."
+      value={form.card_image_url}
+      onChange={e=>setForm(p=>({...p,card_image_url:e.target.value}))}
+    />
+
+    {/* Preview */}
     {form.card_image_url && (
-      <div style={{marginTop:'8px',display:'flex',alignItems:'flex-start',gap:'12px'}}>
-        <img src={form.card_image_url} alt="Card preview" style={{width:'60px',height:'84px',objectFit:'cover',borderRadius:'6px',border:'1px solid #EFEFEF'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-        <div style={{fontSize:'12px',color:'#9A9A9A',lineHeight:1.5,paddingTop:'4px'}}>Preview above. If the image doesn't appear the URL may not be publicly accessible.</div>
+      <div style={{display:'flex',alignItems:'flex-start',gap:'12px'}}>
+        <img
+          src={form.card_image_url}
+          alt="Card preview"
+          style={{width:'60px',height:'84px',objectFit:'cover',borderRadius:'6px',border:'1px solid #EFEFEF'}}
+          onError={e=>{(e.target as HTMLImageElement).style.display='none'}}
+        />
+        <div style={{display:'flex',flexDirection:'column',gap:'6px',paddingTop:'4px'}}>
+          <div style={{fontSize:'12px',color:'#9A9A9A',lineHeight:1.5}}>Image preview. Looking good!</div>
+          <button
+            type="button"
+            onClick={() => setForm(p=>({...p,card_image_url:''}))}
+            style={{display:'inline-flex',alignItems:'center',gap:'4px',fontSize:'12px',color:'#D93025',background:'none',border:'none',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',padding:0,fontWeight:600}}
+          >
+            <FontAwesomeIcon icon={faXmark}/>Remove image
+          </button>
+        </div>
       </div>
     )}
   </div>
+</div>
   <div className="form-group full">
     <label className="form-label">Notes</label>
     <textarea className="form-input" style={{minHeight:'64px',resize:'vertical'}} placeholder="Serial number, purchase story, condition notes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/>
