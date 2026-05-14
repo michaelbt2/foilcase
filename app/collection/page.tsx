@@ -707,9 +707,10 @@ const [uploadLoading, setUploadLoading] = useState(false)
               <option value="gain">Best Gain</option>
             </select>
             <div className="view-toggle">
-              <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}><FontAwesomeIcon icon={faGrip}/></button>
-              <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}><FontAwesomeIcon icon={faBars}/></button>
-            </div>
+  <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}><FontAwesomeIcon icon={faGrip}/></button>
+  <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}><FontAwesomeIcon icon={faBars}/></button>
+</div>
+<div className="results-lbl">{filtered.length} card{filtered.length!==1?'s':''}</div>
             {selected.size > 0 && (
               <div className="bulk-bar">
                 {selected.size} selected
