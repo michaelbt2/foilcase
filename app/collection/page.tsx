@@ -10,9 +10,8 @@ import {
   faLayerGroup, faBoxOpen, faMedal, faChartLine, faGrip, faBars, faXmark,
   faRotateLeft, faShield, faRightToBracket, faUserPlus, faFootball, faBaseball, faUpload,
   faBasketball, faHockeyPuck, faFutbol, faGamepad, faCheck, faFlagCheckered, faChevronLeft, faChevronRight,
-  faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft,faGlobe,
-faLock,
-faGear,
+  faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft, faGlobe,
+  faLock, faGear,
 } from '@fortawesome/free-solid-svg-icons'
 
 const sportEmoji: Record<string,string> = {
@@ -93,78 +92,132 @@ export default function Collection() {
   const [newFolderName, setNewFolderName]   = useState('')
   const [expandedFilters, setExpandedFilters] = useState<string[]>(['sport','grading','status','date'])
   const [selectedCard, setSelectedCard] = useState<Card|null>(null)
+  const [uploadLoading, setUploadLoading] = useState(false)
+  const [isPublic, setIsPublic]         = useState(false)
+  const [vaultUsername, setVaultUsername] = useState('')
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [showOnboarding, setShowOnboarding]       = useState(false)
+  const [suggestedUsername, setSuggestedUsername] = useState('')
+  const [onboardingUsername, setOnboardingUsername] = useState('')
+  const [onboardingPublic, setOnboardingPublic]   = useState(false)
+  const [onboardingError, setOnboardingError]     = useState('')
+  const [onboardingSaving, setOnboardingSaving]   = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const CARDS_PER_PAGE = 24
   const [form, setForm] = useState({
     player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
     folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:''
   })
   const [formAttrs, setFormAttrs] = useState<string[]>([])
 
-const [currentPage, setCurrentPage] = useState(1)
-const CARDS_PER_PAGE = 24
-
   const toggleFilterSection = (key: string) =>
     setExpandedFilters(prev => prev.includes(key) ? prev.filter(k=>k!==key) : [...prev,key])
 
- useEffect(() => {
-  if (isLoaded && user) loadData()
-}, [isLoaded, user?.id])
+  useEffect(() => {
+    if (isLoaded && user) loadData()
+  }, [isLoaded, user?.id])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filters, searchVal, activeFolder, sortVal])
 
   const loadData = async () => {
-  if (!user) return
-  setLoading(true)
-  const [{ data: cardsData }, { data: foldersData }, { data: profileData }] = await Promise.all([
-    supabase.from('cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('folders').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
-    supabase.from('profiles').select('username, is_public').eq('id', user.id).single(),
-  ])
-  setCards(cardsData || [])
-  setFolders(foldersData || [])
-  setIsPublic(profileData?.is_public || false)
-  setVaultUsername(profileData?.username || '')
-  setLoading(false)
-}
+    if (!user) return
+    setLoading(true)
+    const [{ data: cardsData }, { data: foldersData }, { data: profileData }] = await Promise.all([
+      supabase.from('cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('folders').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+      supabase.from('profiles').select('username, is_public').eq('id', user.id).single(),
+    ])
+    setCards(cardsData || [])
+    setFolders(foldersData || [])
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
-const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0]
-  if (!file || !user) return
-
-  // Validate file size (5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('⚠️ Image must be under 5MB')
-    return
-  }
-
-  setUploadLoading(true)
-  try {
-    const ext = file.name.split('.').pop()
-    const fileName = `${user.id}/${Date.now()}.${ext}`
-
-    const { error } = await supabase.storage
-      .from('card-images')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false,
+    if (profileData) {
+      setIsPublic(profileData.is_public || false)
+      setVaultUsername(profileData.username || '')
+      // Show onboarding if profile exists but no username set
+      if (!profileData.username) {
+        const emailPrefix = user.emailAddresses?.[0]?.emailAddress?.split('@')[0] || ''
+        const suggested = emailPrefix.toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,20)
+        setSuggestedUsername(suggested)
+        setShowOnboarding(true)
+      }
+    } else {
+      // First visit — auto-create profile
+      const emailPrefix = user.emailAddresses?.[0]?.emailAddress?.split('@')[0] || ''
+      const suggested = emailPrefix.toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,20)
+      const displayName = user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : ''
+      await supabase.from('profiles').insert({
+        id: user.id,
+        username: null,
+        display_name: displayName,
+        bio: '',
+        is_public: false,
       })
-
-    if (error) {
-      showToast('❌ Upload failed: ' + error.message)
-      return
+      setSuggestedUsername(suggested)
+      setShowOnboarding(true)
     }
 
-    const { data } = supabase.storage
-      .from('card-images')
-      .getPublicUrl(fileName)
-
-    setForm(p => ({...p, card_image_url: data.publicUrl}))
-    showToast('✅ Image uploaded successfully!')
-  } catch (err) {
-    showToast('❌ Upload failed. Please try again.')
-    console.error(err)
-  } finally {
-    setUploadLoading(false)
+    setLoading(false)
   }
-}
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
+
+  const saveOnboarding = async () => {
+    if (!user) return
+    if (!onboardingUsername) { setOnboardingError('Please enter a username'); return }
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(onboardingUsername)) {
+      setOnboardingError('3–20 characters, letters, numbers and underscores only')
+      return
+    }
+    setOnboardingSaving(true)
+    setOnboardingError('')
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', onboardingUsername)
+      .single()
+    if (existing) {
+      setOnboardingError('That username is already taken — try another')
+      setOnboardingSaving(false)
+      return
+    }
+    const { error } = await supabase
+      .from('profiles')
+      .update({ username: onboardingUsername, is_public: onboardingPublic, updated_at: new Date().toISOString() })
+      .eq('id', user.id)
+    if (error) {
+      setOnboardingError('Error saving — please try again')
+      setOnboardingSaving(false)
+      return
+    }
+    setVaultUsername(onboardingUsername)
+    setIsPublic(onboardingPublic)
+    setShowOnboarding(false)
+    showToast(onboardingPublic ? '🌐 Vault is live at foilcase.com/vault/' + onboardingUsername : '✅ Username claimed!')
+    setOnboardingSaving(false)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    if (file.size > 5 * 1024 * 1024) { showToast('⚠️ Image must be under 5MB'); return }
+    setUploadLoading(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const fileName = `${user.id}/${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('card-images').upload(fileName, file, { cacheControl: '3600', upsert: false })
+      if (error) { showToast('❌ Upload failed: ' + error.message); return }
+      const { data } = supabase.storage.from('card-images').getPublicUrl(fileName)
+      setForm(p => ({...p, card_image_url: data.publicUrl}))
+      showToast('✅ Image uploaded successfully!')
+    } catch (err) {
+      showToast('❌ Upload failed. Please try again.')
+    } finally {
+      setUploadLoading(false)
+    }
+  }
+
   const filtered = cards.filter(c => {
     if (searchVal && !['player','set_name','year','brand','cardnum'].some(k => String(c[k as keyof Card]).toLowerCase().includes(searchVal.toLowerCase()))) return false
     if (filters.sport !== 'all' && !c.sport.startsWith(filters.sport)) return false
@@ -186,12 +239,10 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (sortVal === 'gain') return ((b.value||0)-(b.cost||0)) - ((a.value||0)-(a.cost||0))
     return 0
   })
-const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE)
-const paginated = filtered.slice((currentPage - 1) * CARDS_PER_PAGE, currentPage * CARDS_PER_PAGE)
+
+  const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE)
+  const paginated = filtered.slice((currentPage - 1) * CARDS_PER_PAGE, currentPage * CARDS_PER_PAGE)
   const hasActiveFilters = filters.sport !== 'all' || filters.grading !== 'all' || filters.status !== 'all' || filters.date !== 'all'
-  useEffect(() => {
-  setCurrentPage(1)
-}, [filters, searchVal, activeFolder, sortVal])
   const activecards = cards.filter(c => c.status !== 'sold')
   const totalCards  = activecards.reduce((s,c) => s+(c.qty||1), 0)
   const totalValue  = activecards.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0)
@@ -201,7 +252,7 @@ const paginated = filtered.slice((currentPage - 1) * CARDS_PER_PAGE, currentPage
   const gain        = totalValue - totalCost
   const gainPct     = totalCost > 0 ? ((gain/totalCost)*100).toFixed(0) : '0'
   const folderCount = (fid: string) => cards.filter(c => c.folder_id === fid).reduce((s,c)=>s+(c.qty||1),0)
-const [uploadLoading, setUploadLoading] = useState(false)
+
   const openAdd = () => {
     setEditingId(null)
     setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'' })
@@ -211,9 +262,7 @@ const [uploadLoading, setUploadLoading] = useState(false)
     setSelectedStatus('have')
     setShowAdd(true)
   }
-const [isPublic, setIsPublic]         = useState(false)
-const [vaultUsername, setVaultUsername] = useState('')
-const [profileLoading, setProfileLoading] = useState(false)
+
   const openEdit = (id: string) => {
     const c = cards.find(x => x.id === id)
     if (!c) return
@@ -225,25 +274,18 @@ const [profileLoading, setProfileLoading] = useState(false)
     setSelectedStatus(c.status||'have')
     setShowAdd(true)
   }
-const togglePublic = async () => {
-  if (!user) return
-  if (!vaultUsername) {
-    showToast('⚠️ Set a username in Settings first')
-    return
+
+  const togglePublic = async () => {
+    if (!user) return
+    if (!vaultUsername) { showToast('⚠️ Set a username first'); setShowOnboarding(true); return }
+    setProfileLoading(true)
+    const newValue = !isPublic
+    const { error } = await supabase.from('profiles').upsert({ id: user.id, username: vaultUsername, is_public: newValue, updated_at: new Date().toISOString() })
+    if (error) { showToast('❌ Error updating vault visibility') }
+    else { setIsPublic(newValue); showToast(newValue ? '🌐 Vault is now public!' : '🔒 Vault is now private') }
+    setProfileLoading(false)
   }
-  setProfileLoading(true)
-  const newValue = !isPublic
-  const { error } = await supabase
-    .from('profiles')
-    .upsert({ id: user.id, username: vaultUsername, is_public: newValue, updated_at: new Date().toISOString() })
-  if (error) {
-    showToast('❌ Error updating vault visibility')
-  } else {
-    setIsPublic(newValue)
-    showToast(newValue ? '🌐 Vault is now public!' : '🔒 Vault is now private')
-  }
-  setProfileLoading(false)
-}
+
   const saveCard = async () => {
     if (!user) return
     if (!form.player || !form.set_name || !form.sport) { showToast('⚠️ Player, Set, and Sport are required'); return }
@@ -292,12 +334,7 @@ const togglePublic = async () => {
   const createFolder = async () => {
     if (!user) return
     if (!newFolderName.trim()) { showToast('⚠️ Enter a folder name'); return }
-    await supabase.from('folders').insert({
-      user_id: user.id,
-      name: newFolderName.trim(),
-      color: 'blue',
-      emoji: '📁'
-    })
+    await supabase.from('folders').insert({ user_id: user.id, name: newFolderName.trim(), color: 'blue', emoji: '📁' })
     setNewFolderName('')
     showToast(`📁 "${newFolderName}" created`)
     loadData()
@@ -319,15 +356,11 @@ const togglePublic = async () => {
   const statusMap: Record<string,string> = { have:'status-have', trade:'status-trade', sold:'status-sold' }
   const statusLbl: Record<string,string> = { have:'Owned', trade:'Trade', sold:'Sold' }
 
-  // Filter checkbox component to reduce repetition
   const FilterCheckbox = ({ value, label, icon, filterKey, count }: { value:string, label:string, icon?:any, filterKey:keyof typeof filters, count?:number }) => {
     const isActive = filters[filterKey] === value
     return (
       <label style={{display:'flex',alignItems:'center',gap:'10px',cursor:'pointer',fontSize:'13px',fontWeight:500,color:isActive?'#0D0D0D':'#555'}}>
-        <div
-          onClick={() => setFilters(prev => ({...prev, [filterKey]:value}))}
-          style={{width:'18px',height:'18px',borderRadius:'4px',border:`2px solid ${isActive?'#1B6FF0':'#D8D8D8'}`,background:isActive?'#1B6FF0':'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,cursor:'pointer',transition:'all .15s'}}
-        >
+        <div onClick={() => setFilters(prev => ({...prev, [filterKey]:value}))} style={{width:'18px',height:'18px',borderRadius:'4px',border:`2px solid ${isActive?'#1B6FF0':'#D8D8D8'}`,background:isActive?'#1B6FF0':'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,cursor:'pointer',transition:'all .15s'}}>
           {isActive && <FontAwesomeIcon icon={faCheck} style={{color:'#fff',fontSize:'9px'}}/>}
         </div>
         {icon && <FontAwesomeIcon icon={icon} style={{color:isActive?'#1B6FF0':'#9A9A9A',fontSize:'12px',width:'14px'}}/>}
@@ -337,12 +370,8 @@ const togglePublic = async () => {
     )
   }
 
-  // Filter section header component
   const FilterHeader = ({ label, filterKey }: { label:string, filterKey:string }) => (
-    <div
-      onClick={() => toggleFilterSection(filterKey)}
-      style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#9A9A9A',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',marginBottom:expandedFilters.includes(filterKey)?'10px':'0'}}
-    >
+    <div onClick={() => toggleFilterSection(filterKey)} style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#9A9A9A',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',marginBottom:expandedFilters.includes(filterKey)?'10px':'0'}}>
       {label}
       <FontAwesomeIcon icon={expandedFilters.includes(filterKey) ? faChevronUp : faChevronDown} style={{fontSize:'9px'}}/>
     </div>
@@ -353,9 +382,7 @@ const togglePublic = async () => {
       <>
         <Nav />
         <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
-          <div style={{textAlign:'center'}}>
-            <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading...</div>
-          </div>
+          <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading...</div>
         </div>
       </>
     )
@@ -412,9 +439,7 @@ const togglePublic = async () => {
       <>
         <Nav />
         <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
-          <div style={{textAlign:'center'}}>
-            <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading your vault...</div>
-          </div>
+          <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading your vault...</div>
         </div>
       </>
     )
@@ -434,7 +459,6 @@ const togglePublic = async () => {
         .sidebar{display:flex;flex-direction:column;gap:12px;position:sticky;top:78px;max-height:calc(100vh - 98px);overflow-y:auto}
         .sidebar-card{background:#fff;border:1px solid #EFEFEF;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
         .sidebar-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9A9A9A;margin-bottom:10px}
-        .vault-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1B6FF0,#7EB6FF);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0}
         .folder-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:all .12s;border:1px solid transparent}
         .folder-item:hover{background:#F7F7F7}
         .folder-item.active{background:#EBF2FF;border-color:#C5D8FF}
@@ -471,7 +495,8 @@ const togglePublic = async () => {
         .card-tile.sold-card{opacity:.6}
         .card-tile.sel{border-color:#1B6FF0;box-shadow:0 0 0 2px #C5D8FF}
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.card-cb{position:absolute;top:10px;left:10px;z-index:10;width:20px;height:20px;border-radius:4px;border:2px solid #D8D8D8;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;transition:all .15s;opacity:0;box-shadow:0 1px 3px rgba(0,0,0,.15)}        .card-tile:hover .card-cb,.card-tile.sel .card-cb{opacity:1}
+        .card-cb{position:absolute;top:10px;left:10px;z-index:10;width:20px;height:20px;border-radius:4px;border:2px solid #D8D8D8;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;transition:all .15s;opacity:0;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+        .card-tile:hover .card-cb,.card-tile.sel .card-cb{opacity:1}
         .card-tile.sel .card-cb{background:#1B6FF0;border-color:#1B6FF0}
         .card-status{position:absolute;top:10px;right:10px;z-index:10;font-size:9px;font-weight:700;padding:3px 7px;border-radius:100px;letter-spacing:.04em;text-transform:uppercase}
         .status-have{background:#E6F9F0;color:#00A861}
@@ -495,13 +520,12 @@ const togglePublic = async () => {
         .fin-neg{color:#D93025}
         .card-actions{display:flex;gap:4px;padding:0 13px 11px;opacity:0;transition:opacity .15s}
         .card-tile:hover .card-actions{opacity:1}
-.act-btn{flex:1;padding:8px 4px;border-radius:6px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;text-align:center;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
-.act-rm{background:#FDECEA;color:#D93025;flex:0 0 36px}
-.act-rm:hover{background:#D93025;color:#fff}        .act-edit{background:#F7F7F7;color:#555}
+        .act-btn{flex:1;padding:8px 4px;border-radius:6px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;text-align:center;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
+        .act-edit{background:#F7F7F7;color:#555}
         .act-edit:hover{background:#EFEFEF;color:#0D0D0D}
         .act-sold{background:#F7F7F7;color:#555}
         .act-sold:hover{background:#EFEFEF;color:#0D0D0D}
-        .act-rm{background:#FDECEA;color:#D93025}
+        .act-rm{background:#FDECEA;color:#D93025;flex:0 0 36px}
         .act-rm:hover{background:#D93025;color:#fff}
         .list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:8px;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);animation:fadeUp .35s ease both}
         .list-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.07);border-color:#D8D8D8}
@@ -574,11 +598,11 @@ const togglePublic = async () => {
           </div>
           <div style={{display:'flex',gap:'8px'}}>
             <button className="btn btn-sm" style={{background:'#F7F7F7',color:'#0D0D0D',border:'1.5px solid #D8D8D8',display:'inline-flex',alignItems:'center',gap:'6px'}} onClick={() => setShowFolder(true)}>
-  <FontAwesomeIcon icon={faPlus} style={{color:'#9A9A9A'}}/>New Folder
-</button>
-<button className="btn btn-primary" onClick={openAdd}>
-  <FontAwesomeIcon icon={faPlus}/>Add Card
-</button>
+              <FontAwesomeIcon icon={faPlus} style={{color:'#9A9A9A'}}/>New Folder
+            </button>
+            <button className="btn btn-primary" onClick={openAdd}>
+              <FontAwesomeIcon icon={faPlus}/>Add Card
+            </button>
           </div>
         </div>
       </div>
@@ -590,63 +614,38 @@ const togglePublic = async () => {
 
           {/* User info */}
           <div className="sidebar-card">
-  <div style={{fontSize:'14px',fontWeight:700,marginBottom:'2px'}}>{user?.firstName ? `${user.firstName}'s Vault` : 'My Vault'}</div>
-  <div style={{fontSize:'11px',color:'#9A9A9A',marginBottom:'14px'}}>{user?.emailAddresses?.[0]?.emailAddress}</div>
-
-  {/* Privacy toggle */}
-  <div style={{paddingTop:'14px',borderTop:'1px solid #EFEFEF'}}>
-    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
-      <div>
-        <div style={{fontSize:'12px',fontWeight:700,color:'#0D0D0D',display:'flex',alignItems:'center',gap:'5px'}}>
-          <FontAwesomeIcon icon={isPublic ? faGlobe : faLock} style={{color:isPublic?'#1B6FF0':'#9A9A9A',fontSize:'11px'}}/>
-          {isPublic ? 'Public vault' : 'Private vault'}
-        </div>
-        <div style={{fontSize:'11px',color:'#9A9A9A',marginTop:'2px'}}>
-          {isPublic ? 'Visible to everyone' : 'Only visible to you'}
-        </div>
-      </div>
-      <button
-        onClick={togglePublic}
-        disabled={profileLoading}
-        style={{
-          width:'40px',height:'22px',borderRadius:'100px',border:'none',
-          background:isPublic?'#1B6FF0':'#D8D8D8',
-          cursor:profileLoading?'not-allowed':'pointer',
-          position:'relative',transition:'background .2s',flexShrink:0
-        }}
-      >
-        <div style={{
-          position:'absolute',top:'3px',
-          left:isPublic?'21px':'3px',
-          width:'16px',height:'16px',
-          borderRadius:'50%',background:'#fff',
-          transition:'left .2s',
-          boxShadow:'0 1px 3px rgba(0,0,0,.2)'
-        }}></div>
-      </button>
-    </div>
-
-    {/* Vault URL or prompt */}
-    {isPublic && vaultUsername && (
-      <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'7px 10px',background:'#EBF2FF',borderRadius:'6px',border:'1px solid #C5D8FF'}}>
-        <FontAwesomeIcon icon={faGlobe} style={{color:'#1B6FF0',fontSize:'11px',flexShrink:0}}/>
-        <span style={{fontSize:'11px',color:'#1B6FF0',fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-          foilcase.com/vault/{vaultUsername}
-        </span>
-        <button
-          onClick={() => { navigator.clipboard.writeText(`https://foilcase.com/vault/${vaultUsername}`); showToast('📋 Link copied!') }}
-          style={{fontSize:'10px',color:'#1B6FF0',background:'none',border:'none',cursor:'pointer',fontWeight:700,fontFamily:'Plus Jakarta Sans,sans-serif',flexShrink:0}}
-        >Copy</button>
-      </div>
-    )}
-    {!vaultUsername && (
-      <Link href="/settings" style={{display:'flex',alignItems:'center',gap:'5px',fontSize:'11px',color:'#1B6FF0',fontWeight:600,textDecoration:'none',marginTop:'4px'}}>
-        <FontAwesomeIcon icon={faGear} style={{fontSize:'10px'}}/>
-        Set username to share vault
-      </Link>
-    )}
-  </div>
-</div>
+            <div style={{fontSize:'14px',fontWeight:700,marginBottom:'2px'}}>{user?.firstName ? `${user.firstName}'s Vault` : 'My Vault'}</div>
+            <div style={{fontSize:'11px',color:'#9A9A9A',marginBottom:'14px'}}>{user?.emailAddresses?.[0]?.emailAddress}</div>
+            <div style={{paddingTop:'14px',borderTop:'1px solid #EFEFEF'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
+                <div>
+                  <div style={{fontSize:'12px',fontWeight:700,color:'#0D0D0D',display:'flex',alignItems:'center',gap:'5px'}}>
+                    <FontAwesomeIcon icon={isPublic ? faGlobe : faLock} style={{color:isPublic?'#1B6FF0':'#9A9A9A',fontSize:'11px'}}/>
+                    {isPublic ? 'Public vault' : 'Private vault'}
+                  </div>
+                  <div style={{fontSize:'11px',color:'#9A9A9A',marginTop:'2px'}}>
+                    {isPublic ? 'Visible to everyone' : 'Only visible to you'}
+                  </div>
+                </div>
+                <button onClick={togglePublic} disabled={profileLoading} style={{width:'40px',height:'22px',borderRadius:'100px',border:'none',background:isPublic?'#1B6FF0':'#D8D8D8',cursor:profileLoading?'not-allowed':'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
+                  <div style={{position:'absolute',top:'3px',left:isPublic?'21px':'3px',width:'16px',height:'16px',borderRadius:'50%',background:'#fff',transition:'left .2s',boxShadow:'0 1px 3px rgba(0,0,0,.2)'}}></div>
+                </button>
+              </div>
+              {isPublic && vaultUsername && (
+                <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'7px 10px',background:'#EBF2FF',borderRadius:'6px',border:'1px solid #C5D8FF'}}>
+                  <FontAwesomeIcon icon={faGlobe} style={{color:'#1B6FF0',fontSize:'11px',flexShrink:0}}/>
+                  <span style={{fontSize:'11px',color:'#1B6FF0',fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>foilcase.com/vault/{vaultUsername}</span>
+                  <button onClick={() => { navigator.clipboard.writeText(`https://foilcase.com/vault/${vaultUsername}`); showToast('📋 Link copied!') }} style={{fontSize:'10px',color:'#1B6FF0',background:'none',border:'none',cursor:'pointer',fontWeight:700,fontFamily:'Plus Jakarta Sans,sans-serif',flexShrink:0}}>Copy</button>
+                </div>
+              )}
+              {!vaultUsername && (
+                <button onClick={() => setShowOnboarding(true)} style={{display:'flex',alignItems:'center',gap:'5px',fontSize:'11px',color:'#1B6FF0',fontWeight:600,background:'none',border:'none',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',padding:0,marginTop:'4px'}}>
+                  <FontAwesomeIcon icon={faGear} style={{fontSize:'10px'}}/>
+                  Claim username to share vault
+                </button>
+              )}
+            </div>
+          </div>
 
           {/* Folders */}
           <div className="sidebar-card">
@@ -675,32 +674,19 @@ const togglePublic = async () => {
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
               <div className="sidebar-title" style={{margin:0}}>Filters</div>
               {hasActiveFilters && (
-                <button onClick={() => setFilters({sport:'all',grading:'all',status:'all',date:'all'})} style={{fontSize:'11px',fontWeight:600,color:'#1B6FF0',background:'none',border:'none',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
-                  Clear all
-                </button>
+                <button onClick={() => setFilters({sport:'all',grading:'all',status:'all',date:'all'})} style={{fontSize:'11px',fontWeight:600,color:'#1B6FF0',background:'none',border:'none',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}>Clear all</button>
               )}
             </div>
-
-            {/* Sport */}
             <div style={{marginBottom:'4px',paddingBottom:'16px',borderBottom:'1px solid #EFEFEF'}}>
               <FilterHeader label="Sport" filterKey="sport"/>
               {expandedFilters.includes('sport') && (
                 <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                   {SPORTS.map(o => (
-                    <FilterCheckbox
-                      key={o.v}
-                      value={o.v}
-                      label={o.l}
-                      icon={o.icon}
-                      filterKey="sport"
-                      count={o.v === 'all' ? cards.length : cards.filter(c => c.sport.startsWith(o.v)).length}
-                    />
+                    <FilterCheckbox key={o.v} value={o.v} label={o.l} icon={o.icon} filterKey="sport" count={o.v === 'all' ? cards.length : cards.filter(c => c.sport.startsWith(o.v)).length}/>
                   ))}
                 </div>
               )}
             </div>
-
-            {/* Grading */}
             <div style={{marginBottom:'4px',paddingBottom:'16px',borderBottom:'1px solid #EFEFEF'}}>
               <FilterHeader label="Grading" filterKey="grading"/>
               {expandedFilters.includes('grading') && (
@@ -711,8 +697,6 @@ const togglePublic = async () => {
                 </div>
               )}
             </div>
-
-            {/* Status */}
             <div style={{marginBottom:'4px',paddingBottom:'16px',borderBottom:'1px solid #EFEFEF'}}>
               <FilterHeader label="Status" filterKey="status"/>
               {expandedFilters.includes('status') && (
@@ -724,8 +708,6 @@ const togglePublic = async () => {
                 </div>
               )}
             </div>
-
-            {/* Date Added */}
             <div>
               <FilterHeader label="Date Added" filterKey="date"/>
               {expandedFilters.includes('date') && (
@@ -787,10 +769,10 @@ const togglePublic = async () => {
               <option value="gain">Best Gain</option>
             </select>
             <div className="view-toggle">
-  <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}><FontAwesomeIcon icon={faGrip}/></button>
-  <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}><FontAwesomeIcon icon={faBars}/></button>
-</div>
-<div className="results-lbl">{filtered.length} card{filtered.length!==1?'s':''}</div>
+              <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}><FontAwesomeIcon icon={faGrip}/></button>
+              <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}><FontAwesomeIcon icon={faBars}/></button>
+            </div>
+            <div className="results-lbl">{filtered.length} card{filtered.length!==1?'s':''}</div>
             {selected.size > 0 && (
               <div className="bulk-bar">
                 {selected.size} selected
@@ -810,9 +792,7 @@ const togglePublic = async () => {
           {/* CARDS */}
           {filtered.length === 0 ? (
             <div className="empty-state">
-              <div style={{fontSize:'48px',marginBottom:'16px',color:'#D8D8D8'}}>
-                <FontAwesomeIcon icon={faFolderOpen}/>
-              </div>
+              <div style={{fontSize:'48px',marginBottom:'16px',color:'#D8D8D8'}}><FontAwesomeIcon icon={faFolderOpen}/></div>
               <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>{cards.length === 0 ? 'Your vault is empty' : 'No cards found'}</div>
               <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>{cards.length === 0 ? 'Start building your collection by adding your first card.' : 'Try adjusting your filters.'}</div>
               <button className="btn btn-primary" onClick={openAdd}>+ Add Your First Card</button>
@@ -867,8 +847,8 @@ const togglePublic = async () => {
                 return (
                   <div key={c.id} className={`list-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.025}s`}} onClick={() => setSelectedCard(c)}>
                     <div style={{padding:'0 0 0 12px',cursor:'pointer'}} onClick={e=>{e.stopPropagation();toggleSelect(c.id)}}>
-  <div className="card-cb" style={{position:'relative',top:0,left:0,opacity:1,width:18,height:18,fontSize:10,background:isSel?'#1B6FF0':'#fff',borderColor:isSel?'#1B6FF0':'#D8D8D8'}}>{isSel?'✓':''}</div>
-</div>
+                      <div className="card-cb" style={{position:'relative',top:0,left:0,opacity:1,width:18,height:18,fontSize:10,background:isSel?'#1B6FF0':'#fff',borderColor:isSel?'#1B6FF0':'#D8D8D8'}}>{isSel?'✓':''}</div>
+                    </div>
                     <div className="list-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
                       {c.card_image_url
                         ? <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
@@ -886,62 +866,51 @@ const togglePublic = async () => {
                       </div>
                     </div>
                     <div className="list-meta">
-  <div><div className="lm-lbl">Grade</div><div className="lm-val" style={{fontSize:'12px'}}>{c.grader&&c.grader!=='Raw'?`${c.grader} ${c.grade}`:'Raw'}</div></div>
-  <div><div className="lm-lbl">Cost</div><div className="lm-val">{c.cost?`$${c.cost}`:'-'}</div></div>
-  <div><div className="lm-lbl">Value</div><div className="lm-val" style={{color:'#1B6FF0'}}>{c.value?`$${c.value}`:'-'}</div></div>
-  <div><div className="lm-lbl">Gain</div><div className={`lm-val ${gain>=0?'fin-pos':'fin-neg'}`}>{c.cost?(gain>=0?'+':'')+`$${Math.abs(gain)}`:'-'}</div></div>
-</div>
+                      <div><div className="lm-lbl">Grade</div><div className="lm-val" style={{fontSize:'12px'}}>{c.grader&&c.grader!=='Raw'?`${c.grader} ${c.grade}`:'Raw'}</div></div>
+                      <div><div className="lm-lbl">Cost</div><div className="lm-val">{c.cost?`$${c.cost}`:'-'}</div></div>
+                      <div><div className="lm-lbl">Value</div><div className="lm-val" style={{color:'#1B6FF0'}}>{c.value?`$${c.value}`:'-'}</div></div>
+                      <div><div className="lm-lbl">Gain</div><div className={`lm-val ${gain>=0?'fin-pos':'fin-neg'}`}>{c.cost?(gain>=0?'+':'')+`$${Math.abs(gain)}`:'-'}</div></div>
+                    </div>
                     <div className="list-acts">
-  <button className="act-btn act-edit" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
-  <button className="act-btn act-sold" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();markSold(c.id)}}>
-    <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
-  </button>
-  <button className="act-btn act-rm" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
-</div>
+                      <button className="act-btn act-edit" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
+                      <button className="act-btn act-sold" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();markSold(c.id)}}>
+                        <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
+                      </button>
+                      <button className="act-btn act-rm" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
+                    </div>
                   </div>
                 )
               })}
             </div>
           )}
+
           {/* PAGINATION */}
-{totalPages > 1 && (
-  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 0',borderTop:'1px solid #EFEFEF',marginTop:'8px'}}>
-    <div style={{fontSize:'13px',color:'#9A9A9A'}}>
-      Showing <strong style={{color:'#0D0D0D'}}>{((currentPage-1)*CARDS_PER_PAGE)+1}–{Math.min(currentPage*CARDS_PER_PAGE, filtered.length)}</strong> of <strong style={{color:'#0D0D0D'}}>{filtered.length}</strong> cards
-    </div>
-    <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
-      <button
-        onClick={() => setCurrentPage(p => Math.max(1, p-1))}
-        disabled={currentPage === 1}
-        style={{width:'32px',height:'32px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:currentPage===1?'#F7F7F7':'#fff',color:currentPage===1?'#D8D8D8':'#0D0D0D',cursor:currentPage===1?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}
-      >
-        <FontAwesomeIcon icon={faChevronLeft}/>
-      </button>
-      {Array.from({length:totalPages},(_,i)=>i+1).filter(p => p===1 || p===totalPages || Math.abs(p-currentPage)<=1).reduce((acc:number[],p,i,arr)=>{
-        if(i>0 && p-arr[i-1]>1) acc.push(-1)
-        acc.push(p)
-        return acc
-      },[] as number[]).map((p,i) => p===-1 ? (
-        <span key={`ellipsis-${i}`} style={{width:'32px',height:'32px',display:'flex',alignItems:'center',justifyContent:'center',color:'#9A9A9A',fontSize:'13px'}}>...</span>
-      ) : (
-        <button
-          key={p}
-          onClick={() => setCurrentPage(p)}
-          style={{width:'32px',height:'32px',borderRadius:'6px',border:`1.5px solid ${currentPage===p?'#1B6FF0':'#EFEFEF'}`,background:currentPage===p?'#1B6FF0':'#fff',color:currentPage===p?'#fff':'#0D0D0D',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}
-        >
-          {p}
-        </button>
-      ))}
-      <button
-        onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))}
-        disabled={currentPage === totalPages}
-        style={{width:'32px',height:'32px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:currentPage===totalPages?'#F7F7F7':'#fff',color:currentPage===totalPages?'#D8D8D8':'#0D0D0D',cursor:currentPage===totalPages?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}
-      >
-        <FontAwesomeIcon icon={faChevronRight}/>
-      </button>
-    </div>
-  </div>
-)}
+          {totalPages > 1 && (
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 0',borderTop:'1px solid #EFEFEF',marginTop:'8px'}}>
+              <div style={{fontSize:'13px',color:'#9A9A9A'}}>
+                Showing <strong style={{color:'#0D0D0D'}}>{((currentPage-1)*CARDS_PER_PAGE)+1}–{Math.min(currentPage*CARDS_PER_PAGE, filtered.length)}</strong> of <strong style={{color:'#0D0D0D'}}>{filtered.length}</strong> cards
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
+                <button onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} style={{width:'32px',height:'32px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:currentPage===1?'#F7F7F7':'#fff',color:currentPage===1?'#D8D8D8':'#0D0D0D',cursor:currentPage===1?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}>
+                  <FontAwesomeIcon icon={faChevronLeft}/>
+                </button>
+                {Array.from({length:totalPages},(_,i)=>i+1).filter(p => p===1 || p===totalPages || Math.abs(p-currentPage)<=1).reduce((acc:number[],p,i,arr)=>{
+                  if(i>0 && p-arr[i-1]>1) acc.push(-1)
+                  acc.push(p)
+                  return acc
+                },[] as number[]).map((p,i) => p===-1 ? (
+                  <span key={`ellipsis-${i}`} style={{width:'32px',height:'32px',display:'flex',alignItems:'center',justifyContent:'center',color:'#9A9A9A',fontSize:'13px'}}>...</span>
+                ) : (
+                  <button key={p} onClick={() => setCurrentPage(p)} style={{width:'32px',height:'32px',borderRadius:'6px',border:`1.5px solid ${currentPage===p?'#1B6FF0':'#EFEFEF'}`,background:currentPage===p?'#1B6FF0':'#fff',color:currentPage===p?'#fff':'#0D0D0D',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}>
+                    {p}
+                  </button>
+                ))}
+                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} style={{width:'32px',height:'32px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:currentPage===totalPages?'#F7F7F7':'#fff',color:currentPage===totalPages?'#D8D8D8':'#0D0D0D',cursor:currentPage===totalPages?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}>
+                  <FontAwesomeIcon icon={faChevronRight}/>
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
@@ -955,193 +924,137 @@ const togglePublic = async () => {
             </div>
             <div className="modal-body">
               <div className="form-grid">
-  {/* Required fields first */}
-  <div className="form-group">
-    <label className="form-label">Player / Subject <span style={{color:'#D93025'}}>*</span></label>
-    <input className="form-input" placeholder="e.g. Patrick Mahomes" value={form.player} onChange={e=>setForm(p=>({...p,player:e.target.value}))}/>
-  </div>
-  <div className="form-group">
-    <label className="form-label">Set Name <span style={{color:'#D93025'}}>*</span></label>
-    <input className="form-input" placeholder="e.g. Prizm Football" value={form.set_name} onChange={e=>setForm(p=>({...p,set_name:e.target.value}))}/>
-  </div>
-  <div className="form-group">
-    <label className="form-label">Sport / Category <span style={{color:'#D93025'}}>*</span></label>
-    <select className="form-select" value={form.sport} onChange={e=>setForm(p=>({...p,sport:e.target.value}))}>
-      <option value="">Select...</option>
-      {['Football','Baseball','Basketball','Hockey','Soccer','Gaming / TCG','Wrestling','Racing','Tennis','UFC','Golf','Boxing','Non-Sport','Other'].map(s=><option key={s}>{s}</option>)}
-    </select>
-  </div>
-  <div className="form-group">
-    <label className="form-label">Year</label>
-    <input className="form-input" type="number" placeholder="2024" value={form.year} onChange={e=>setForm(p=>({...p,year:e.target.value}))}/>
-  </div>
-
-  {/* Optional fields */}
-  <div className="form-group">
-    <label className="form-label">Brand</label>
-    <select className="form-select" value={form.brand} onChange={e=>setForm(p=>({...p,brand:e.target.value}))}>
-      <option value="">Select...</option>
-      {['Panini','Topps','Bowman','Upper Deck','Leaf','SAGE','Donruss','Fleer','Score','Other'].map(b=><option key={b}>{b}</option>)}
-    </select>
-  </div>
-  <div className="form-group">
-    <label className="form-label">Card Number</label>
-    <input className="form-input" placeholder="e.g. #200 or /99" value={form.cardnum} onChange={e=>setForm(p=>({...p,cardnum:e.target.value}))}/>
-  </div>
-  <div className="form-group">
-    <label className="form-label">Folder</label>
-    <select className="form-select" value={form.folder_id} onChange={e=>setForm(p=>({...p,folder_id:e.target.value}))}>
-      <option value="">No folder</option>
-      {folders.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
-    </select>
-  </div>
-  <div className="form-group">
-    <label className="form-label">Quantity</label>
-    <input className="form-input" type="number" min="1" value={form.qty} onChange={e=>setForm(p=>({...p,qty:e.target.value}))}/>
-  </div>
-
-  {/* Status */}
-  <div className="form-group full">
-    <label className="form-label">Status</label>
-    <div className="status-sel">
-      {[
-        {v:'have', l:'In My Vault', icon:faLayerGroup, color:'#00A861', bg:'#E6F9F0', border:'#A8DFC4'},
-        {v:'trade', l:'For Trade', icon:faArrowRightArrowLeft, color:'#E8820C', bg:'#FEF3E2', border:'#F5C880'},
-        {v:'sold', l:'Sold', icon:faTag, color:'#D93025', bg:'#FDECEA', border:'#FFBBB7'},
-      ].map(s=>(
-        <button
-          key={s.v}
-          onClick={()=>setSelectedStatus(s.v)}
-          style={{
-            padding:'10px',
-            borderRadius:'6px',
-            border:`1.5px solid ${selectedStatus===s.v?s.border:'#EFEFEF'}`,
-            background:selectedStatus===s.v?s.bg:'#fff',
-            color:selectedStatus===s.v?s.color:'#555',
-            fontFamily:'Plus Jakarta Sans,sans-serif',
-            fontSize:'12px',
-            fontWeight:600,
-            cursor:'pointer',
-            display:'flex',
-            alignItems:'center',
-            justifyContent:'center',
-            gap:'6px',
-            transition:'all .15s',
-          }}
-        >
-          <FontAwesomeIcon icon={s.icon} style={{fontSize:'12px'}}/>
-          {s.l}
-        </button>
-      ))}
-    </div>
-  </div>
-
-  {/* Grading */}
-  <div className="form-group full">
-    <label className="form-label">Grading</label>
-    <div className="grader-row">
-      {['Raw','PSA','BGS','SGC'].map(g=>(
-        <button key={g} className={`grader-btn${selectedGrader===g?' g-'+g:''}`} onClick={()=>{setSelectedGrader(g);setSelectedScore('')}}>{g==='Raw'?'Ungraded':g}</button>
-      ))}
-    </div>
-  </div>
-  {selectedGrader !== 'Raw' && (
-    <div className="form-group full">
-      <label className="form-label">Grade Score</label>
-      <div className="score-row">
-        {gradeScores(selectedGrader).map(s=>(
-          <button key={s} className={`score-btn${selectedScore===s?' sel':''}`} onClick={()=>setSelectedScore(s)}>{s}</button>
-        ))}
-      </div>
-    </div>
-  )}
-
-  <div className="form-group">
-    <label className="form-label">Condition</label>
-    <select className="form-select" value={form.condition} onChange={e=>setForm(p=>({...p,condition:e.target.value}))}>
-      <option value="">Select...</option>
-      {['Mint (M)','Near Mint-Mint (NM-MT)','Near Mint (NM)','Excellent-Mint (EX-MT)','Excellent (EX)','Very Good (VG)','Good (G)'].map(c=><option key={c}>{c}</option>)}
-    </select>
-  </div>
-  <div className="form-group">
-    <label className="form-label">Cost Paid ($)</label>
-    <input className="form-input" type="number" placeholder="0.00" value={form.cost} onChange={e=>setForm(p=>({...p,cost:e.target.value}))}/>
-  </div>
-  <div className="form-group">
-    <label className="form-label">Current Value ($)</label>
-    <input className="form-input" type="number" placeholder="0.00" value={form.value} onChange={e=>setForm(p=>({...p,value:e.target.value}))}/>
-  </div>
-  <div className="form-group full">
-    <label className="form-label">Card Attributes</label>
-    <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-      {[{v:'rc',l:'Rookie (RC)'},{v:'auto',l:'Autograph'},{v:'patch',l:'Patch/Relic'},{v:'numbered',l:'Numbered'},{v:'chrome',l:'Chrome'},{v:'refractor',l:'Refractor'},{v:'shortprint',l:'Short Print'},{v:'1of1',l:'1 of 1'}].map(a=>(
-        <button key={a.v} className={`fchip${formAttrs.includes(a.v)?' on':''}`} onClick={()=>toggleAttr(a.v)}>{a.l}</button>
-      ))}
-    </div>
-  </div>
-  <div className="form-group full">
-  <label className="form-label">Card Image</label>
-  <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-    
-    {/* Upload button */}
-    <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-      <label style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'6px',background:'#F7F7F7',border:'1.5px solid #EFEFEF',color:'#0D0D0D',fontSize:'13px',fontWeight:600,cursor:'pointer',transition:'all .15s',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
-        <FontAwesomeIcon icon={faUpload} style={{color:'#1B6FF0'}}/>
-        {uploadLoading ? 'Uploading...' : 'Upload Photo'}
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          style={{display:'none'}}
-          onChange={handleImageUpload}
-          disabled={uploadLoading}
-        />
-      </label>
-      <span style={{fontSize:'12px',color:'#9A9A9A'}}>JPG, PNG or WebP · Max 5MB</span>
-    </div>
-
-    {/* Divider */}
-    <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-      <div style={{flex:1,height:'1px',background:'#EFEFEF'}}></div>
-      <span style={{fontSize:'11px',color:'#9A9A9A',fontWeight:600}}>OR</span>
-      <div style={{flex:1,height:'1px',background:'#EFEFEF'}}></div>
-    </div>
-
-    {/* URL input */}
-    <input
-      className="form-input"
-      placeholder="Paste an image URL from eBay, COMC, or any image host..."
-      value={form.card_image_url}
-      onChange={e=>setForm(p=>({...p,card_image_url:e.target.value}))}
-    />
-
-    {/* Preview */}
-    {form.card_image_url && (
-      <div style={{display:'flex',alignItems:'flex-start',gap:'12px'}}>
-        <img
-          src={form.card_image_url}
-          alt="Card preview"
-          style={{width:'60px',height:'84px',objectFit:'cover',borderRadius:'6px',border:'1px solid #EFEFEF'}}
-          onError={e=>{(e.target as HTMLImageElement).style.display='none'}}
-        />
-        <div style={{display:'flex',flexDirection:'column',gap:'6px',paddingTop:'4px'}}>
-          <div style={{fontSize:'12px',color:'#9A9A9A',lineHeight:1.5}}>Image preview. Looking good!</div>
-          <button
-            type="button"
-            onClick={() => setForm(p=>({...p,card_image_url:''}))}
-            style={{display:'inline-flex',alignItems:'center',gap:'4px',fontSize:'12px',color:'#D93025',background:'none',border:'none',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',padding:0,fontWeight:600}}
-          >
-            <FontAwesomeIcon icon={faXmark}/>Remove image
-          </button>
-        </div>
-      </div>
-    )}
-  </div>
-</div>
-  <div className="form-group full">
-    <label className="form-label">Notes</label>
-    <textarea className="form-input" style={{minHeight:'64px',resize:'vertical'}} placeholder="Serial number, purchase story, condition notes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/>
-  </div>
-</div>
+                <div className="form-group">
+                  <label className="form-label">Player / Subject <span style={{color:'#D93025'}}>*</span></label>
+                  <input className="form-input" placeholder="e.g. Patrick Mahomes" value={form.player} onChange={e=>setForm(p=>({...p,player:e.target.value}))}/>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Set Name <span style={{color:'#D93025'}}>*</span></label>
+                  <input className="form-input" placeholder="e.g. Prizm Football" value={form.set_name} onChange={e=>setForm(p=>({...p,set_name:e.target.value}))}/>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Sport / Category <span style={{color:'#D93025'}}>*</span></label>
+                  <select className="form-select" value={form.sport} onChange={e=>setForm(p=>({...p,sport:e.target.value}))}>
+                    <option value="">Select...</option>
+                    {['Football','Baseball','Basketball','Hockey','Soccer','Gaming / TCG','Wrestling','Racing','Tennis','UFC','Golf','Boxing','Non-Sport','Other'].map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Year</label>
+                  <input className="form-input" type="number" placeholder="2024" value={form.year} onChange={e=>setForm(p=>({...p,year:e.target.value}))}/>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Brand</label>
+                  <select className="form-select" value={form.brand} onChange={e=>setForm(p=>({...p,brand:e.target.value}))}>
+                    <option value="">Select...</option>
+                    {['Panini','Topps','Bowman','Upper Deck','Leaf','SAGE','Donruss','Fleer','Score','Other'].map(b=><option key={b}>{b}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Card Number</label>
+                  <input className="form-input" placeholder="e.g. #200 or /99" value={form.cardnum} onChange={e=>setForm(p=>({...p,cardnum:e.target.value}))}/>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Folder</label>
+                  <select className="form-select" value={form.folder_id} onChange={e=>setForm(p=>({...p,folder_id:e.target.value}))}>
+                    <option value="">No folder</option>
+                    {folders.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Quantity</label>
+                  <input className="form-input" type="number" min="1" value={form.qty} onChange={e=>setForm(p=>({...p,qty:e.target.value}))}/>
+                </div>
+                <div className="form-group full">
+                  <label className="form-label">Status</label>
+                  <div className="status-sel">
+                    {[
+                      {v:'have', l:'In My Vault', icon:faLayerGroup, color:'#00A861', bg:'#E6F9F0', border:'#A8DFC4'},
+                      {v:'trade', l:'For Trade', icon:faArrowRightArrowLeft, color:'#E8820C', bg:'#FEF3E2', border:'#F5C880'},
+                      {v:'sold', l:'Sold', icon:faTag, color:'#D93025', bg:'#FDECEA', border:'#FFBBB7'},
+                    ].map(s=>(
+                      <button key={s.v} onClick={()=>setSelectedStatus(s.v)} style={{padding:'10px',borderRadius:'6px',border:`1.5px solid ${selectedStatus===s.v?s.border:'#EFEFEF'}`,background:selectedStatus===s.v?s.bg:'#fff',color:selectedStatus===s.v?s.color:'#555',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',transition:'all .15s'}}>
+                        <FontAwesomeIcon icon={s.icon} style={{fontSize:'12px'}}/>{s.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-group full">
+                  <label className="form-label">Grading</label>
+                  <div className="grader-row">
+                    {['Raw','PSA','BGS','SGC'].map(g=>(
+                      <button key={g} className={`grader-btn${selectedGrader===g?' g-'+g:''}`} onClick={()=>{setSelectedGrader(g);setSelectedScore('')}}>{g==='Raw'?'Ungraded':g}</button>
+                    ))}
+                  </div>
+                </div>
+                {selectedGrader !== 'Raw' && (
+                  <div className="form-group full">
+                    <label className="form-label">Grade Score</label>
+                    <div className="score-row">
+                      {gradeScores(selectedGrader).map(s=>(
+                        <button key={s} className={`score-btn${selectedScore===s?' sel':''}`} onClick={()=>setSelectedScore(s)}>{s}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="form-group">
+                  <label className="form-label">Condition</label>
+                  <select className="form-select" value={form.condition} onChange={e=>setForm(p=>({...p,condition:e.target.value}))}>
+                    <option value="">Select...</option>
+                    {['Mint (M)','Near Mint-Mint (NM-MT)','Near Mint (NM)','Excellent-Mint (EX-MT)','Excellent (EX)','Very Good (VG)','Good (G)'].map(c=><option key={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Cost Paid ($)</label>
+                  <input className="form-input" type="number" placeholder="0.00" value={form.cost} onChange={e=>setForm(p=>({...p,cost:e.target.value}))}/>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Current Value ($)</label>
+                  <input className="form-input" type="number" placeholder="0.00" value={form.value} onChange={e=>setForm(p=>({...p,value:e.target.value}))}/>
+                </div>
+                <div className="form-group full">
+                  <label className="form-label">Card Attributes</label>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+                    {[{v:'rc',l:'Rookie (RC)'},{v:'auto',l:'Autograph'},{v:'patch',l:'Patch/Relic'},{v:'numbered',l:'Numbered'},{v:'chrome',l:'Chrome'},{v:'refractor',l:'Refractor'},{v:'shortprint',l:'Short Print'},{v:'1of1',l:'1 of 1'}].map(a=>(
+                      <button key={a.v} className={`fchip${formAttrs.includes(a.v)?' on':''}`} onClick={()=>toggleAttr(a.v)}>{a.l}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-group full">
+                  <label className="form-label">Card Image</label>
+                  <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                    <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+                      <label style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'6px',background:'#F7F7F7',border:'1.5px solid #EFEFEF',color:'#0D0D0D',fontSize:'13px',fontWeight:600,cursor:'pointer',transition:'all .15s',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+                        <FontAwesomeIcon icon={faUpload} style={{color:'#1B6FF0'}}/>
+                        {uploadLoading ? 'Uploading...' : 'Upload Photo'}
+                        <input type="file" accept="image/jpeg,image/png,image/webp" style={{display:'none'}} onChange={handleImageUpload} disabled={uploadLoading}/>
+                      </label>
+                      <span style={{fontSize:'12px',color:'#9A9A9A'}}>JPG, PNG or WebP · Max 5MB</span>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                      <div style={{flex:1,height:'1px',background:'#EFEFEF'}}></div>
+                      <span style={{fontSize:'11px',color:'#9A9A9A',fontWeight:600}}>OR</span>
+                      <div style={{flex:1,height:'1px',background:'#EFEFEF'}}></div>
+                    </div>
+                    <input className="form-input" placeholder="Paste an image URL from eBay, COMC, or any image host..." value={form.card_image_url} onChange={e=>setForm(p=>({...p,card_image_url:e.target.value}))}/>
+                    {form.card_image_url && (
+                      <div style={{display:'flex',alignItems:'flex-start',gap:'12px'}}>
+                        <img src={form.card_image_url} alt="Card preview" style={{width:'60px',height:'84px',objectFit:'cover',borderRadius:'6px',border:'1px solid #EFEFEF'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+                        <div style={{display:'flex',flexDirection:'column',gap:'6px',paddingTop:'4px'}}>
+                          <div style={{fontSize:'12px',color:'#9A9A9A',lineHeight:1.5}}>Image preview. Looking good!</div>
+                          <button type="button" onClick={() => setForm(p=>({...p,card_image_url:''}))} style={{display:'inline-flex',alignItems:'center',gap:'4px',fontSize:'12px',color:'#D93025',background:'none',border:'none',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',padding:0,fontWeight:600}}>
+                            <FontAwesomeIcon icon={faXmark}/>Remove image
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="form-group full">
+                  <label className="form-label">Notes</label>
+                  <textarea className="form-input" style={{minHeight:'64px',resize:'vertical'}} placeholder="Serial number, purchase story, condition notes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/>
+                </div>
+              </div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={()=>setShowAdd(false)}>Cancel</button>
@@ -1218,9 +1131,7 @@ const togglePublic = async () => {
           <div className="modal modal-lg" style={{maxWidth:'700px'}} onClick={e => e.stopPropagation()}>
             <div className="modal-hdr">
               <div className="modal-hdr-title">{selectedCard.player}</div>
-              <button className="modal-close" onClick={() => setSelectedCard(null)}>
-                <FontAwesomeIcon icon={faXmark}/>
-              </button>
+              <button className="modal-close" onClick={() => setSelectedCard(null)}><FontAwesomeIcon icon={faXmark}/></button>
             </div>
             <div className="modal-body">
               <div style={{display:'grid',gridTemplateColumns:'200px 1fr',gap:'24px'}}>
@@ -1232,13 +1143,9 @@ const togglePublic = async () => {
                 </div>
                 <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
                   <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-                    <span className={`card-status ${statusMap[selectedCard.status]||'status-have'}`} style={{position:'static',fontSize:'11px'}}>
-                      {statusLbl[selectedCard.status]||'Owned'}
-                    </span>
+                    <span className={`card-status ${statusMap[selectedCard.status]||'status-have'}`} style={{position:'static',fontSize:'11px'}}>{statusLbl[selectedCard.status]||'Owned'}</span>
                     {selectedCard.grader && selectedCard.grader !== 'Raw' && (
-                      <span className={`grade-chip grade-${selectedCard.grader}`} style={{position:'static',fontSize:'11px'}}>
-                        {selectedCard.grader} {selectedCard.grade}
-                      </span>
+                      <span className={`grade-chip grade-${selectedCard.grader}`} style={{position:'static',fontSize:'11px'}}>{selectedCard.grader} {selectedCard.grade}</span>
                     )}
                   </div>
                   <div>
@@ -1267,16 +1174,16 @@ const togglePublic = async () => {
                   </div>
                   <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                     {[
-  {lbl:'Sport', val:selectedCard.sport},
-  {lbl:'Year', val:selectedCard.year||'-'},
-  {lbl:'Brand', val:selectedCard.brand||'-'},
-  {lbl:'Set Name', val:selectedCard.set_name||'-'},
-  {lbl:'Card Number', val:selectedCard.cardnum||'-'},
-  {lbl:'Condition', val:selectedCard.condition||'-'},
-  {lbl:'Quantity', val:String(selectedCard.qty||1)},
-  {lbl:'Grading', val:selectedCard.grader&&selectedCard.grader!=='Raw'?`${selectedCard.grader} ${selectedCard.grade}`:'Raw (Ungraded)'},
-  {lbl:'Added', val:new Date(selectedCard.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},
-].map(row => (
+                      {lbl:'Sport', val:selectedCard.sport},
+                      {lbl:'Year', val:selectedCard.year||'-'},
+                      {lbl:'Brand', val:selectedCard.brand||'-'},
+                      {lbl:'Set Name', val:selectedCard.set_name||'-'},
+                      {lbl:'Card Number', val:selectedCard.cardnum||'-'},
+                      {lbl:'Condition', val:selectedCard.condition||'-'},
+                      {lbl:'Quantity', val:String(selectedCard.qty||1)},
+                      {lbl:'Grading', val:selectedCard.grader&&selectedCard.grader!=='Raw'?`${selectedCard.grader} ${selectedCard.grade}`:'Raw (Ungraded)'},
+                      {lbl:'Added', val:new Date(selectedCard.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},
+                    ].map(row => (
                       <div key={row.lbl} style={{display:'flex',justifyContent:'space-between',fontSize:'13px',paddingBottom:'8px',borderBottom:'1px solid #EFEFEF'}}>
                         <span style={{color:'#9A9A9A',fontWeight:500}}>{row.lbl}</span>
                         <span style={{fontWeight:600,color:'#0D0D0D'}}>{row.val}</span>
@@ -1300,6 +1207,64 @@ const togglePublic = async () => {
               </button>
               <button className="btn btn-primary" onClick={() => { setSelectedCard(null); openEdit(selectedCard.id) }}>
                 <FontAwesomeIcon icon={faPen}/>Edit Card
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ONBOARDING MODAL */}
+      {showOnboarding && (
+        <div className="overlay" onClick={e => e.stopPropagation()}>
+          <div className="modal" style={{maxWidth:'440px'}} onClick={e => e.stopPropagation()}>
+            <div className="modal-hdr">
+              <div className="modal-hdr-title">🎉 Welcome to FoilCase!</div>
+            </div>
+            <div className="modal-body">
+              <p style={{fontSize:'14px',color:'#555',lineHeight:1.6,marginBottom:'20px'}}>
+                Claim your username to get a shareable vault URL. You can always change this later in Settings.
+              </p>
+              <div className="form-group" style={{marginBottom:'16px'}}>
+                <label className="form-label">Username <span style={{color:'#D93025'}}>*</span></label>
+                <div style={{position:'relative'}}>
+                  <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',fontSize:'14px',color:'#9A9A9A',fontWeight:600,pointerEvents:'none'}}>@</span>
+                  <input
+                    className="form-input"
+                    style={{paddingLeft:'28px'}}
+                    placeholder={suggestedUsername || 'yourcollectorname'}
+                    value={onboardingUsername}
+                    onChange={e => { setOnboardingUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,'')); setOnboardingError('') }}
+                    maxLength={20}
+                    autoFocus
+                  />
+                </div>
+                {onboardingError && <div style={{fontSize:'12px',color:'#D93025',marginTop:'4px'}}>{onboardingError}</div>}
+                {onboardingUsername.length >= 3 && !onboardingError && (
+                  <div style={{fontSize:'12px',color:'#1B6FF0',marginTop:'4px',fontWeight:600}}>foilcase.com/vault/{onboardingUsername}</div>
+                )}
+                {!onboardingUsername && suggestedUsername && (
+                  <button onClick={() => setOnboardingUsername(suggestedUsername)} style={{fontSize:'12px',color:'#1B6FF0',background:'none',border:'none',cursor:'pointer',padding:'4px 0',fontFamily:'Plus Jakarta Sans,sans-serif',fontWeight:600}}>
+                    Use suggested: @{suggestedUsername}
+                  </button>
+                )}
+              </div>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px',background:'#F7F7F7',borderRadius:'8px',border:'1px solid #EFEFEF'}}>
+                <div>
+                  <div style={{fontSize:'13px',fontWeight:700,color:'#0D0D0D',marginBottom:'2px',display:'flex',alignItems:'center',gap:'6px'}}>
+                    <FontAwesomeIcon icon={onboardingPublic ? faGlobe : faLock} style={{color:onboardingPublic?'#1B6FF0':'#9A9A9A'}}/>
+                    {onboardingPublic ? 'Public vault' : 'Private vault'}
+                  </div>
+                  <div style={{fontSize:'12px',color:'#9A9A9A'}}>{onboardingPublic ? 'Anyone can browse your collection' : 'Only you can see your collection'}</div>
+                </div>
+                <button onClick={() => setOnboardingPublic(p => !p)} style={{width:'40px',height:'22px',borderRadius:'100px',border:'none',background:onboardingPublic?'#1B6FF0':'#D8D8D8',cursor:'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
+                  <div style={{position:'absolute',top:'3px',left:onboardingPublic?'21px':'3px',width:'16px',height:'16px',borderRadius:'50%',background:'#fff',transition:'left .2s',boxShadow:'0 1px 3px rgba(0,0,0,.2)'}}></div>
+                </button>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setShowOnboarding(false)}>Maybe later</button>
+              <button className="btn btn-primary" onClick={saveOnboarding} disabled={onboardingSaving}>
+                {onboardingSaving ? 'Saving...' : <><FontAwesomeIcon icon={faCheck}/>Claim Username</>}
               </button>
             </div>
           </div>
