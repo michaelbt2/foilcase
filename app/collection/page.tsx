@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { supabase } from '../lib/supabase'
@@ -9,7 +10,9 @@ import {
   faLayerGroup, faBoxOpen, faMedal, faChartLine, faGrip, faBars, faXmark,
   faRotateLeft, faShield, faRightToBracket, faUserPlus, faFootball, faBaseball, faUpload,
   faBasketball, faHockeyPuck, faFutbol, faGamepad, faCheck, faFlagCheckered, faChevronLeft, faChevronRight,
-  faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft,
+  faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft,faGlobe,
+faLock,
+faGear,
 } from '@fortawesome/free-solid-svg-icons'
 
 const sportEmoji: Record<string,string> = {
@@ -107,16 +110,19 @@ const CARDS_PER_PAGE = 24
 }, [isLoaded, user?.id])
 
   const loadData = async () => {
-    if (!user) return
-    setLoading(true)
-    const [{ data: cardsData }, { data: foldersData }] = await Promise.all([
-      supabase.from('cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('folders').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
-    ])
-    setCards(cardsData || [])
-    setFolders(foldersData || [])
-    setLoading(false)
-  }
+  if (!user) return
+  setLoading(true)
+  const [{ data: cardsData }, { data: foldersData }, { data: profileData }] = await Promise.all([
+    supabase.from('cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('folders').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+    supabase.from('profiles').select('username, is_public').eq('id', user.id).single(),
+  ])
+  setCards(cardsData || [])
+  setFolders(foldersData || [])
+  setIsPublic(profileData?.is_public || false)
+  setVaultUsername(profileData?.username || '')
+  setLoading(false)
+}
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
 const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -205,7 +211,9 @@ const [uploadLoading, setUploadLoading] = useState(false)
     setSelectedStatus('have')
     setShowAdd(true)
   }
-
+const [isPublic, setIsPublic]         = useState(false)
+const [vaultUsername, setVaultUsername] = useState('')
+const [profileLoading, setProfileLoading] = useState(false)
   const openEdit = (id: string) => {
     const c = cards.find(x => x.id === id)
     if (!c) return
@@ -217,7 +225,25 @@ const [uploadLoading, setUploadLoading] = useState(false)
     setSelectedStatus(c.status||'have')
     setShowAdd(true)
   }
-
+const togglePublic = async () => {
+  if (!user) return
+  if (!vaultUsername) {
+    showToast('⚠️ Set a username in Settings first')
+    return
+  }
+  setProfileLoading(true)
+  const newValue = !isPublic
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ id: user.id, username: vaultUsername, is_public: newValue, updated_at: new Date().toISOString() })
+  if (error) {
+    showToast('❌ Error updating vault visibility')
+  } else {
+    setIsPublic(newValue)
+    showToast(newValue ? '🌐 Vault is now public!' : '🔒 Vault is now private')
+  }
+  setProfileLoading(false)
+}
   const saveCard = async () => {
     if (!user) return
     if (!form.player || !form.set_name || !form.sport) { showToast('⚠️ Player, Set, and Sport are required'); return }
@@ -565,7 +591,61 @@ const [uploadLoading, setUploadLoading] = useState(false)
           {/* User info */}
           <div className="sidebar-card">
   <div style={{fontSize:'14px',fontWeight:700,marginBottom:'2px'}}>{user?.firstName ? `${user.firstName}'s Vault` : 'My Vault'}</div>
-  <div style={{fontSize:'11px',color:'#9A9A9A'}}>{user?.emailAddresses?.[0]?.emailAddress}</div>
+  <div style={{fontSize:'11px',color:'#9A9A9A',marginBottom:'14px'}}>{user?.emailAddresses?.[0]?.emailAddress}</div>
+
+  {/* Privacy toggle */}
+  <div style={{paddingTop:'14px',borderTop:'1px solid #EFEFEF'}}>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
+      <div>
+        <div style={{fontSize:'12px',fontWeight:700,color:'#0D0D0D',display:'flex',alignItems:'center',gap:'5px'}}>
+          <FontAwesomeIcon icon={isPublic ? faGlobe : faLock} style={{color:isPublic?'#1B6FF0':'#9A9A9A',fontSize:'11px'}}/>
+          {isPublic ? 'Public vault' : 'Private vault'}
+        </div>
+        <div style={{fontSize:'11px',color:'#9A9A9A',marginTop:'2px'}}>
+          {isPublic ? 'Visible to everyone' : 'Only visible to you'}
+        </div>
+      </div>
+      <button
+        onClick={togglePublic}
+        disabled={profileLoading}
+        style={{
+          width:'40px',height:'22px',borderRadius:'100px',border:'none',
+          background:isPublic?'#1B6FF0':'#D8D8D8',
+          cursor:profileLoading?'not-allowed':'pointer',
+          position:'relative',transition:'background .2s',flexShrink:0
+        }}
+      >
+        <div style={{
+          position:'absolute',top:'3px',
+          left:isPublic?'21px':'3px',
+          width:'16px',height:'16px',
+          borderRadius:'50%',background:'#fff',
+          transition:'left .2s',
+          boxShadow:'0 1px 3px rgba(0,0,0,.2)'
+        }}></div>
+      </button>
+    </div>
+
+    {/* Vault URL or prompt */}
+    {isPublic && vaultUsername && (
+      <div style={{display:'flex',alignItems:'center',gap:'6px',padding:'7px 10px',background:'#EBF2FF',borderRadius:'6px',border:'1px solid #C5D8FF'}}>
+        <FontAwesomeIcon icon={faGlobe} style={{color:'#1B6FF0',fontSize:'11px',flexShrink:0}}/>
+        <span style={{fontSize:'11px',color:'#1B6FF0',fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+          foilcase.com/vault/{vaultUsername}
+        </span>
+        <button
+          onClick={() => { navigator.clipboard.writeText(`https://foilcase.com/vault/${vaultUsername}`); showToast('📋 Link copied!') }}
+          style={{fontSize:'10px',color:'#1B6FF0',background:'none',border:'none',cursor:'pointer',fontWeight:700,fontFamily:'Plus Jakarta Sans,sans-serif',flexShrink:0}}
+        >Copy</button>
+      </div>
+    )}
+    {!vaultUsername && (
+      <Link href="/settings" style={{display:'flex',alignItems:'center',gap:'5px',fontSize:'11px',color:'#1B6FF0',fontWeight:600,textDecoration:'none',marginTop:'4px'}}>
+        <FontAwesomeIcon icon={faGear} style={{fontSize:'10px'}}/>
+        Set username to share vault
+      </Link>
+    )}
+  </div>
 </div>
 
           {/* Folders */}
