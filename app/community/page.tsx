@@ -7,14 +7,20 @@ import Link from 'next/link'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faMagnifyingGlass, faLayerGroup, faChartLine, faMedal,
-  faFire, faStar, faUsers, faUserPlus, faGlobe, faArrowRight,
+  faFire, faStar, faUsers, faUserPlus, faGlobe, faArrowRight, faTrophy, faCrown, faBolt
 } from '@fortawesome/free-solid-svg-icons'
 
 function fmtNum(n: number) {
   if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K'
   return n.toFixed(0)
 }
-
+function getCollectorBadge(cardCount: number) {
+  if (cardCount >= 500) return { icon: faCrown, color: '#F5A623', bg: '#FEF9EC', label: 'Legend' }
+  if (cardCount >= 250) return { icon: faTrophy, color: '#E8820C', bg: '#FEF3E2', label: 'Elite' }
+  if (cardCount >= 100) return { icon: faMedal, color: '#7B4FCA', bg: '#F2ECFB', label: 'Veteran' }
+  if (cardCount >= 25)  return { icon: faStar, color: '#1B6FF0', bg: '#EBF2FF', label: 'Enthusiast' }
+  return { icon: faLayerGroup, color: '#9A9A9A', bg: '#F7F7F7', label: 'Collector' }
+}
 interface Profile {
   id: string
   username: string
@@ -25,6 +31,7 @@ interface Profile {
   cardCount?: number
   totalValue?: number
   followerCount?: number
+  lastCardAdded?: string
 }
 
 export default function Community() {
@@ -63,22 +70,24 @@ export default function Community() {
 
     // Load card counts and values for each profile
     const enriched = await Promise.all(profileData.map(async (p) => {
-      const { data: cards } = await supabase
-        .from('cards')
-        .select('value, qty')
-        .eq('user_id', p.id)
-        .neq('status', 'sold')
+  const { data: cards } = await supabase
+    .from('cards')
+    .select('value, qty, created_at')
+    .eq('user_id', p.id)
+    .neq('status', 'sold')
+    .order('created_at', { ascending: false })
 
-      const { count: followerCount } = await supabase
-        .from('followers')
-        .select('*', { count: 'exact', head: true })
-        .eq('following_id', p.id)
+  const { count: followerCount } = await supabase
+    .from('followers')
+    .select('*', { count: 'exact', head: true })
+    .eq('following_id', p.id)
 
-      const cardCount = cards?.reduce((s,c) => s+(c.qty||1), 0) || 0
-      const totalValue = cards?.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0) || 0
+  const cardCount = cards?.reduce((s,c) => s+(c.qty||1), 0) || 0
+  const totalValue = cards?.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0) || 0
+  const lastCardAdded = cards?.[0]?.created_at || null
 
-      return { ...p, cardCount, totalValue, followerCount: followerCount || 0 }
-    }))
+  return { ...p, cardCount, totalValue, followerCount: followerCount || 0, lastCardAdded }
+}))
 
     setProfiles(enriched)
     setLoading(false)
@@ -94,27 +103,28 @@ export default function Community() {
   }
 
   const filterProfiles = () => {
-    let result = [...profiles]
-    if (searchVal) {
-      result = result.filter(p =>
-        p.username?.toLowerCase().includes(searchVal.toLowerCase()) ||
-        p.display_name?.toLowerCase().includes(searchVal.toLowerCase()) ||
-        p.bio?.toLowerCase().includes(searchVal.toLowerCase())
-      )
-    }
-    if (activeTab === 'top-value') {
-      result = result.sort((a,b) => (b.totalValue||0) - (a.totalValue||0))
-    } else if (activeTab === 'most-followed') {
-      result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
-    } else if (activeTab === 'most-cards') {
-      result = result.sort((a,b) => (b.cardCount||0) - (a.cardCount||0))
-    } else if (activeTab === 'newest') {
-      result = result.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    } else {
-      result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
-    }
-    setFiltered(result)
+  let result = [...profiles]
+  if (searchVal) {
+    result = result.filter(p =>
+      p.username?.toLowerCase().includes(searchVal.toLowerCase()) ||
+      p.display_name?.toLowerCase().includes(searchVal.toLowerCase())
+    )
   }
+  if (activeTab === 'most-followed') {
+    result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
+  } else if (activeTab === 'most-cards') {
+    result = result.sort((a,b) => (b.cardCount||0) - (a.cardCount||0))
+  } else if (activeTab === 'newest') {
+    result = result.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  } else if (activeTab === 'active') {
+    const cutoff = Date.now() - 7 * 86400000
+    result = result.filter(p => p.lastCardAdded && new Date(p.lastCardAdded).getTime() > cutoff)
+      .sort((a,b) => new Date(b.lastCardAdded||0).getTime() - new Date(a.lastCardAdded||0).getTime())
+  } else {
+    result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
+  }
+  setFiltered(result)
+}
 
   const toggleFollow = async (profileId: string) => {
     if (!user) { window.location.href = '/sign-in'; return }
@@ -137,12 +147,12 @@ export default function Community() {
   }
 
   const tabs = [
-    {id:'featured', label:'Featured', icon:faStar},
-    {id:'top-value', label:'Top Value', icon:faChartLine},
-    {id:'most-followed', label:'Most Followed', icon:faUsers},
-    {id:'most-cards', label:'Most Cards', icon:faLayerGroup},
-    {id:'newest', label:'Newest', icon:faFire},
-  ]
+  {id:'featured', label:'Featured', icon:faStar},
+  {id:'most-followed', label:'Most Followed', icon:faUsers},
+  {id:'most-cards', label:'Most Cards', icon:faLayerGroup},
+  {id:'newest', label:'Newest', icon:faFire},
+  {id:'active', label:'Active this week', icon:faBolt},
+]
 
   return (
     <>
@@ -285,21 +295,24 @@ export default function Community() {
 
                 {/* Header */}
                 <div className="profile-header">
-                  <div className="profile-avatar">
-                    {(p.display_name || p.username || '?')[0].toUpperCase()}
-                  </div>
+                  <div className="profile-avatar" style={{background:getCollectorBadge(p.cardCount||0).bg}}>
+  <FontAwesomeIcon
+    icon={getCollectorBadge(p.cardCount||0).icon}
+    style={{color:getCollectorBadge(p.cardCount||0).color, fontSize:'20px'}}
+  />
+</div>
                   <div className="profile-info">
                     <div className="profile-name">{p.display_name || p.username}</div>
                     <div className="profile-username">@{p.username}</div>
+<div style={{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px',padding:'2px 8px',borderRadius:'100px',background:getCollectorBadge(p.cardCount||0).bg,fontSize:'10px',fontWeight:700,color:getCollectorBadge(p.cardCount||0).color}}>
+  <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{fontSize:'9px'}}/>
+  {getCollectorBadge(p.cardCount||0).label}
+</div>
                   </div>
-                  <div style={{display:'flex',alignItems:'center',gap:'4px',fontSize:'11px',color:'#9A9A9A',flexShrink:0}}>
-                    <FontAwesomeIcon icon={faGlobe} style={{fontSize:'10px'}}/>
-                    Public
-                  </div>
+                  
                 </div>
 
-                {/* Bio */}
-                {p.bio && <div className="profile-bio">{p.bio}</div>}
+                
 
                 {/* Stats */}
                 <div className="profile-stats">
