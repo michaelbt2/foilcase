@@ -8,7 +8,7 @@ import {
   faLayerGroup,
   faRightToBracket,
   faUserPlus,
-  faTableCells, faUsers
+  faTableCells, faUsers, faGear,
 } from '@fortawesome/free-solid-svg-icons'
 
 function NavActions() {
@@ -17,13 +17,16 @@ function NavActions() {
   if (!isLoaded) return null
 
   if (isSignedIn) {
-    return (
-      <div className="nav-actions">
-        <Link className="btn btn-ghost" href="/collection">My Vault</Link>
-        <UserButton />
-      </div>
-    )
-  }
+  return (
+    <div className="nav-actions">
+      <Link className="btn btn-ghost" href="/collection">My Vault</Link>
+      <Link className="btn btn-ghost" href="/settings" style={{padding:'8px 10px'}}>
+        <FontAwesomeIcon icon={faGear}/>
+      </Link>
+      <UserButton />
+    </div>
+  )
+}
 
   return (
     <div className="nav-actions">
