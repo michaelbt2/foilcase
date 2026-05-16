@@ -11,7 +11,7 @@ import {
   faRotateLeft, faShield, faRightToBracket, faUserPlus, faFootball, faBaseball, faUpload,
   faBasketball, faHockeyPuck, faFutbol, faGamepad, faCheck, faFlagCheckered, faChevronLeft, faChevronRight,
   faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft, faGlobe,
-  faLock, faGear,
+  faLock, faGear, faArrowUpRightFromSquare,
 } from '@fortawesome/free-solid-svg-icons'
 
 const sportEmoji: Record<string,string> = {
@@ -24,7 +24,7 @@ interface Card {
   cardnum:string; folder_id:string; status:string; grader:string; grade:string;
   qty:number; condition:string; cost:number; value:number; attrs:string[];
   notes:string; created_at:string; img:string; user_id:string; card_image_url:string;
-  print_run:string;
+  print_run:string; ebay_listing_url:string;
 }
 interface Folder { id:string; name:string; color:string; emoji:string; user_id:string }
 
@@ -107,7 +107,7 @@ export default function Collection() {
   const CARDS_PER_PAGE = 24
   const [form, setForm] = useState({
   player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
-  folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:''
+  folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'', ebay_listing_url:''
 })
   const [formAttrs, setFormAttrs] = useState<string[]>([])
 
@@ -255,7 +255,7 @@ export default function Collection() {
   const folderCount = (fid: string) => cards.filter(c => c.folder_id === fid).reduce((s,c)=>s+(c.qty||1),0)
 
   const openAdd = () => {
-    setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'' })
+    setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'', ebay_listing_url:'' })
     setFormAttrs([])
     setSelectedGrader('Raw')
     setSelectedScore('')
@@ -267,7 +267,7 @@ export default function Collection() {
     const c = cards.find(x => x.id === id)
     if (!c) return
     setEditingId(id)
-    setForm({ player:c.player, year:c.year, brand:c.brand, set_name:c.set_name, sport:c.sport, cardnum:c.cardnum, folder_id:c.folder_id||'', qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes||'', card_image_url:c.card_image_url||'', print_run:c.print_run||'' })
+    setForm({ player:c.player, year:c.year, brand:c.brand, set_name:c.set_name, sport:c.sport, cardnum:c.cardnum, folder_id:c.folder_id||'', qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes||'', card_image_url:c.card_image_url||'', print_run:c.print_run||'', ebay_listing_url:c.ebay_listing_url||'' })
     setFormAttrs(c.attrs||[])
     setSelectedGrader(c.grader||'Raw')
     setSelectedScore(c.grade||'')
@@ -300,6 +300,7 @@ export default function Collection() {
 img: sportEmoji[form.sport]||'🃏',
 card_image_url: form.card_image_url || null,
 print_run: form.print_run || null,
+ebay_listing_url: form.ebay_listing_url || null,
     }
     if (editingId) {
       const { error } = await supabase.from('cards').update(card).eq('id', editingId)
@@ -354,8 +355,8 @@ print_run: form.print_run || null,
     ? ['10','9.5','9','8.5','8','7.5','7','6.5','6','5','4']
     : ['10','9','8','7','6','5','4','3','2','1','A']
 
-  const statusMap: Record<string,string> = { have:'status-have', trade:'status-trade', sold:'status-sold' }
-  const statusLbl: Record<string,string> = { have:'Owned', trade:'Trade', sold:'Sold' }
+  const statusMap: Record<string,string> = { have:'status-have', sale:'status-sale', trade:'status-trade', sold:'status-sold' }
+const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:'For Trade', sold:'Sold' }
 
   const FilterCheckbox = ({ value, label, icon, filterKey, count }: { value:string, label:string, icon?:any, filterKey:keyof typeof filters, count?:number }) => {
     const isActive = filters[filterKey] === value
@@ -503,6 +504,7 @@ print_run: form.print_run || null,
         .status-have{background:#E6F9F0;color:#00A861}
         .status-trade{background:#FEF3E2;color:#E8820C}
         .status-sold{background:#E5E5E5;color:#777}
+        .status-sale{background:#EBF2FF;color:#1B6FF0}
         .card-img{aspect-ratio:2.5/3.5;width:100%;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;flex-shrink:0;overflow:hidden;background:#F7F7F7}
         .card-img img{width:100%;height:100%;object-fit:cover}
         .grade-chip{position:absolute;bottom:8px;left:8px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:4px}
@@ -575,7 +577,7 @@ print_run: form.print_run || null,
         .score-row{display:flex;flex-wrap:wrap;gap:4px}
         .score-btn{padding:4px 9px;border-radius:4px;border:1px solid #EFEFEF;font-size:11px;font-weight:700;cursor:pointer;background:#fff;color:#555;font-family:'Plus Jakarta Sans',sans-serif;transition:all .1s}
         .score-btn.sel{background:#1B6FF0;color:#fff;border-color:#1B6FF0}
-        .status-sel{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+        .status-sel{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
         .status-opt{padding:8px;border-radius:6px;border:1.5px solid #EFEFEF;font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all .12s;background:#fff;font-family:'Plus Jakarta Sans',sans-serif}
         .s-have{background:#E6F9F0;color:#00A861;border-color:#A8DFC4}
         .s-trade{background:#FEF3E2;color:#E8820C;border-color:#F5C880}
@@ -835,10 +837,15 @@ print_run: form.print_run || null,
                       </div>
                     </div>
                     <div className="card-actions">
-                      <button className="act-btn act-edit" onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
-                      <button className="act-btn act-sold" onClick={e=>{e.stopPropagation();markSold(c.id)}}><FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}</button>
-                      <button className="act-btn act-rm" onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
-                    </div>
+  <button className="act-btn act-edit" onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
+  <button className="act-btn act-sold" onClick={e=>{e.stopPropagation();markSold(c.id)}}><FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}</button>
+  {c.ebay_listing_url && c.status==='sale' && (
+    <a href={c.ebay_listing_url} target="_blank" rel="noopener noreferrer" className="act-btn" style={{background:'#EBF2FF',color:'#1B6FF0',textDecoration:'none'}} onClick={e=>e.stopPropagation()}>
+      <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
+    </a>
+  )}
+  <button className="act-btn act-rm" onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
+</div>
                   </div>
                 )
               })}
@@ -978,10 +985,11 @@ print_run: form.print_run || null,
                   <label className="form-label">Status</label>
                   <div className="status-sel">
                     {[
-                      {v:'have', l:'In My Vault', icon:faLayerGroup, color:'#00A861', bg:'#E6F9F0', border:'#A8DFC4'},
-                      {v:'trade', l:'For Trade', icon:faArrowRightArrowLeft, color:'#E8820C', bg:'#FEF3E2', border:'#F5C880'},
-                      {v:'sold', l:'Sold', icon:faTag, color:'#D93025', bg:'#FDECEA', border:'#FFBBB7'},
-                    ].map(s=>(
+  {v:'have', l:'In My Vault', icon:faLayerGroup, color:'#00A861', bg:'#E6F9F0', border:'#A8DFC4'},
+  {v:'sale', l:'For Sale', icon:faArrowUpRightFromSquare, color:'#1B6FF0', bg:'#EBF2FF', border:'#C5D8FF'},
+  {v:'trade', l:'For Trade', icon:faArrowRightArrowLeft, color:'#E8820C', bg:'#FEF3E2', border:'#F5C880'},
+  {v:'sold', l:'Sold', icon:faTag, color:'#D93025', bg:'#FDECEA', border:'#FFBBB7'},
+].map(s=>(
                       <button key={s.v} onClick={()=>setSelectedStatus(s.v)} style={{padding:'10px',borderRadius:'6px',border:`1.5px solid ${selectedStatus===s.v?s.border:'#EFEFEF'}`,background:selectedStatus===s.v?s.bg:'#fff',color:selectedStatus===s.v?s.color:'#555',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',transition:'all .15s'}}>
                         <FontAwesomeIcon icon={s.icon} style={{fontSize:'12px'}}/>{s.l}
                       </button>
@@ -1072,6 +1080,23 @@ print_run: form.print_run || null,
                     )}
                   </div>
                 </div>
+                {selectedStatus === 'sale' && (
+  <div className="form-group full">
+    <label className="form-label">eBay Listing URL</label>
+    <input
+      className="form-input"
+      placeholder="Paste your eBay listing URL..."
+      value={form.ebay_listing_url}
+      onChange={e => setForm(p => ({...p, ebay_listing_url:e.target.value}))}
+    />
+    {form.ebay_listing_url && (
+      <div style={{marginTop:'6px',display:'flex',alignItems:'center',gap:'6px',fontSize:'12px',color:'#1B6FF0',fontWeight:600}}>
+        <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{fontSize:'11px'}}/>
+        <a href={form.ebay_listing_url} target="_blank" rel="noopener noreferrer" style={{color:'#1B6FF0'}}>Preview listing</a>
+      </div>
+    )}
+  </div>
+)}
                 <div className="form-group full">
                   <label className="form-label">Notes</label>
                   <textarea className="form-input" style={{minHeight:'64px',resize:'vertical'}} placeholder="Serial number, purchase story, condition notes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/>
@@ -1226,15 +1251,20 @@ print_run: form.print_run || null,
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setSelectedCard(null)}>Close</button>
-              <button className="btn btn-outline" onClick={() => { setSelectedCard(null); markSold(selectedCard.id) }}>
-                <FontAwesomeIcon icon={selectedCard.status==='sold'?faRotateLeft:faTag}/>
-                {selectedCard.status==='sold'?'Mark Owned':'Mark Sold'}
-              </button>
-              <button className="btn btn-primary" onClick={() => { setSelectedCard(null); openEdit(selectedCard.id) }}>
-                <FontAwesomeIcon icon={faPen}/>Edit Card
-              </button>
-            </div>
+  <button className="btn btn-ghost" onClick={() => setSelectedCard(null)}>Close</button>
+  {selectedCard.ebay_listing_url && selectedCard.status==='sale' && (
+    <a href={selectedCard.ebay_listing_url} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{textDecoration:'none'}}>
+      <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>View on eBay
+    </a>
+  )}
+  <button className="btn btn-outline" onClick={() => { setSelectedCard(null); markSold(selectedCard.id) }}>
+    <FontAwesomeIcon icon={selectedCard.status==='sold'?faRotateLeft:faTag}/>
+    {selectedCard.status==='sold'?'Mark Owned':'Mark Sold'}
+  </button>
+  <button className="btn btn-primary" onClick={() => { setSelectedCard(null); openEdit(selectedCard.id) }}>
+    <FontAwesomeIcon icon={faPen}/>Edit Card
+  </button>
+</div>
           </div>
         </div>
       )}
