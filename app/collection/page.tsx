@@ -93,6 +93,9 @@ export default function Collection() {
   const [newFolderName, setNewFolderName]   = useState('')
   const [expandedFilters, setExpandedFilters] = useState<string[]>(['sport','grading','status','date'])
   const [selectedCard, setSelectedCard] = useState<Card|null>(null)
+  useEffect(() => {
+  if (selectedCard) setImageTab('front')
+}, [selectedCard?.id])
   const [uploadLoading, setUploadLoading] = useState(false)
   const [isPublic, setIsPublic]         = useState(false)
   const [vaultUsername, setVaultUsername] = useState('')
@@ -1297,12 +1300,33 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
             </div>
             <div className="modal-body">
               <div style={{display:'grid',gridTemplateColumns:'200px 1fr',gap:'24px'}}>
-                <div style={{aspectRatio:'2.5/3.5',borderRadius:'8px',overflow:'hidden',background:selectedCard.card_image_url?'#000':cardBg(selectedCard.sport),display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  {selectedCard.card_image_url
-                    ? <img src={selectedCard.card_image_url} alt={selectedCard.player} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                    : <span style={{fontSize:'64px'}}>{sportEmoji[selectedCard.sport]||'🃏'}</span>
-                  }
-                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+  {/* Front/Back toggle — only show if back image exists */}
+  {selectedCard.card_image_back_url && (
+    <div style={{display:'flex',gap:'4px',background:'#EFEFEF',borderRadius:'8px',padding:'3px'}}>
+      {(['front','back'] as const).map(side => (
+        <button
+          key={side}
+          onClick={() => setImageTab(side)}
+          style={{flex:1,padding:'5px',borderRadius:'6px',border:'none',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',background:imageTab===side?'#fff':'transparent',color:imageTab===side?'#0D0D0D':'#9A9A9A',boxShadow:imageTab===side?'0 1px 3px rgba(0,0,0,.08)':'none',transition:'all .15s'}}
+        >
+          {side === 'front' ? 'Front' : 'Back'}
+        </button>
+      ))}
+    </div>
+  )}
+  <div style={{aspectRatio:'2.5/3.5',borderRadius:'8px',overflow:'hidden',background:(imageTab==='front'?selectedCard.card_image_url:selectedCard.card_image_back_url)?'#000':cardBg(selectedCard.sport),display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+    {imageTab === 'front' ? (
+      selectedCard.card_image_url
+        ? <img src={selectedCard.card_image_url} alt={selectedCard.player} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+        : <span style={{fontSize:'64px'}}>{sportEmoji[selectedCard.sport]||'🃏'}</span>
+    ) : (
+      selectedCard.card_image_back_url
+        ? <img src={selectedCard.card_image_back_url} alt={`${selectedCard.player} back`} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+        : <span style={{fontSize:'64px'}}>{sportEmoji[selectedCard.sport]||'🃏'}</span>
+    )}
+  </div>
+</div>
                 <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
                   <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
                     <span className={`card-status ${statusMap[selectedCard.status]||'status-have'}`} style={{position:'static',fontSize:'11px'}}>{statusLbl[selectedCard.status]||'Owned'}</span>
