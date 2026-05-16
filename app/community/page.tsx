@@ -55,6 +55,7 @@ export default function Community() {
   const [following, setFollowing]         = useState<Set<string>>(new Set())
   const [followLoading, setFollowLoading] = useState<string|null>(null)
   const [userCardCount, setUserCardCount] = useState(0)
+  const [activeTier, setActiveTier] = useState('all')
 
   useEffect(() => { loadProfiles() }, [])
 
@@ -65,7 +66,7 @@ export default function Community() {
     }
   }, [user])
 
-  useEffect(() => { filterProfiles() }, [searchVal, profiles, activeTab])
+  useEffect(() => { filterProfiles() }, [searchVal, profiles, activeTab, activeTier])
 
   const loadProfiles = async () => {
     setLoading(true)
@@ -122,29 +123,37 @@ export default function Community() {
   }
 
   const filterProfiles = () => {
-    let result = [...profiles]
-    if (searchVal) {
-      result = result.filter(p =>
-        p.username?.toLowerCase().includes(searchVal.toLowerCase()) ||
-        p.display_name?.toLowerCase().includes(searchVal.toLowerCase())
-      )
-    }
-    if (activeTab === 'most-followed') {
-      result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
-    } else if (activeTab === 'most-cards') {
-      result = result.sort((a,b) => (b.cardCount||0) - (a.cardCount||0))
-    } else if (activeTab === 'newest') {
-      result = result.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    } else if (activeTab === 'active') {
-      const cutoff = Date.now() - 7 * 86400000
-      result = result
-        .filter(p => p.lastCardAdded && new Date(p.lastCardAdded).getTime() > cutoff)
-        .sort((a,b) => new Date(b.lastCardAdded||0).getTime() - new Date(a.lastCardAdded||0).getTime())
-    } else {
-      result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
-    }
-    setFiltered(result)
+  let result = [...profiles]
+  if (searchVal) {
+    result = result.filter(p =>
+      p.username?.toLowerCase().includes(searchVal.toLowerCase()) ||
+      p.display_name?.toLowerCase().includes(searchVal.toLowerCase())
+    )
   }
+  // Tier filter
+  if (activeTier !== 'all') {
+    const tier = TIERS.find(t => t.label === activeTier)
+    if (tier) {
+      result = result.filter(p => {
+        const count = p.cardCount || 0
+        return count >= tier.min && (tier.max === Infinity || count <= tier.max)
+      })
+    }
+  }
+  if (activeTab === 'most-followed') {
+    result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
+  } else if (activeTab === 'newest') {
+    result = result.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  } else if (activeTab === 'active') {
+    const cutoff = Date.now() - 7 * 86400000
+    result = result
+      .filter(p => p.lastCardAdded && new Date(p.lastCardAdded).getTime() > cutoff)
+      .sort((a,b) => new Date(b.lastCardAdded||0).getTime() - new Date(a.lastCardAdded||0).getTime())
+  } else {
+    result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
+  }
+  setFiltered(result)
+}
 
   const toggleFollow = async (profileId: string) => {
     if (!user) { window.location.href = '/sign-in'; return }
@@ -166,7 +175,6 @@ export default function Community() {
   const tabs = [
     {id:'featured', label:'Featured', icon:faStar},
     {id:'most-followed', label:'Most Followed', icon:faUsers},
-    {id:'most-cards', label:'Most Cards', icon:faLayerGroup},
     {id:'newest', label:'Newest', icon:faFire},
     {id:'active', label:'Active this week', icon:faBolt},
   ]
@@ -193,11 +201,6 @@ export default function Community() {
         .search-bar input{flex:1;border:none;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;color:#0D0D0D;background:transparent}
         .search-bar input::placeholder{color:#9A9A9A}
         .search-bar-btn{background:#1B6FF0;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
-        .community-stats{background:#fff;border-bottom:1px solid #EFEFEF;padding:16px 24px}
-        .community-stats-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:32px;justify-content:center}
-        .community-stat{text-align:center}
-        .community-stat-val{font-size:20px;font-weight:800;color:#0D0D0D}
-        .community-stat-lbl{font-size:11px;color:#9A9A9A;text-transform:uppercase;letter-spacing:.06em}
         .community-main{max-width:1200px;margin:0 auto;padding:28px 24px}
         .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px}
         .tab{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #EFEFEF;background:#fff;color:#555;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif}
@@ -235,7 +238,7 @@ export default function Community() {
       <div className="community-hero">
         <div className="community-hero-inner">
           <h1 className="community-hero-title">Discover <em>collectors</em></h1>
-          <p className="community-hero-sub">Browse public vaults, follow collectors, and find cards For Trade</p>
+          <p className="community-hero-sub">Browse public vaults, follow collectors, and find cards for sell</p>
           <div className="search-bar">
             <FontAwesomeIcon icon={faMagnifyingGlass} style={{color:'#9A9A9A',flexShrink:0}}/>
             <input
@@ -245,24 +248,6 @@ export default function Community() {
               onChange={e => setSearchVal(e.target.value)}
             />
             <button className="search-bar-btn">Search</button>
-          </div>
-        </div>
-      </div>
-
-      {/* COMMUNITY STATS */}
-      <div className="community-stats">
-        <div className="community-stats-inner">
-          <div className="community-stat">
-            <div className="community-stat-val">{profiles.length}</div>
-            <div className="community-stat-lbl">Public Vaults</div>
-          </div>
-          <div className="community-stat">
-            <div className="community-stat-val">{fmtNum(profiles.reduce((s,p) => s+(p.cardCount||0), 0))}</div>
-            <div className="community-stat-lbl">Cards Tracked</div>
-          </div>
-          <div className="community-stat">
-            <div className="community-stat-val">{profiles.filter(p => (p.cardCount||0) > 0).length}</div>
-            <div className="community-stat-lbl">Active Collectors</div>
           </div>
         </div>
       </div>
@@ -365,14 +350,51 @@ export default function Community() {
         </div>
 
         {/* Tabs */}
-        <div className="tabs">
-          {tabs.map(t => (
-            <button key={t.id} className={`tab${activeTab===t.id?' on':''}`} onClick={() => setActiveTab(t.id)}>
-              <FontAwesomeIcon icon={t.icon} style={{fontSize:'11px'}}/>
-              {t.label}
-            </button>
-          ))}
-        </div>
+<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px',marginBottom:'16px'}}>
+  <div className="tabs" style={{margin:0}}>
+    {tabs.map(t => (
+      <button key={t.id} className={`tab${activeTab===t.id?' on':''}`} onClick={() => setActiveTab(t.id)}>
+        <FontAwesomeIcon icon={t.icon} style={{fontSize:'11px'}}/>
+        {t.label}
+      </button>
+    ))}
+  </div>
+</div>
+
+{/* Tier filter pills */}
+<div style={{display:'flex',alignItems:'center',gap:'6px',flexWrap:'wrap',marginBottom:'20px'}}>
+  <span style={{fontSize:'11px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.06em',marginRight:'4px'}}>Tier:</span>
+  <button
+    onClick={() => setActiveTier('all')}
+    style={{display:'inline-flex',alignItems:'center',gap:'5px',padding:'5px 12px',borderRadius:'100px',fontSize:'12px',fontWeight:600,cursor:'pointer',border:`1.5px solid ${activeTier==='all'?'#0D0D0D':'#EFEFEF'}`,background:activeTier==='all'?'#0D0D0D':'#fff',color:activeTier==='all'?'#fff':'#555',transition:'all .15s',fontFamily:'Plus Jakarta Sans,sans-serif'}}
+  >
+    All
+  </button>
+  {TIERS.map(tier => {
+    const count = profiles.filter(p => {
+      const c = p.cardCount || 0
+      return c >= tier.min && (tier.max === Infinity || c <= tier.max)
+    }).length
+    return (
+      <button
+        key={tier.label}
+        onClick={() => setActiveTier(activeTier === tier.label ? 'all' : tier.label)}
+        style={{
+          display:'inline-flex',alignItems:'center',gap:'5px',
+          padding:'5px 12px',borderRadius:'100px',fontSize:'12px',fontWeight:600,
+          cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s',
+          border:`1.5px solid ${activeTier===tier.label?tier.border:'#EFEFEF'}`,
+          background:activeTier===tier.label?tier.bg:'#fff',
+          color:activeTier===tier.label?tier.color:'#555',
+        }}
+      >
+        <FontAwesomeIcon icon={tier.icon} style={{fontSize:'10px',color:activeTier===tier.label?tier.color:'#9A9A9A'}}/>
+        {tier.label}
+        <span style={{fontSize:'10px',color:activeTier===tier.label?tier.color:'#9A9A9A',fontWeight:500}}>({count})</span>
+      </button>
+    )
+  })}
+</div>
 
         {/* Profiles grid */}
         {loading ? (
