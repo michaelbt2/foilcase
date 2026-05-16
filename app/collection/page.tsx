@@ -24,6 +24,7 @@ interface Card {
   cardnum:string; folder_id:string; status:string; grader:string; grade:string;
   qty:number; condition:string; cost:number; value:number; attrs:string[];
   notes:string; created_at:string; img:string; user_id:string; card_image_url:string;
+  print_run:string;
 }
 interface Folder { id:string; name:string; color:string; emoji:string; user_id:string }
 
@@ -105,9 +106,9 @@ export default function Collection() {
   const [currentPage, setCurrentPage] = useState(1)
   const CARDS_PER_PAGE = 24
   const [form, setForm] = useState({
-    player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
-    folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:''
-  })
+  player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
+  folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:''
+})
   const [formAttrs, setFormAttrs] = useState<string[]>([])
 
   const toggleFilterSection = (key: string) =>
@@ -254,8 +255,7 @@ export default function Collection() {
   const folderCount = (fid: string) => cards.filter(c => c.folder_id === fid).reduce((s,c)=>s+(c.qty||1),0)
 
   const openAdd = () => {
-    setEditingId(null)
-    setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'' })
+    setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'' })
     setFormAttrs([])
     setSelectedGrader('Raw')
     setSelectedScore('')
@@ -267,7 +267,7 @@ export default function Collection() {
     const c = cards.find(x => x.id === id)
     if (!c) return
     setEditingId(id)
-    setForm({ player:c.player, year:c.year, brand:c.brand, set_name:c.set_name, sport:c.sport, cardnum:c.cardnum, folder_id:c.folder_id||'', qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes||'', card_image_url:c.card_image_url||'' })
+    setForm({ player:c.player, year:c.year, brand:c.brand, set_name:c.set_name, sport:c.sport, cardnum:c.cardnum, folder_id:c.folder_id||'', qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes||'', card_image_url:c.card_image_url||'', print_run:c.print_run||'' })
     setFormAttrs(c.attrs||[])
     setSelectedGrader(c.grader||'Raw')
     setSelectedScore(c.grade||'')
@@ -297,8 +297,9 @@ export default function Collection() {
       qty:parseInt(form.qty)||1, condition:form.condition,
       cost:parseFloat(form.cost)||0, value:parseFloat(form.value)||0,
       attrs:formAttrs, notes:form.notes,
-      img: sportEmoji[form.sport]||'🃏',
-      card_image_url: form.card_image_url || null,
+img: sportEmoji[form.sport]||'🃏',
+card_image_url: form.card_image_url || null,
+print_run: form.print_run || null,
     }
     if (editingId) {
       const { error } = await supabase.from('cards').update(card).eq('id', editingId)
@@ -789,7 +790,7 @@ export default function Collection() {
             )}
           </div>
 
-          {/* CARDS */}
+         {/* CARDS */}
           {filtered.length === 0 ? (
             <div className="empty-state">
               <div style={{fontSize:'48px',marginBottom:'16px',color:'#D8D8D8'}}><FontAwesomeIcon icon={faFolderOpen}/></div>
@@ -821,7 +822,11 @@ export default function Collection() {
                         {c.cardnum?` · ${c.cardnum}`:''}
                       </div>
                       <div className="card-attrs">
-                        {(c.attrs||[]).map(a => <span key={a} className="attr-tag">{attrLabel(a)}</span>)}
+                        {(c.attrs||[]).map(a => (
+                          <span key={a} className="attr-tag">
+                            {a === 'numbered' && c.print_run ? c.print_run : attrLabel(a)}
+                          </span>
+                        ))}
                       </div>
                       <div className="card-fins">
                         <div><div className="fin-lbl">Cost</div><div className="fin-val">{c.cost?`$${c.cost}`:'-'}</div></div>
@@ -862,7 +867,11 @@ export default function Collection() {
                         {c.cardnum?` · ${c.cardnum}`:''}
                       </div>
                       <div className="card-attrs" style={{marginTop:'4px'}}>
-                        {(c.attrs||[]).map(a => <span key={a} className="attr-tag">{attrLabel(a)}</span>)}
+                        {(c.attrs||[]).map(a => (
+                          <span key={a} className="attr-tag">
+                            {a === 'numbered' && c.print_run ? c.print_run : attrLabel(a)}
+                          </span>
+                        ))}
                       </div>
                     </div>
                     <div className="list-meta">
@@ -1013,13 +1022,26 @@ export default function Collection() {
                   <input className="form-input" type="number" placeholder="0.00" value={form.value} onChange={e=>setForm(p=>({...p,value:e.target.value}))}/>
                 </div>
                 <div className="form-group full">
-                  <label className="form-label">Card Attributes</label>
-                  <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                    {[{v:'rc',l:'Rookie (RC)'},{v:'auto',l:'Autograph'},{v:'patch',l:'Patch/Relic'},{v:'numbered',l:'Numbered'},{v:'chrome',l:'Chrome'},{v:'refractor',l:'Refractor'},{v:'shortprint',l:'Short Print'},{v:'1of1',l:'1 of 1'}].map(a=>(
-                      <button key={a.v} className={`fchip${formAttrs.includes(a.v)?' on':''}`} onClick={()=>toggleAttr(a.v)}>{a.l}</button>
-                    ))}
-                  </div>
-                </div>
+  <label className="form-label">Card Attributes</label>
+  <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+    {[{v:'rc',l:'Rookie (RC)'},{v:'auto',l:'Autograph'},{v:'patch',l:'Patch/Relic'},{v:'numbered',l:'Numbered'},{v:'chrome',l:'Chrome'},{v:'refractor',l:'Refractor'},{v:'shortprint',l:'Short Print'},{v:'1of1',l:'1 of 1'}].map(a=>(
+      <button key={a.v} className={`fchip${formAttrs.includes(a.v)?' on':''}`} onClick={()=>toggleAttr(a.v)}>{a.l}</button>
+    ))}
+  </div>
+  {formAttrs.includes('numbered') && (
+    <div style={{marginTop:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
+      <label style={{fontSize:'12px',fontWeight:700,color:'#555',whiteSpace:'nowrap'}}>Print Run</label>
+      <input
+        className="form-input"
+        style={{maxWidth:'160px'}}
+        placeholder="e.g. 14/49 or 3/199"
+        value={form.print_run}
+        onChange={e => setForm(p => ({...p, print_run:e.target.value}))}
+      />
+      <span style={{fontSize:'12px',color:'#9A9A9A'}}>This will show on your card</span>
+    </div>
+  )}
+</div>
                 <div className="form-group full">
                   <label className="form-label">Card Image</label>
                   <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
@@ -1157,7 +1179,11 @@ export default function Collection() {
                   </div>
                   {(selectedCard.attrs||[]).length > 0 && (
                     <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                      {(selectedCard.attrs||[]).map(a => <span key={a} className="attr-tag">{attrLabel(a)}</span>)}
+                      {(selectedCard.attrs||[]).map(a => (
+  <span key={a} className="attr-tag">
+    {a === 'numbered' && selectedCard.print_run ? selectedCard.print_run : attrLabel(a)}
+  </span>
+))}
                     </div>
                   )}
                   <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px'}}>
