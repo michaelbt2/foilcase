@@ -198,7 +198,6 @@ export async function GET(request: NextRequest) {
   try {
     const token = await getEbayToken()
 
-    // Use quoted player name for exact match
     let query = `"${player}"`
     if (year)  query += ` ${year}`
     if (set)   query += ` ${set}`
@@ -207,44 +206,111 @@ export async function GET(request: NextRequest) {
     if (sport === 'Basketball') query += ' basketball'
     if (sport === 'Hockey')     query += ' hockey'
 
-    // Fetch across multiple offsets to get enough results
-    const allItems: any[] = []
+    // Fetch active listings and sold comps in parallel
     const offsets = [0, 50, 100, 150]
 
-    await Promise.all(offsets.map(async (offset) => {
-      const response = await fetch(
-        `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(query)}&filter=categoryIds:212&limit=50&offset=${offset}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-            'Content-Type': 'application/json',
+    const [activeResults, soldResults] = await Promise.all([
+      // Active listings — existing logic
+      Promise.all(offsets.map(async (offset) => {
+        const response = await fetch(
+          `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(query)}&filter=categoryIds:212&limit=50&offset=${offset}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+              'Content-Type': 'application/json',
+            }
+          }
+        )
+        const data = await response.json()
+        return data.itemSummaries || []
+      })),
+
+      // Sold comps — last 90 days
+      Promise.all([0, 50].map(async (offset) => {
+        const now = new Date().toISOString()
+        const past = new Date(Date.now() - 90 * 86400000).toISOString()
+        const response = await fetch(
+          `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(query)}&filter=categoryIds:212,buyingOptions:{FIXED_PRICE},itemEndDate:[${past}..${now}]&limit=50&offset=${offset}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+              'Content-Type': 'application/json',
+            }
+          }
+        )
+        const data = await response.json()
+        return data.itemSummaries || []
+      }))
+    ])
+
+    // Process active listings
+    const allActive = activeResults.flat()
+    const filteredActive = filterRelevantCards(allActive, player)
+    const deduplicated = deduplicateCards(filteredActive, player)
+
+    // Process sold comps
+    const allSold = soldResults.flat()
+    const filteredSold = filterRelevantCards(allSold, player)
+
+    // Build sold price map keyed same way as deduplication
+    const soldMap = new Map<string, {
+      prices: number[],
+      lastSold: string | null,
+    }>()
+
+    for (const item of filteredSold) {
+      const parsed = parseCardTitle(item.title, player)
+      const key = `${parsed.year}-${parsed.brand}-${parsed.setName}-${parsed.cardNum}-${parsed.parallel}`.toLowerCase()
+      const price = parseFloat(item.price?.value || '0')
+      if (!price) continue
+
+      if (!soldMap.has(key)) {
+        soldMap.set(key, { prices: [], lastSold: null })
+      }
+      const entry = soldMap.get(key)!
+      entry.prices.push(price)
+      const endDate = item.itemEndDate || null
+      if (endDate && (!entry.lastSold || endDate > entry.lastSold)) {
+        entry.lastSold = endDate
+      }
+    }
+
+    // Attach sold data to each deduped card
+    const enriched = deduplicated.map(card => {
+      const key = `${card.year}-${card.brand}-${card.setName}-${card.cardNum}-${card.parallel}`.toLowerCase()
+      const sold = soldMap.get(key)
+
+      if (sold && sold.prices.length > 0) {
+        const sorted = [...sold.prices].sort((a,b) => a - b)
+        const avg = sorted.reduce((s,p) => s+p, 0) / sorted.length
+        return {
+          ...card,
+          soldData: {
+            avgPrice: Math.round(avg * 100) / 100,
+            lowPrice: sorted[0],
+            highPrice: sorted[sorted.length - 1],
+            soldCount: sorted.length,
+            lastSold: sold.lastSold,
           }
         }
-      )
-      const data = await response.json()
-      if (data.itemSummaries) {
-        allItems.push(...data.itemSummaries)
       }
-    }))
+      return { ...card, soldData: null }
+    })
 
-    // Filter to relevant cards only
-    const filtered = filterRelevantCards(allItems, player)
-
-    // Deduplicate
-    const deduplicated = deduplicateCards(filtered, player)
-
-    // Sort by year descending then price ascending
-    deduplicated.sort((a, b) => {
+    // Sort by year desc then price asc
+    enriched.sort((a, b) => {
       if (b.year !== a.year) return parseInt(b.year) - parseInt(a.year)
       return a.price - b.price
     })
 
     return NextResponse.json({
-      total: deduplicated.length,
-      ebayTotal: allItems.length,
+      total: enriched.length,
+      ebayTotal: allActive.length,
+      soldTotal: allSold.length,
       query,
-      cards: deduplicated.slice(0, limit),
+      cards: enriched.slice(0, limit),
     })
 
   } catch (error: any) {

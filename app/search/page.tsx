@@ -496,10 +496,28 @@ const addToVault = async (c: any) => {
                         ))}
                         {c.grade && <span className="attr-tag" style={{background:'#EEF2FF',color:'#3730A3'}}>{c.grade}</span>}
                       </div>
-                      <div className="card-footer">
-                        <div className="card-price">{fmtPrice(c.price)}</div>
-                        <div className="card-condition">{c.condition}</div>
-                      </div>
+                      <div className="card-footer" style={{flexDirection:'column',alignItems:'flex-start',gap:'4px'}}>
+  {c.soldData && c.soldData.soldCount > 1 ? (
+    <>
+      <div style={{display:'flex',justifyContent:'space-between',width:'100%',alignItems:'flex-end'}}>
+        <div>
+          <div style={{fontSize:'9px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.04em'}}>Avg Sold</div>
+          <div style={{fontSize:'15px',fontWeight:800,color:'#00A861'}}>{fmtPrice(c.soldData.avgPrice)}</div>
+        </div>
+        <div style={{textAlign:'right'}}>
+          <div style={{fontSize:'9px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.04em'}}>Listed</div>
+          <div style={{fontSize:'13px',fontWeight:800,color:'#1B6FF0'}}>{fmtPrice(c.price)}</div>
+        </div>
+      </div>
+      <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.soldData.soldCount} sales · {fmtPrice(c.soldData.lowPrice)}–{fmtPrice(c.soldData.highPrice)}</div>
+    </>
+  ) : (
+    <>
+      <div className="card-price">{fmtPrice(c.price)}</div>
+      <div className="card-condition">{c.condition}</div>
+    </>
+  )}
+</div>
                     </div>
                     <div className="card-actions">
                       <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-view">
@@ -570,12 +588,37 @@ const addToVault = async (c: any) => {
     </div>
   </div>
   <div className="list-right">
-    <div className="list-price-lbl">Market Price</div>
-    <div className="list-price">{fmtPrice(c.price)}</div>
-    {c.printRun && (
-      <div style={{fontSize:'11px',color:'#7B4FCA',fontWeight:700}}>/{c.printRun}</div>
-    )}
-  </div>
+  {c.soldData && c.soldData.soldCount > 1 ? (
+    <>
+      <div style={{textAlign:'right',marginBottom:'6px'}}>
+        <div className="list-price-lbl">Avg Sold</div>
+        <div className="list-price" style={{color:'#00A861',fontSize:'17px'}}>{fmtPrice(c.soldData.avgPrice)}</div>
+        <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.soldData.soldCount} sales · {fmtPrice(c.soldData.lowPrice)}–{fmtPrice(c.soldData.highPrice)}</div>
+        {c.soldData.lastSold && (
+          <div style={{fontSize:'10px',color:'#00A861',fontWeight:600}}>
+            ↑ {new Date(c.soldData.lastSold).toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+          </div>
+        )}
+      </div>
+      <div style={{textAlign:'right'}}>
+        <div className="list-price-lbl">Listed From</div>
+        <div style={{fontSize:'14px',fontWeight:800,color:'#1B6FF0'}}>{fmtPrice(c.price)}</div>
+        {c.listingCount > 1 && <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.listingCount} listings</div>}
+      </div>
+    </>
+  ) : (
+    <>
+      <div className="list-price-lbl">Market Price</div>
+      <div className="list-price">{fmtPrice(c.price)}</div>
+      {c.listingCount > 1 && (
+        <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.listingCount} listings</div>
+      )}
+    </>
+  )}
+  {c.printRun && (
+    <div style={{fontSize:'11px',color:'#7B4FCA',fontWeight:700,marginTop:'2px'}}>/{c.printRun}</div>
+  )}
+</div>
   <div className="list-actions">
     
       <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'5px'}}>
