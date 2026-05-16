@@ -7,13 +7,15 @@ import Link from 'next/link'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faMagnifyingGlass, faLayerGroup, faChartLine, faMedal,
-  faFire, faStar, faUsers, faUserPlus, faGlobe, faArrowRight, faTrophy, faCrown, faBolt
+  faFire, faStar, faUsers, faUserPlus, faGlobe, faArrowRight,
+  faTrophy, faCrown, faBolt,
 } from '@fortawesome/free-solid-svg-icons'
 
 function fmtNum(n: number) {
   if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K'
   return n.toFixed(0)
 }
+
 function getCollectorBadge(cardCount: number) {
   if (cardCount >= 500) return { icon: faCrown, color: '#F5A623', bg: '#FEF9EC', label: 'Legend' }
   if (cardCount >= 250) return { icon: faTrophy, color: '#E8820C', bg: '#FEF3E2', label: 'Elite' }
@@ -21,6 +23,15 @@ function getCollectorBadge(cardCount: number) {
   if (cardCount >= 25)  return { icon: faStar, color: '#1B6FF0', bg: '#EBF2FF', label: 'Enthusiast' }
   return { icon: faLayerGroup, color: '#9A9A9A', bg: '#F7F7F7', label: 'Collector' }
 }
+
+const TIERS = [
+  { label:'Collector', min:1, max:24, icon:faLayerGroup, color:'#9A9A9A', bg:'#F7F7F7', border:'#E0E0E0' },
+  { label:'Enthusiast', min:25, max:99, icon:faStar, color:'#1B6FF0', bg:'#EBF2FF', border:'#C5D8FF' },
+  { label:'Veteran', min:100, max:249, icon:faMedal, color:'#7B4FCA', bg:'#F2ECFB', border:'#D4BAF0' },
+  { label:'Elite', min:250, max:499, icon:faTrophy, color:'#E8820C', bg:'#FEF3E2', border:'#F5C880' },
+  { label:'Legend', min:500, max:Infinity, icon:faCrown, color:'#F5A623', bg:'#FEF9EC', border:'#FDDBA0' },
+]
+
 interface Profile {
   id: string
   username: string
@@ -36,30 +47,28 @@ interface Profile {
 
 export default function Community() {
   const { user } = useUser()
-  const [profiles, setProfiles]       = useState<Profile[]>([])
-  const [filtered, setFiltered]       = useState<Profile[]>([])
-  const [loading, setLoading]         = useState(true)
-  const [searchVal, setSearchVal]     = useState('')
-  const [activeTab, setActiveTab]     = useState('featured')
-  const [following, setFollowing]     = useState<Set<string>>(new Set())
+  const [profiles, setProfiles]           = useState<Profile[]>([])
+  const [filtered, setFiltered]           = useState<Profile[]>([])
+  const [loading, setLoading]             = useState(true)
+  const [searchVal, setSearchVal]         = useState('')
+  const [activeTab, setActiveTab]         = useState('featured')
+  const [following, setFollowing]         = useState<Set<string>>(new Set())
   const [followLoading, setFollowLoading] = useState<string|null>(null)
+  const [userCardCount, setUserCardCount] = useState(0)
+
+  useEffect(() => { loadProfiles() }, [])
 
   useEffect(() => {
-    loadProfiles()
-  }, [])
-
-  useEffect(() => {
-    if (user) loadFollowing()
+    if (user) {
+      loadFollowing()
+      loadUserCardCount()
+    }
   }, [user])
 
-  useEffect(() => {
-    filterProfiles()
-  }, [searchVal, profiles, activeTab])
+  useEffect(() => { filterProfiles() }, [searchVal, profiles, activeTab])
 
   const loadProfiles = async () => {
     setLoading(true)
-
-    // Load all public profiles
     const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
@@ -68,26 +77,25 @@ export default function Community() {
 
     if (!profileData) { setLoading(false); return }
 
-    // Load card counts and values for each profile
     const enriched = await Promise.all(profileData.map(async (p) => {
-  const { data: cards } = await supabase
-    .from('cards')
-    .select('value, qty, created_at')
-    .eq('user_id', p.id)
-    .neq('status', 'sold')
-    .order('created_at', { ascending: false })
+      const { data: cards } = await supabase
+        .from('cards')
+        .select('value, qty, created_at')
+        .eq('user_id', p.id)
+        .neq('status', 'sold')
+        .order('created_at', { ascending: false })
 
-  const { count: followerCount } = await supabase
-    .from('followers')
-    .select('*', { count: 'exact', head: true })
-    .eq('following_id', p.id)
+      const { count: followerCount } = await supabase
+        .from('followers')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', p.id)
 
-  const cardCount = cards?.reduce((s,c) => s+(c.qty||1), 0) || 0
-  const totalValue = cards?.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0) || 0
-  const lastCardAdded = cards?.[0]?.created_at || null
+      const cardCount = cards?.reduce((s,c) => s+(c.qty||1), 0) || 0
+      const totalValue = cards?.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0) || 0
+      const lastCardAdded = cards?.[0]?.created_at || null
 
-  return { ...p, cardCount, totalValue, followerCount: followerCount || 0, lastCardAdded }
-}))
+      return { ...p, cardCount, totalValue, followerCount: followerCount || 0, lastCardAdded }
+    }))
 
     setProfiles(enriched)
     setLoading(false)
@@ -102,29 +110,41 @@ export default function Community() {
     if (data) setFollowing(new Set(data.map(f => f.following_id)))
   }
 
+  const loadUserCardCount = async () => {
+    if (!user) return
+    const { data } = await supabase
+      .from('cards')
+      .select('qty')
+      .eq('user_id', user.id)
+      .neq('status', 'sold')
+    const count = data?.reduce((s,c) => s+(c.qty||1), 0) || 0
+    setUserCardCount(count)
+  }
+
   const filterProfiles = () => {
-  let result = [...profiles]
-  if (searchVal) {
-    result = result.filter(p =>
-      p.username?.toLowerCase().includes(searchVal.toLowerCase()) ||
-      p.display_name?.toLowerCase().includes(searchVal.toLowerCase())
-    )
+    let result = [...profiles]
+    if (searchVal) {
+      result = result.filter(p =>
+        p.username?.toLowerCase().includes(searchVal.toLowerCase()) ||
+        p.display_name?.toLowerCase().includes(searchVal.toLowerCase())
+      )
+    }
+    if (activeTab === 'most-followed') {
+      result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
+    } else if (activeTab === 'most-cards') {
+      result = result.sort((a,b) => (b.cardCount||0) - (a.cardCount||0))
+    } else if (activeTab === 'newest') {
+      result = result.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    } else if (activeTab === 'active') {
+      const cutoff = Date.now() - 7 * 86400000
+      result = result
+        .filter(p => p.lastCardAdded && new Date(p.lastCardAdded).getTime() > cutoff)
+        .sort((a,b) => new Date(b.lastCardAdded||0).getTime() - new Date(a.lastCardAdded||0).getTime())
+    } else {
+      result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
+    }
+    setFiltered(result)
   }
-  if (activeTab === 'most-followed') {
-    result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
-  } else if (activeTab === 'most-cards') {
-    result = result.sort((a,b) => (b.cardCount||0) - (a.cardCount||0))
-  } else if (activeTab === 'newest') {
-    result = result.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  } else if (activeTab === 'active') {
-    const cutoff = Date.now() - 7 * 86400000
-    result = result.filter(p => p.lastCardAdded && new Date(p.lastCardAdded).getTime() > cutoff)
-      .sort((a,b) => new Date(b.lastCardAdded||0).getTime() - new Date(a.lastCardAdded||0).getTime())
-  } else {
-    result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
-  }
-  setFiltered(result)
-}
 
   const toggleFollow = async (profileId: string) => {
     if (!user) { window.location.href = '/sign-in'; return }
@@ -136,10 +156,7 @@ export default function Community() {
       setFollowing(prev => { const n = new Set(prev); n.delete(profileId); return n })
       setProfiles(prev => prev.map(p => p.id === profileId ? {...p, followerCount:(p.followerCount||1)-1} : p))
     } else {
-      await supabase.from('followers').insert({
-        follower_id: user.id,
-        following_id: profileId,
-      })
+      await supabase.from('followers').insert({ follower_id: user.id, following_id: profileId })
       setFollowing(prev => new Set([...prev, profileId]))
       setProfiles(prev => prev.map(p => p.id === profileId ? {...p, followerCount:(p.followerCount||0)+1} : p))
     }
@@ -147,12 +164,19 @@ export default function Community() {
   }
 
   const tabs = [
-  {id:'featured', label:'Featured', icon:faStar},
-  {id:'most-followed', label:'Most Followed', icon:faUsers},
-  {id:'most-cards', label:'Most Cards', icon:faLayerGroup},
-  {id:'newest', label:'Newest', icon:faFire},
-  {id:'active', label:'Active this week', icon:faBolt},
-]
+    {id:'featured', label:'Featured', icon:faStar},
+    {id:'most-followed', label:'Most Followed', icon:faUsers},
+    {id:'most-cards', label:'Most Cards', icon:faLayerGroup},
+    {id:'newest', label:'Newest', icon:faFire},
+    {id:'active', label:'Active this week', icon:faBolt},
+  ]
+
+  // Tier calculations for signed-in user
+  const currentTier = TIERS.find(t => userCardCount >= t.min && (t.max === Infinity || userCardCount <= t.max)) || TIERS[0]
+  const nextTier = user ? TIERS[TIERS.indexOf(currentTier) + 1] : null
+  const tierPct = nextTier
+    ? Math.min(100, Math.round(((userCardCount - currentTier.min) / (nextTier.min - currentTier.min)) * 100))
+    : 100
 
   return (
     <>
@@ -183,11 +207,10 @@ export default function Community() {
         .profile-card{background:#fff;border:1px solid #EFEFEF;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:all .2s;display:flex;flex-direction:column;gap:14px}
         .profile-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);transform:translateY(-2px);border-color:#D8D8D8}
         .profile-header{display:flex;align-items:flex-start;gap:12px}
-        .profile-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#1B6FF0,#7EB6FF);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
+        .profile-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
         .profile-info{flex:1;min-width:0}
         .profile-name{font-size:15px;font-weight:800;color:#0D0D0D;letter-spacing:-.3px}
         .profile-username{font-size:12px;color:#9A9A9A;margin-top:1px}
-        .profile-bio{font-size:13px;color:#555;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
         .profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
         .profile-stat{background:#F7F7F7;border-radius:6px;padding:10px;text-align:center}
         .profile-stat-val{font-size:15px;font-weight:800;color:#0D0D0D;letter-spacing:-.3px}
@@ -238,10 +261,6 @@ export default function Community() {
             <div className="community-stat-lbl">Cards Tracked</div>
           </div>
           <div className="community-stat">
-            <div className="community-stat-val">${fmtNum(profiles.reduce((s,p) => s+(p.totalValue||0), 0))}</div>
-            <div className="community-stat-lbl">Total Value</div>
-          </div>
-          <div className="community-stat">
             <div className="community-stat-val">{profiles.filter(p => (p.cardCount||0) > 0).length}</div>
             <div className="community-stat-lbl">Active Collectors</div>
           </div>
@@ -251,14 +270,104 @@ export default function Community() {
       {/* MAIN */}
       <div className="community-main">
 
+        {/* ACHIEVEMENT TIERS */}
+        <div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:'8px',padding:'20px 24px',marginBottom:'20px',boxShadow:'0 1px 3px rgba(0,0,0,.06)'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'8px'}}>
+            <div style={{fontSize:'13px',fontWeight:700,color:'#0D0D0D'}}>
+              <FontAwesomeIcon icon={faTrophy} style={{color:'#E8820C',marginRight:'6px'}}/>
+              Collector Achievements
+            </div>
+            <div style={{fontSize:'12px',color:'#9A9A9A'}}>Add cards to your vault to level up</div>
+          </div>
+
+          {/* Tier row */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'8px',marginBottom: user ? '20px' : '0'}}>
+            {TIERS.map(tier => {
+              const achieved = userCardCount >= tier.min
+              const isCurrent = userCardCount >= tier.min && (tier.max === Infinity || userCardCount <= tier.max)
+              return (
+                <div key={tier.label} style={{
+                  display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',
+                  padding:'12px 8px',borderRadius:'8px',
+                  border:`1.5px solid ${isCurrent ? tier.border : achieved ? tier.border : '#EFEFEF'}`,
+                  background:isCurrent ? tier.bg : achieved ? tier.bg : '#F7F7F7',
+                  opacity: user ? (achieved ? 1 : 0.45) : 1,
+                  transition:'all .2s',
+                  position:'relative',
+                }}>
+                  {isCurrent && user && (
+                    <div style={{position:'absolute',top:'-8px',left:'50%',transform:'translateX(-50%)',background:tier.color,color:'#fff',fontSize:'9px',fontWeight:700,padding:'2px 8px',borderRadius:'100px',whiteSpace:'nowrap'}}>
+                      YOUR TIER
+                    </div>
+                  )}
+                  <div style={{width:'36px',height:'36px',borderRadius:'50%',background:achieved&&user?tier.bg:'#EFEFEF',display:'flex',alignItems:'center',justifyContent:'center',border:`2px solid ${achieved&&user?tier.border:'#E0E0E0'}`}}>
+                    <FontAwesomeIcon icon={tier.icon} style={{color:achieved&&user?tier.color:'#9A9A9A',fontSize:'16px'}}/>
+                  </div>
+                  <div style={{fontSize:'12px',fontWeight:700,color:achieved&&user?tier.color:'#9A9A9A'}}>{tier.label}</div>
+                  <div style={{fontSize:'10px',color:'#9A9A9A',textAlign:'center'}}>
+                    {tier.max === Infinity ? `${tier.min}+ cards` : `${tier.min}–${tier.max} cards`}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Personal progress bar for signed-in users */}
+          {user && (
+            <div style={{borderTop:'1px solid #EFEFEF',paddingTop:'16px'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px',flexWrap:'wrap',gap:'8px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                  <div style={{width:'28px',height:'28px',borderRadius:'50%',background:currentTier.bg,display:'flex',alignItems:'center',justifyContent:'center',border:`2px solid ${currentTier.border}`}}>
+                    <FontAwesomeIcon icon={currentTier.icon} style={{color:currentTier.color,fontSize:'12px'}}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize:'13px',fontWeight:700,color:'#0D0D0D'}}>
+                      You are a <span style={{color:currentTier.color}}>{currentTier.label}</span>
+                    </div>
+                    <div style={{fontSize:'11px',color:'#9A9A9A'}}>{userCardCount} card{userCardCount!==1?'s':''} in your vault</div>
+                  </div>
+                </div>
+                {nextTier ? (
+                  <div style={{display:'flex',alignItems:'center',gap:'6px',fontSize:'12px',color:'#9A9A9A'}}>
+                    <span>{nextTier.min - userCardCount} cards to</span>
+                    <div style={{display:'flex',alignItems:'center',gap:'4px',fontWeight:700,color:nextTier.color}}>
+                      <FontAwesomeIcon icon={nextTier.icon} style={{fontSize:'11px'}}/>
+                      {nextTier.label}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{fontSize:'12px',fontWeight:700,color:currentTier.color}}>
+                    <FontAwesomeIcon icon={faCrown} style={{marginRight:'4px'}}/>
+                    Maximum tier reached!
+                  </div>
+                )}
+              </div>
+              <div style={{height:'6px',background:'#EFEFEF',borderRadius:'100px',overflow:'hidden'}}>
+                <div style={{width:`${tierPct}%`,height:'100%',background:currentTier.color,borderRadius:'100px',transition:'width .6s ease'}}></div>
+              </div>
+              {nextTier && (
+                <div style={{display:'flex',justifyContent:'space-between',marginTop:'4px',fontSize:'10px',color:'#9A9A9A'}}>
+                  <span>{currentTier.min} cards</span>
+                  <span>{nextTier.min} cards</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* CTA for signed-out users */}
+          {!user && (
+            <div style={{borderTop:'1px solid #EFEFEF',paddingTop:'16px',textAlign:'center'}}>
+              <Link href="/sign-up" style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'8px 20px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',textDecoration:'none',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600}}>
+                Start collecting to earn achievements
+              </Link>
+            </div>
+          )}
+        </div>
+
         {/* Tabs */}
         <div className="tabs">
           {tabs.map(t => (
-            <button
-              key={t.id}
-              className={`tab${activeTab===t.id?' on':''}`}
-              onClick={() => setActiveTab(t.id)}
-            >
+            <button key={t.id} className={`tab${activeTab===t.id?' on':''}`} onClick={() => setActiveTab(t.id)}>
               <FontAwesomeIcon icon={t.icon} style={{fontSize:'11px'}}/>
               {t.label}
             </button>
@@ -277,15 +386,10 @@ export default function Community() {
               {searchVal ? 'No collectors found' : 'No public vaults yet'}
             </div>
             <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>
-              {searchVal
-                ? `No collectors matching "${searchVal}"`
-                : 'Be the first to make your vault public!'
-              }
+              {searchVal ? `No collectors matching "${searchVal}"` : 'Be the first to make your vault public!'}
             </div>
             {!searchVal && (
-              <Link href="/settings" className="btn btn-primary">
-                Make my vault public
-              </Link>
+              <Link href="/settings" className="btn btn-primary">Make my vault public</Link>
             )}
           </div>
         ) : (
@@ -295,24 +399,18 @@ export default function Community() {
 
                 {/* Header */}
                 <div className="profile-header">
-                  <div className="profile-avatar" style={{background:getCollectorBadge(p.cardCount||0).bg}}>
-  <FontAwesomeIcon
-    icon={getCollectorBadge(p.cardCount||0).icon}
-    style={{color:getCollectorBadge(p.cardCount||0).color, fontSize:'20px'}}
-  />
-</div>
+                  <div className="profile-avatar" style={{background:getCollectorBadge(p.cardCount||0).bg,border:`2px solid ${TIERS.find(t => p.cardCount!==undefined && p.cardCount>=t.min && (t.max===Infinity||p.cardCount<=t.max))?.border||'#E0E0E0'}`}}>
+                    <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{color:getCollectorBadge(p.cardCount||0).color,fontSize:'20px'}}/>
+                  </div>
                   <div className="profile-info">
                     <div className="profile-name">{p.display_name || p.username}</div>
                     <div className="profile-username">@{p.username}</div>
-<div style={{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px',padding:'2px 8px',borderRadius:'100px',background:getCollectorBadge(p.cardCount||0).bg,fontSize:'10px',fontWeight:700,color:getCollectorBadge(p.cardCount||0).color}}>
-  <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{fontSize:'9px'}}/>
-  {getCollectorBadge(p.cardCount||0).label}
-</div>
+                    <div style={{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px',padding:'2px 8px',borderRadius:'100px',background:getCollectorBadge(p.cardCount||0).bg,fontSize:'10px',fontWeight:700,color:getCollectorBadge(p.cardCount||0).color}}>
+                      <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{fontSize:'9px'}}/>
+                      {getCollectorBadge(p.cardCount||0).label}
+                    </div>
                   </div>
-                  
                 </div>
-
-                
 
                 {/* Stats */}
                 <div className="profile-stats">
