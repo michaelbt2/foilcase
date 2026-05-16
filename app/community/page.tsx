@@ -56,7 +56,6 @@ export default function Community() {
   const [followLoading, setFollowLoading] = useState<string|null>(null)
   const [userCardCount, setUserCardCount] = useState(0)
   const [activeTier, setActiveTier] = useState('all')
-
   useEffect(() => { loadProfiles() }, [])
 
   useEffect(() => {

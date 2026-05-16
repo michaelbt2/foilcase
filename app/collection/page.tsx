@@ -24,7 +24,7 @@ interface Card {
   cardnum:string; folder_id:string; status:string; grader:string; grade:string;
   qty:number; condition:string; cost:number; value:number; attrs:string[];
   notes:string; created_at:string; img:string; user_id:string; card_image_url:string;
-  print_run:string; ebay_listing_url:string;
+  print_run:string; ebay_listing_url:string; card_image_back_url:string; sold_price:number;
 }
 interface Folder { id:string; name:string; color:string; emoji:string; user_id:string }
 
@@ -105,12 +105,13 @@ export default function Collection() {
   const [onboardingSaving, setOnboardingSaving]   = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const CARDS_PER_PAGE = 24
-  const [form, setForm] = useState({
+const [form, setForm] = useState({
   player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
-  folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'', ebay_listing_url:''
+  folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'', ebay_listing_url:'', card_image_back_url:'', sold_price:''
 })
   const [formAttrs, setFormAttrs] = useState<string[]>([])
-
+const [imageTab, setImageTab] = useState<'front'|'back'>('front')
+const [uploadBackLoading, setUploadBackLoading] = useState(false)
   const toggleFilterSection = (key: string) =>
     setExpandedFilters(prev => prev.includes(key) ? prev.filter(k=>k!==key) : [...prev,key])
 
@@ -218,7 +219,25 @@ export default function Collection() {
       setUploadLoading(false)
     }
   }
-
+const handleBackImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file || !user) return
+  if (file.size > 5 * 1024 * 1024) { showToast('⚠️ Image must be under 5MB'); return }
+  setUploadBackLoading(true)
+  try {
+    const ext = file.name.split('.').pop()
+    const fileName = `${user.id}/back-${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('card-images').upload(fileName, file, { cacheControl: '3600', upsert: false })
+    if (error) { showToast('❌ Upload failed: ' + error.message); return }
+    const { data } = supabase.storage.from('card-images').getPublicUrl(fileName)
+    setForm(p => ({...p, card_image_back_url: data.publicUrl}))
+    showToast('✅ Back image uploaded!')
+  } catch (err) {
+    showToast('❌ Upload failed. Please try again.')
+  } finally {
+    setUploadBackLoading(false)
+  }
+}
   const filtered = cards.filter(c => {
     if (searchVal && !['player','set_name','year','brand','cardnum'].some(k => String(c[k as keyof Card]).toLowerCase().includes(searchVal.toLowerCase()))) return false
     if (filters.sport !== 'all' && !c.sport.startsWith(filters.sport)) return false
@@ -255,7 +274,8 @@ export default function Collection() {
   const folderCount = (fid: string) => cards.filter(c => c.folder_id === fid).reduce((s,c)=>s+(c.qty||1),0)
 
   const openAdd = () => {
-    setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'', ebay_listing_url:'' })
+    setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'', ebay_listing_url:'', card_image_back_url:'', sold_price:'' })
+setImageTab('front')
     setFormAttrs([])
     setSelectedGrader('Raw')
     setSelectedScore('')
@@ -267,7 +287,8 @@ export default function Collection() {
     const c = cards.find(x => x.id === id)
     if (!c) return
     setEditingId(id)
-    setForm({ player:c.player, year:c.year, brand:c.brand, set_name:c.set_name, sport:c.sport, cardnum:c.cardnum, folder_id:c.folder_id||'', qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes||'', card_image_url:c.card_image_url||'', print_run:c.print_run||'', ebay_listing_url:c.ebay_listing_url||'' })
+    setForm({ player:c.player, year:c.year, brand:c.brand, set_name:c.set_name, sport:c.sport, cardnum:c.cardnum, folder_id:c.folder_id||'', qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes||'', card_image_url:c.card_image_url||'', print_run:c.print_run||'', ebay_listing_url:c.ebay_listing_url||'', card_image_back_url:c.card_image_back_url||'', sold_price:String(c.sold_price||'') })
+setImageTab('front')
     setFormAttrs(c.attrs||[])
     setSelectedGrader(c.grader||'Raw')
     setSelectedScore(c.grade||'')
@@ -299,8 +320,10 @@ export default function Collection() {
       attrs:formAttrs, notes:form.notes,
 img: sportEmoji[form.sport]||'🃏',
 card_image_url: form.card_image_url || null,
+card_image_back_url: form.card_image_back_url || null,
 print_run: form.print_run || null,
 ebay_listing_url: form.ebay_listing_url || null,
+sold_price: parseFloat(form.sold_price)||0,
     }
     if (editingId) {
       const { error } = await supabase.from('cards').update(card).eq('id', editingId)
@@ -565,7 +588,7 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
         .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
         .form-group{display:flex;flex-direction:column;gap:5px}
         .form-group.full{grid-column:1/-1}
-        .form-label{font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.07em}
+        .form-label{font-size:12px;font-weight:700;color:#555;letter-spacing:.05em}
         .form-input,.form-select{width:100%;padding:9px 12px;border:1.5px solid #EFEFEF;border-radius:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:#0D0D0D;background:#fff;outline:none;transition:border-color .15s}
         .form-input:focus,.form-select:focus{border-color:#1B6FF0;box-shadow:0 0 0 3px rgba(27,111,240,.1)}
         .grader-row{display:flex;gap:6px}
@@ -930,186 +953,278 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
         </main>
       </div>
 
-      {/* ADD / EDIT MODAL */}
-      {showAdd && (
-        <div className="overlay" onClick={()=>setShowAdd(false)}>
-          <div className="modal modal-lg" onClick={e=>e.stopPropagation()}>
-            <div className="modal-hdr">
-              <div className="modal-hdr-title">{editingId?'Edit Card':'Add Card to Vault'}</div>
-              <button className="modal-close" onClick={()=>setShowAdd(false)}><FontAwesomeIcon icon={faXmark}/></button>
-            </div>
-            <div className="modal-body">
-              <div className="form-grid">
-                <div className="form-group">
-                  <label className="form-label">Player / Subject <span style={{color:'#D93025'}}>*</span></label>
-                  <input className="form-input" placeholder="e.g. Patrick Mahomes" value={form.player} onChange={e=>setForm(p=>({...p,player:e.target.value}))}/>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Set Name <span style={{color:'#D93025'}}>*</span></label>
-                  <input className="form-input" placeholder="e.g. Prizm Football" value={form.set_name} onChange={e=>setForm(p=>({...p,set_name:e.target.value}))}/>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Sport / Category <span style={{color:'#D93025'}}>*</span></label>
-                  <select className="form-select" value={form.sport} onChange={e=>setForm(p=>({...p,sport:e.target.value}))}>
-                    <option value="">Select...</option>
-                    {['Football','Baseball','Basketball','Hockey','Soccer','Gaming / TCG','Wrestling','Racing','Tennis','UFC','Golf','Boxing','Non-Sport','Other'].map(s=><option key={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Year</label>
-                  <input className="form-input" type="number" placeholder="2024" value={form.year} onChange={e=>setForm(p=>({...p,year:e.target.value}))}/>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Brand</label>
-                  <select className="form-select" value={form.brand} onChange={e=>setForm(p=>({...p,brand:e.target.value}))}>
-                    <option value="">Select...</option>
-                    {['Panini','Topps','Bowman','Upper Deck','Leaf','SAGE','Donruss','Fleer','Score','Other'].map(b=><option key={b}>{b}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Card Number</label>
-                  <input className="form-input" placeholder="e.g. #200 or /99" value={form.cardnum} onChange={e=>setForm(p=>({...p,cardnum:e.target.value}))}/>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Folder</label>
-                  <select className="form-select" value={form.folder_id} onChange={e=>setForm(p=>({...p,folder_id:e.target.value}))}>
-                    <option value="">No folder</option>
-                    {folders.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Quantity</label>
-                  <input className="form-input" type="number" min="1" value={form.qty} onChange={e=>setForm(p=>({...p,qty:e.target.value}))}/>
-                </div>
-                <div className="form-group full">
-                  <label className="form-label">Status</label>
-                  <div className="status-sel">
-                    {[
-  {v:'have', l:'In My Vault', icon:faLayerGroup, color:'#00A861', bg:'#E6F9F0', border:'#A8DFC4'},
-  {v:'sale', l:'For Sale', icon:faArrowUpRightFromSquare, color:'#1B6FF0', bg:'#EBF2FF', border:'#C5D8FF'},
-  {v:'trade', l:'For Trade', icon:faArrowRightArrowLeft, color:'#E8820C', bg:'#FEF3E2', border:'#F5C880'},
-  {v:'sold', l:'Sold', icon:faTag, color:'#D93025', bg:'#FDECEA', border:'#FFBBB7'},
-].map(s=>(
-                      <button key={s.v} onClick={()=>setSelectedStatus(s.v)} style={{padding:'10px',borderRadius:'6px',border:`1.5px solid ${selectedStatus===s.v?s.border:'#EFEFEF'}`,background:selectedStatus===s.v?s.bg:'#fff',color:selectedStatus===s.v?s.color:'#555',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',transition:'all .15s'}}>
-                        <FontAwesomeIcon icon={s.icon} style={{fontSize:'12px'}}/>{s.l}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="form-group full">
-                  <label className="form-label">Grading</label>
-                  <div className="grader-row">
-                    {['Raw','PSA','BGS','SGC'].map(g=>(
-                      <button key={g} className={`grader-btn${selectedGrader===g?' g-'+g:''}`} onClick={()=>{setSelectedGrader(g);setSelectedScore('')}}>{g==='Raw'?'Ungraded':g}</button>
-                    ))}
-                  </div>
-                </div>
-                {selectedGrader !== 'Raw' && (
-                  <div className="form-group full">
-                    <label className="form-label">Grade Score</label>
-                    <div className="score-row">
-                      {gradeScores(selectedGrader).map(s=>(
-                        <button key={s} className={`score-btn${selectedScore===s?' sel':''}`} onClick={()=>setSelectedScore(s)}>{s}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="form-group">
-                  <label className="form-label">Condition</label>
-                  <select className="form-select" value={form.condition} onChange={e=>setForm(p=>({...p,condition:e.target.value}))}>
-                    <option value="">Select...</option>
-                    {['Mint (M)','Near Mint-Mint (NM-MT)','Near Mint (NM)','Excellent-Mint (EX-MT)','Excellent (EX)','Very Good (VG)','Good (G)'].map(c=><option key={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Cost Paid ($)</label>
-                  <input className="form-input" type="number" placeholder="0.00" value={form.cost} onChange={e=>setForm(p=>({...p,cost:e.target.value}))}/>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Current Value ($)</label>
-                  <input className="form-input" type="number" placeholder="0.00" value={form.value} onChange={e=>setForm(p=>({...p,value:e.target.value}))}/>
-                </div>
-                <div className="form-group full">
-  <label className="form-label">Card Attributes</label>
-  <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-    {[{v:'rc',l:'Rookie (RC)'},{v:'auto',l:'Autograph'},{v:'patch',l:'Patch/Relic'},{v:'numbered',l:'Numbered'},{v:'chrome',l:'Chrome'},{v:'refractor',l:'Refractor'},{v:'shortprint',l:'Short Print'},{v:'1of1',l:'1 of 1'}].map(a=>(
-      <button key={a.v} className={`fchip${formAttrs.includes(a.v)?' on':''}`} onClick={()=>toggleAttr(a.v)}>{a.l}</button>
-    ))}
-  </div>
-  {formAttrs.includes('numbered') && (
-    <div style={{marginTop:'10px',display:'flex',alignItems:'center',gap:'10px'}}>
-      <label style={{fontSize:'12px',fontWeight:700,color:'#555',whiteSpace:'nowrap'}}>Print Run</label>
-      <input
-        className="form-input"
-        style={{maxWidth:'160px'}}
-        placeholder="e.g. 14/49 or 3/199"
-        value={form.print_run}
-        onChange={e => setForm(p => ({...p, print_run:e.target.value}))}
-      />
-      <span style={{fontSize:'12px',color:'#9A9A9A'}}>This will show on your card</span>
-    </div>
-  )}
-</div>
-                <div className="form-group full">
-                  <label className="form-label">Card Image</label>
-                  <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-                    <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-                      <label style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'6px',background:'#F7F7F7',border:'1.5px solid #EFEFEF',color:'#0D0D0D',fontSize:'13px',fontWeight:600,cursor:'pointer',transition:'all .15s',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
-                        <FontAwesomeIcon icon={faUpload} style={{color:'#1B6FF0'}}/>
-                        {uploadLoading ? 'Uploading...' : 'Upload Photo'}
-                        <input type="file" accept="image/jpeg,image/png,image/webp" style={{display:'none'}} onChange={handleImageUpload} disabled={uploadLoading}/>
-                      </label>
-                      <span style={{fontSize:'12px',color:'#9A9A9A'}}>JPG, PNG or WebP · Max 5MB</span>
-                    </div>
-                    <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                      <div style={{flex:1,height:'1px',background:'#EFEFEF'}}></div>
-                      <span style={{fontSize:'11px',color:'#9A9A9A',fontWeight:600}}>OR</span>
-                      <div style={{flex:1,height:'1px',background:'#EFEFEF'}}></div>
-                    </div>
-                    <input className="form-input" placeholder="Paste an image URL from eBay, COMC, or any image host..." value={form.card_image_url} onChange={e=>setForm(p=>({...p,card_image_url:e.target.value}))}/>
-                    {form.card_image_url && (
-                      <div style={{display:'flex',alignItems:'flex-start',gap:'12px'}}>
-                        <img src={form.card_image_url} alt="Card preview" style={{width:'60px',height:'84px',objectFit:'cover',borderRadius:'6px',border:'1px solid #EFEFEF'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-                        <div style={{display:'flex',flexDirection:'column',gap:'6px',paddingTop:'4px'}}>
-                          <div style={{fontSize:'12px',color:'#9A9A9A',lineHeight:1.5}}>Image preview. Looking good!</div>
-                          <button type="button" onClick={() => setForm(p=>({...p,card_image_url:''}))} style={{display:'inline-flex',alignItems:'center',gap:'4px',fontSize:'12px',color:'#D93025',background:'none',border:'none',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',padding:0,fontWeight:600}}>
-                            <FontAwesomeIcon icon={faXmark}/>Remove image
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {selectedStatus === 'sale' && (
-  <div className="form-group full">
-    <label className="form-label">eBay Listing URL</label>
-    <input
-      className="form-input"
-      placeholder="Paste your eBay listing URL..."
-      value={form.ebay_listing_url}
-      onChange={e => setForm(p => ({...p, ebay_listing_url:e.target.value}))}
-    />
-    {form.ebay_listing_url && (
-      <div style={{marginTop:'6px',display:'flex',alignItems:'center',gap:'6px',fontSize:'12px',color:'#1B6FF0',fontWeight:600}}>
-        <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{fontSize:'11px'}}/>
-        <a href={form.ebay_listing_url} target="_blank" rel="noopener noreferrer" style={{color:'#1B6FF0'}}>Preview listing</a>
+{/* ADD / EDIT MODAL */}
+{showAdd && (
+  <div className="overlay" onClick={()=>setShowAdd(false)}>
+    <div className="modal" style={{maxWidth:'860px',width:'100%',maxHeight:'92vh',overflow:'hidden',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
+
+      {/* Header */}
+      <div className="modal-hdr">
+        <div className="modal-hdr-title">{editingId ? 'Edit Card' : 'Add Card to Vault'}</div>
+        <button className="modal-close" onClick={()=>setShowAdd(false)}><FontAwesomeIcon icon={faXmark}/></button>
       </div>
-    )}
-  </div>
-)}
-                <div className="form-group full">
-                  <label className="form-label">Notes</label>
-                  <textarea className="form-input" style={{minHeight:'64px',resize:'vertical'}} placeholder="Serial number, purchase story, condition notes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/>
-                </div>
+
+      {/* Two column body */}
+      <div style={{display:'grid',gridTemplateColumns:'260px 1fr',flex:1,overflow:'hidden'}}>
+
+        {/* LEFT — Media */}
+        <div style={{borderRight:'1px solid #EFEFEF',padding:'20px',display:'flex',flexDirection:'column',gap:'12px',overflowY:'auto',background:'#F7F7F7'}}>
+          <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#1B6FF0'}}>Media</div>
+
+          {/* Front / Back tabs */}
+          <div style={{display:'flex',gap:'4px',background:'#EFEFEF',borderRadius:'8px',padding:'3px'}}>
+            {(['front','back'] as const).map(side => (
+              <button
+                key={side}
+                onClick={() => setImageTab(side)}
+                style={{flex:1,padding:'6px',borderRadius:'6px',border:'none',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',background:imageTab===side?'#fff':'transparent',color:imageTab===side?'#0D0D0D':'#9A9A9A',boxShadow:imageTab===side?'0 1px 3px rgba(0,0,0,.08)':'none',transition:'all .15s'}}
+              >
+                {side === 'front' ? 'Front' : 'Back'}
+              </button>
+            ))}
+          </div>
+
+          {/* Image preview */}
+          <div style={{aspectRatio:'2.5/3.5',borderRadius:'8px',overflow:'hidden',background:imageTab==='front'?(form.card_image_url?'#000':cardBg(form.sport)):(form.card_image_back_url?'#000':'#EFEFEF'),display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid #E0E0E0'}}>
+            {imageTab === 'front' ? (
+              form.card_image_url
+                ? <img src={form.card_image_url} alt="Front" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                : <div style={{textAlign:'center',color:'#9A9A9A',fontSize:'12px',padding:'16px'}}>
+                    <FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'32px',marginBottom:'8px',display:'block'}}/>
+                    Front image
+                  </div>
+            ) : (
+              form.card_image_back_url
+                ? <img src={form.card_image_back_url} alt="Back" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                : <div style={{textAlign:'center',color:'#9A9A9A',fontSize:'12px',padding:'16px'}}>
+                    <FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'32px',marginBottom:'8px',display:'block'}}/>
+                    Back image
+                  </div>
+            )}
+          </div>
+
+          {/* Upload buttons */}
+          {imageTab === 'front' ? (
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              <label style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'8px',borderRadius:'6px',background:'#fff',border:'1.5px solid #EFEFEF',color:'#0D0D0D',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+                <FontAwesomeIcon icon={faUpload} style={{color:'#1B6FF0'}}/>
+                {uploadLoading ? 'Uploading...' : 'Upload Front'}
+                <input type="file" accept="image/jpeg,image/png,image/webp" style={{display:'none'}} onChange={handleImageUpload} disabled={uploadLoading}/>
+              </label>
+              {form.card_image_url && (
+                <button onClick={() => setForm(p=>({...p,card_image_url:''}))} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'4px',padding:'6px',borderRadius:'6px',border:'1.5px solid #FFBBB7',background:'#FDECEA',color:'#D93025',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+                  <FontAwesomeIcon icon={faXmark}/>Remove Front
+                </button>
+              )}
+              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                <div style={{flex:1,height:'1px',background:'#E0E0E0'}}></div>
+                <span style={{fontSize:'10px',color:'#9A9A9A',fontWeight:600}}>OR</span>
+                <div style={{flex:1,height:'1px',background:'#E0E0E0'}}></div>
               </div>
+              <input className="form-input" style={{fontSize:'12px'}} placeholder="Paste front image URL..." value={form.card_image_url} onChange={e=>setForm(p=>({...p,card_image_url:e.target.value}))}/>
             </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={()=>setShowAdd(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={saveCard}>Save to Vault</button>
+          ) : (
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              <label style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'8px',borderRadius:'6px',background:'#fff',border:'1.5px solid #EFEFEF',color:'#0D0D0D',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+                <FontAwesomeIcon icon={faUpload} style={{color:'#1B6FF0'}}/>
+                {uploadBackLoading ? 'Uploading...' : 'Upload Back'}
+                <input type="file" accept="image/jpeg,image/png,image/webp" style={{display:'none'}} onChange={handleBackImageUpload} disabled={uploadBackLoading}/>
+              </label>
+              {form.card_image_back_url && (
+                <button onClick={() => setForm(p=>({...p,card_image_back_url:''}))} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'4px',padding:'6px',borderRadius:'6px',border:'1.5px solid #FFBBB7',background:'#FDECEA',color:'#D93025',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+                  <FontAwesomeIcon icon={faXmark}/>Remove Back
+                </button>
+              )}
+              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                <div style={{flex:1,height:'1px',background:'#E0E0E0'}}></div>
+                <span style={{fontSize:'10px',color:'#9A9A9A',fontWeight:600}}>OR</span>
+                <div style={{flex:1,height:'1px',background:'#E0E0E0'}}></div>
+              </div>
+              <input className="form-input" style={{fontSize:'12px'}} placeholder="Paste back image URL..." value={form.card_image_back_url} onChange={e=>setForm(p=>({...p,card_image_back_url:e.target.value}))}/>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT — Details */}
+        <div style={{overflowY:'auto',padding:'20px',display:'flex',flexDirection:'column',gap:'12px',background:'#fff'}}>
+
+          {/* CORE INFORMATION */}
+<div style={{background:'#F7F7F7',borderRadius:'8px',padding:'14px 16px',border:'1px solid #EFEFEF'}}>
+  <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#1B6FF0',marginBottom:'12px'}}>Core Information</div>
+            <div className="form-grid">
+              <div className="form-group full">
+  <label className="form-label">Player / Subject <span style={{color:'#D93025'}}>*</span></label>
+  <input className="form-input" placeholder="e.g. Patrick Mahomes" value={form.player} onChange={e=>setForm(p=>({...p,player:e.target.value}))}/>
+</div>
+<div className="form-group">
+  <label className="form-label">Sport / Category <span style={{color:'#D93025'}}>*</span></label>
+  <select className="form-select" value={form.sport} onChange={e=>setForm(p=>({...p,sport:e.target.value}))}>
+    <option value="">Select...</option>
+    {['Football','Baseball','Basketball','Hockey','Soccer','Gaming / TCG','Wrestling','Racing','Tennis','UFC','Golf','Boxing','Non-Sport','Other'].map(s=><option key={s}>{s}</option>)}
+  </select>
+</div>
+<div className="form-group">
+  <label className="form-label">Year</label>
+  <input className="form-input" type="number" placeholder="2024" value={form.year} onChange={e=>setForm(p=>({...p,year:e.target.value}))}/>
+</div>
+<div className="form-group">
+  <label className="form-label">Brand</label>
+  <select className="form-select" value={form.brand} onChange={e=>setForm(p=>({...p,brand:e.target.value}))}>
+    <option value="">Select...</option>
+    {['Panini','Topps','Bowman','Upper Deck','Leaf','SAGE','Donruss','Fleer','Score','Other'].map(b=><option key={b}>{b}</option>)}
+  </select>
+</div>
+<div className="form-group">
+  <label className="form-label">Set Name <span style={{color:'#D93025'}}>*</span></label>
+  <input className="form-input" placeholder="e.g. Prizm Football" value={form.set_name} onChange={e=>setForm(p=>({...p,set_name:e.target.value}))}/>
+</div>
+<div className="form-group">
+  <label className="form-label">Card Number</label>
+  <input className="form-input" placeholder="e.g. #200 or /99" value={form.cardnum} onChange={e=>setForm(p=>({...p,cardnum:e.target.value}))}/>
+</div>
             </div>
           </div>
+
+          {/* INVENTORY & CONDITION */}
+<div style={{background:'#F7F7F7',borderRadius:'8px',padding:'14px 16px',border:'1px solid #EFEFEF'}}>
+  <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#1B6FF0',marginBottom:'12px'}}>Inventory & Condition</div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label className="form-label">Quantity</label>
+                <input className="form-input" type="number" min="1" value={form.qty} onChange={e=>setForm(p=>({...p,qty:e.target.value}))}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Folder</label>
+                <select className="form-select" value={form.folder_id} onChange={e=>setForm(p=>({...p,folder_id:e.target.value}))}>
+                  <option value="">No folder</option>
+                  {folders.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group full">
+                <label className="form-label">Grading</label>
+                <div className="grader-row">
+                  {['Raw','PSA','BGS','SGC'].map(g=>(
+                    <button key={g} className={`grader-btn${selectedGrader===g?' g-'+g:''}`} onClick={()=>{setSelectedGrader(g);setSelectedScore('')}}>{g==='Raw'?'Ungraded':g}</button>
+                  ))}
+                </div>
+              </div>
+              {selectedGrader !== 'Raw' && (
+                <div className="form-group full">
+                  <label className="form-label">Grade Score</label>
+                  <div className="score-row">
+                    {gradeScores(selectedGrader).map(s=>(
+                      <button key={s} className={`score-btn${selectedScore===s?' sel':''}`} onClick={()=>setSelectedScore(s)}>{s}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="form-group full">
+                <label className="form-label">Condition</label>
+                <select className="form-select" value={form.condition} onChange={e=>setForm(p=>({...p,condition:e.target.value}))}>
+                  <option value="">Select...</option>
+                  {['Mint (M)','Near Mint-Mint (NM-MT)','Near Mint (NM)','Excellent-Mint (EX-MT)','Excellent (EX)','Very Good (VG)','Good (G)'].map(c=><option key={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* FINANCIALS */}
+<div style={{background:'#F7F7F7',borderRadius:'8px',padding:'14px 16px',border:'1px solid #EFEFEF'}}>
+  <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#1B6FF0',marginBottom:'12px'}}>Financials</div>
+  <div className="form-grid">
+    <div className="form-group">
+      <label className="form-label">Cost Paid ($)</label>
+      <input className="form-input" type="number" placeholder="0.00" value={form.cost} onChange={e=>setForm(p=>({...p,cost:e.target.value}))}/>
+    </div>
+    <div className="form-group">
+      <label className="form-label">Current Value ($)</label>
+      <input className="form-input" type="number" placeholder="0.00" value={form.value} onChange={e=>setForm(p=>({...p,value:e.target.value}))}/>
+    </div>
+    {selectedStatus === 'sold' && (
+      <>
+        <div className="form-group">
+          <label className="form-label">Sold For ($)</label>
+          <input className="form-input" type="number" placeholder="0.00" value={form.sold_price} onChange={e=>setForm(p=>({...p,sold_price:e.target.value}))}/>
         </div>
-      )}
+        <div className="form-group">
+          <label className="form-label">Profit</label>
+          <div style={{padding:'9px 12px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:'#fff',fontSize:'14px',fontWeight:700,color:((parseFloat(form.sold_price)||0)-(parseFloat(form.cost)||0))>=0?'#00A861':'#D93025'}}>
+            {form.sold_price||form.cost
+              ? `${((parseFloat(form.sold_price)||0)-(parseFloat(form.cost)||0))>=0?'+':'-'}$${Math.abs((parseFloat(form.sold_price)||0)-(parseFloat(form.cost)||0)).toFixed(2)}`
+              : '-'
+            }
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+</div>
+
+          {/* CARD ATTRIBUTES */}
+<div style={{background:'#F7F7F7',borderRadius:'8px',padding:'14px 16px',border:'1px solid #EFEFEF'}}>
+  <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#1B6FF0',marginBottom:'12px'}}>Card Attributes</div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'10px'}}>
+              {[{v:'rc',l:'Rookie (RC)'},{v:'auto',l:'Autograph'},{v:'patch',l:'Patch/Relic'},{v:'numbered',l:'Numbered'},{v:'chrome',l:'Chrome'},{v:'refractor',l:'Refractor'},{v:'shortprint',l:'Short Print'},{v:'1of1',l:'1 of 1'}].map(a=>(
+                <button key={a.v} className={`fchip${formAttrs.includes(a.v)?' on':''}`} onClick={()=>toggleAttr(a.v)}>{a.l}</button>
+              ))}
+            </div>
+            {formAttrs.includes('numbered') && (
+              <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                <label style={{fontSize:'12px',fontWeight:700,color:'#555',whiteSpace:'nowrap'}}>Print Run</label>
+                <input className="form-input" style={{maxWidth:'160px'}} placeholder="e.g. 14/49" value={form.print_run} onChange={e=>setForm(p=>({...p,print_run:e.target.value}))}/>
+                <span style={{fontSize:'12px',color:'#9A9A9A'}}>Shows on your card</span>
+              </div>
+            )}
+          </div>
+
+          {/* STATUS */}
+<div style={{background:'#F7F7F7',borderRadius:'8px',padding:'14px 16px',border:'1px solid #EFEFEF'}}>
+  <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#1B6FF0',marginBottom:'12px'}}>Status</div>
+            <div className="status-sel">
+              {[
+                {v:'have', l:'In My Vault', icon:faLayerGroup, color:'#00A861', bg:'#E6F9F0', border:'#A8DFC4'},
+                {v:'sale', l:'For Sale', icon:faArrowUpRightFromSquare, color:'#1B6FF0', bg:'#EBF2FF', border:'#C5D8FF'},
+                {v:'trade', l:'For Trade', icon:faArrowRightArrowLeft, color:'#E8820C', bg:'#FEF3E2', border:'#F5C880'},
+                {v:'sold', l:'Sold', icon:faTag, color:'#D93025', bg:'#FDECEA', border:'#FFBBB7'},
+              ].map(s=>(
+                <button key={s.v} onClick={()=>setSelectedStatus(s.v)} style={{padding:'10px',borderRadius:'6px',border:`1.5px solid ${selectedStatus===s.v?s.border:'#EFEFEF'}`,background:selectedStatus===s.v?s.bg:'#fff',color:selectedStatus===s.v?s.color:'#555',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',transition:'all .15s'}}>
+                  <FontAwesomeIcon icon={s.icon} style={{fontSize:'12px'}}/>{s.l}
+                </button>
+              ))}
+            </div>
+            {selectedStatus === 'sale' && (
+              <div style={{marginTop:'12px'}}>
+                <label className="form-label" style={{marginBottom:'6px',display:'block'}}>eBay Listing URL</label>
+                <input className="form-input" placeholder="Paste your eBay listing URL..." value={form.ebay_listing_url} onChange={e=>setForm(p=>({...p,ebay_listing_url:e.target.value}))}/>
+                {form.ebay_listing_url && (
+                  <div style={{marginTop:'6px',display:'flex',alignItems:'center',gap:'6px',fontSize:'12px',color:'#1B6FF0',fontWeight:600}}>
+                    <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{fontSize:'11px'}}/>
+                    <a href={form.ebay_listing_url} target="_blank" rel="noopener noreferrer" style={{color:'#1B6FF0'}}>Preview listing</a>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* NOTES */}
+<div style={{background:'#F7F7F7',borderRadius:'8px',padding:'14px 16px',border:'1px solid #EFEFEF'}}>
+  <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#1B6FF0',marginBottom:'12px'}}>Notes</div>
+            <textarea className="form-input" style={{minHeight:'80px',resize:'vertical'}} placeholder="Serial number, purchase story, condition notes..." value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="modal-footer">
+        <button className="btn btn-ghost" onClick={()=>setShowAdd(false)}>Cancel</button>
+        <button className="btn btn-primary" onClick={saveCard}>
+          {editingId ? 'Save Changes' : 'Add to Vault'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* FOLDER MODAL */}
       {showFolder && (
@@ -1224,22 +1339,24 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
                     ))}
                   </div>
                   <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-                    {[
-                      {lbl:'Sport', val:selectedCard.sport},
-                      {lbl:'Year', val:selectedCard.year||'-'},
-                      {lbl:'Brand', val:selectedCard.brand||'-'},
-                      {lbl:'Set Name', val:selectedCard.set_name||'-'},
-                      {lbl:'Card Number', val:selectedCard.cardnum||'-'},
-                      {lbl:'Condition', val:selectedCard.condition||'-'},
-                      {lbl:'Quantity', val:String(selectedCard.qty||1)},
-                      {lbl:'Grading', val:selectedCard.grader&&selectedCard.grader!=='Raw'?`${selectedCard.grader} ${selectedCard.grade}`:'Raw (Ungraded)'},
-                      {lbl:'Added', val:new Date(selectedCard.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},
-                    ].map(row => (
-                      <div key={row.lbl} style={{display:'flex',justifyContent:'space-between',fontSize:'13px',paddingBottom:'8px',borderBottom:'1px solid #EFEFEF'}}>
-                        <span style={{color:'#9A9A9A',fontWeight:500}}>{row.lbl}</span>
-                        <span style={{fontWeight:600,color:'#0D0D0D'}}>{row.val}</span>
-                      </div>
-                    ))}
+  {[
+    {lbl:'Sport', val:selectedCard.sport},
+    {lbl:'Year', val:selectedCard.year||'-'},
+    {lbl:'Brand', val:selectedCard.brand||'-'},
+    {lbl:'Set Name', val:selectedCard.set_name||'-'},
+    {lbl:'Card Number', val:selectedCard.cardnum||'-'},
+    {lbl:'Condition', val:selectedCard.condition||'-'},
+    {lbl:'Sold For', val:selectedCard.status==='sold'&&selectedCard.sold_price?`$${selectedCard.sold_price}`:null},
+    {lbl:'Profit', val:selectedCard.status==='sold'&&selectedCard.sold_price?`${((selectedCard.sold_price||0)-(selectedCard.cost||0))>=0?'+':'-'}$${Math.abs((selectedCard.sold_price||0)-(selectedCard.cost||0)).toFixed(2)}`:null},
+    {lbl:'Quantity', val:String(selectedCard.qty||1)},
+    {lbl:'Grading', val:selectedCard.grader&&selectedCard.grader!=='Raw'?`${selectedCard.grader} ${selectedCard.grade}`:'Raw (Ungraded)'},
+    {lbl:'Added', val:new Date(selectedCard.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},
+  ].filter(row => row.val !== null).map(row => (
+    <div key={row.lbl} style={{display:'flex',justifyContent:'space-between',fontSize:'13px',paddingBottom:'8px',borderBottom:'1px solid #EFEFEF'}}>
+      <span style={{color:'#9A9A9A',fontWeight:500}}>{row.lbl}</span>
+      <span style={{fontWeight:600,color:'#0D0D0D'}}>{row.val}</span>
+    </div>
+  ))}
                     {selectedCard.notes && (
                       <div style={{fontSize:'13px',paddingBottom:'8px',borderBottom:'1px solid #EFEFEF'}}>
                         <div style={{color:'#9A9A9A',fontWeight:500,marginBottom:'4px'}}>Notes</div>
