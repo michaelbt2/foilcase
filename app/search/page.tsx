@@ -23,6 +23,7 @@ import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 
 const RECENT_SEARCHES = ['Patrick Mahomes','2024 Prizm Football','Charizard PSA 10','Shohei Ohtani RC','LeBron James']
 const TRENDING = ['Caleb Williams RC','2025 Prizm Football','Mahomes Gold /10','Wembanyama Prizm','Charizard 1st Edition']
+const PER_PAGE = 24
 
 const sportEmoji: Record<string,string> = { Football:'🏈', Baseball:'⚾', Basketball:'🏀', Hockey:'🏒', Soccer:'⚽', Gaming:'🎮' }
 
@@ -62,53 +63,47 @@ function SearchContent() {
   const [activeAttrs, setActiveAttrs] = useState<string[]>([])
   const [viewMode, setViewMode]       = useState<'grid'|'list'>('grid')
   const [toast, setToast]             = useState<string|null>(null)
+  const [page, setPage]               = useState(1)
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
 
-const addToVault = async (c: any) => {
-  if (!user) {
-    showToast('⚠️ Please sign in to add cards to your vault')
-    return
-  }
-
-  const card = {
-    user_id: user.id,
-    player: c.player,
-    year: String(c.year),
-    brand: c.brand !== 'Unknown' ? c.brand : '',
-    set_name: c.setName || '',
-    sport: c.sport !== 'Unknown' ? c.sport : '',
-    cardnum: c.cardNum || '',
-    folder_id: null,
-    status: 'have',
-    grader: 'Raw',
-    grade: c.grade || '',
-    qty: 1,
-    condition: c.condition || '',
-    cost: 0,
-    value: c.price || 0,
-    attrs: c.attrs || [],
-    notes: '',
-    img: c.sport === 'Football' ? '🏈'
-        : c.sport === 'Baseball' ? '⚾'
-        : c.sport === 'Basketball' ? '🏀'
-        : c.sport === 'Hockey' ? '🏒'
-        : c.sport === 'Gaming' ? '🎮' : '🃏',
-  }
-
-  try {
-    const { error } = await supabase.from('cards').insert(card)
-    if (error) {
-      showToast('❌ Error: ' + error.message)
-      console.error(error)
+  const addToVault = async (c: any) => {
+    if (!user) {
+      showToast('⚠️ Please sign in to add cards to your vault')
       return
     }
-    showToast(`✅ ${c.player} added to your vault!`)
-  } catch (e: any) {
-    showToast('❌ Something went wrong. Please try again.')
-    console.error(e)
+    const card = {
+      user_id: user.id,
+      player: c.player,
+      year: String(c.year),
+      brand: c.brand !== 'Unknown' ? c.brand : '',
+      set_name: c.setName || '',
+      sport: c.sport !== 'Unknown' ? c.sport : '',
+      cardnum: c.cardNum || '',
+      folder_id: null,
+      status: 'have',
+      grader: 'Raw',
+      grade: c.grade || '',
+      qty: 1,
+      condition: c.condition || '',
+      cost: 0,
+      value: c.price || 0,
+      attrs: c.attrs || [],
+      notes: '',
+      img: c.sport === 'Football' ? '🏈'
+          : c.sport === 'Baseball' ? '⚾'
+          : c.sport === 'Basketball' ? '🏀'
+          : c.sport === 'Hockey' ? '🏒'
+          : c.sport === 'Gaming' ? '🎮' : '🃏',
+    }
+    try {
+      const { error } = await supabase.from('cards').insert(card)
+      if (error) { showToast('❌ Error: ' + error.message); return }
+      showToast(`✅ ${c.player} added to your vault!`)
+    } catch (e: any) {
+      showToast('❌ Something went wrong. Please try again.')
+    }
   }
-}
 
   const toggleAttr = (a: string) => setActiveAttrs(prev => prev.includes(a) ? prev.filter(x=>x!==a) : [...prev,a])
 
@@ -120,15 +115,15 @@ const addToVault = async (c: any) => {
     setSearching(true)
     setSearchError(null)
     setLiveResults([])
+    setPage(1)
     try {
       const sportParam = sport !== 'all' ? `&sport=${encodeURIComponent(sport)}` : ''
-      const res = await fetch(`/api/card-search?player=${encodeURIComponent(q)}${sportParam}&limit=50`)
+      const res = await fetch(`/api/card-search?player=${encodeURIComponent(q)}${sportParam}&limit=72`)
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setLiveResults(data.cards || [])
     } catch (e: any) {
       setSearchError('Could not load results. Please try again.')
-      console.error(e)
     } finally {
       setSearching(false)
     }
@@ -136,11 +131,10 @@ const addToVault = async (c: any) => {
 
   useEffect(() => {
     const q = searchParams.get('q')
-    if (q) {
-      setQuery(q)
-      runSearch(q)
-    }
+    if (q) { setQuery(q); runSearch(q) }
   }, [])
+
+  useEffect(() => { setPage(1) }, [sport, grading, priceMin, priceMax, yearMin, yearMax, activeAttrs, sortBy])
 
   const filtered = liveResults.filter((c: any) => {
     if (sport !== 'all' && c.sport !== sport) return false
@@ -159,6 +153,9 @@ const addToVault = async (c: any) => {
     if (sortBy === 'year-asc')   return parseInt(a.year) - parseInt(b.year)
     return 0
   })
+
+  const totalPages = Math.ceil(filtered.length / PER_PAGE)
+  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   const hasActiveFilters = sport !== 'all' || grading !== 'all' || priceMin || priceMax || yearMin || yearMax || activeAttrs.length > 0
   const clearFilters = () => { setSport('all'); setGrading('all'); setPriceMin(''); setPriceMax(''); setYearMin(''); setYearMax(''); setActiveAttrs([]) }
@@ -288,6 +285,12 @@ const addToVault = async (c: any) => {
   .disc-title{font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
   .toast{position:fixed;bottom:24px;right:24px;z-index:999;background:#0D0D0D;color:#fff;border-radius:8px;padding:12px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.25);animation:toastIn .3s cubic-bezier(.34,1.56,.64,1);max-width:320px}
   @keyframes toastIn{from{transform:translateY(80px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .pagination-btn{padding:8px 18px;border-radius:100px;border:1.5px solid #EFEFEF;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;color:#0D0D0D}
+  .pagination-btn:hover:not(:disabled){border-color:#1B6FF0;color:#1B6FF0}
+  .pagination-btn:disabled{color:#D8D8D8;cursor:not-allowed}
+  .pagination-page{width:36px;height:36px;border-radius:100px;border:1.5px solid #EFEFEF;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;color:#0D0D0D;display:inline-flex;align-items:center;justify-content:center}
+  .pagination-page:hover{border-color:#1B6FF0;color:#1B6FF0}
+  .pagination-page.on{background:#1B6FF0;color:#fff;border-color:#1B6FF0}
   @media(max-width:860px){.main-layout{grid-template-columns:1fr}.sidebar{position:static}.cards-grid{grid-template-columns:repeat(2,1fr)}}
 `}</style>
 
@@ -311,12 +314,12 @@ const addToVault = async (c: any) => {
               />
               {query && (
                 <button className="search-clear" onClick={() => { setQuery(''); setSubmitted(false); setLiveResults([]); setShowDropdown(false) }}>
-  <FontAwesomeIcon icon={faXmark} style={{fontSize:'14px'}}/>
-</button>
+                  <FontAwesomeIcon icon={faXmark} style={{fontSize:'14px'}}/>
+                </button>
               )}
               <button className="search-bar-btn" onClick={() => runSearch(query)}>
-  <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'6px'}}/>Search
-</button>
+                <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'6px'}}/>Search
+              </button>
             </div>
 
             {showDropdown && (
@@ -342,7 +345,6 @@ const addToVault = async (c: any) => {
         </div>
       </div>
 
-
       {/* RESULTS or DISCOVERY */}
       {submitted ? (
         <div className="main-layout">
@@ -354,27 +356,23 @@ const addToVault = async (c: any) => {
                 Filters
                 {hasActiveFilters && <span className="filter-clear" onClick={clearFilters}>Clear all</span>}
               </div>
-
               <div className="filter-group-label">Grading</div>
               <div className="fchips">
                 {[{v:'all',l:'All'},{v:'graded',l:'Graded'},{v:'raw',l:'Raw'}].map(o => (
                   <button key={o.v} className={`fchip${grading===o.v?' on':''}`} onClick={() => setGrading(o.v)}>{o.l}</button>
                 ))}
               </div>
-
               <div className="filter-group-label">Card Type</div>
               <div className="fchips">
                 {[{v:'rc',l:'Rookie'},{v:'auto',l:'Auto'},{v:'numbered',l:'Numbered'},{v:'chrome',l:'Chrome'},{v:'patch',l:'Patch'}].map(a => (
                   <button key={a.v} className={`fchip${activeAttrs.includes(a.v)?' on':''}`} onClick={() => toggleAttr(a.v)}>{a.l}</button>
                 ))}
               </div>
-
               <div className="filter-group-label">Price Range ($)</div>
               <div className="price-range">
                 <input className="range-input" type="number" placeholder="Min" value={priceMin} onChange={e=>setPriceMin(e.target.value)}/>
                 <input className="range-input" type="number" placeholder="Max" value={priceMax} onChange={e=>setPriceMax(e.target.value)}/>
               </div>
-
               <div className="filter-group-label">Year Range</div>
               <div className="price-range">
                 <input className="range-input" type="number" placeholder="From" value={yearMin} onChange={e=>setYearMin(e.target.value)}/>
@@ -400,7 +398,11 @@ const addToVault = async (c: any) => {
               <div className="results-count">
                 {searching
                   ? <span>Searching for "<strong>{query}</strong>"...</span>
-                  : <>{filtered.length} result{filtered.length!==1?'s':''} <span>for "{query}"</span></>
+                  : <>
+                      {filtered.length} result{filtered.length!==1?'s':''}{' '}
+                      <span>for "{query}"</span>
+                      {totalPages > 1 && <span> · page {page} of {totalPages}</span>}
+                    </>
                 }
               </div>
 
@@ -424,11 +426,11 @@ const addToVault = async (c: any) => {
 
               <div className="view-toggle">
                 <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}>
-  <FontAwesomeIcon icon={faGrip}/>
-</button>
-<button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}>
-  <FontAwesomeIcon icon={faBars}/>
-</button>
+                  <FontAwesomeIcon icon={faGrip}/>
+                </button>
+                <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}>
+                  <FontAwesomeIcon icon={faBars}/>
+                </button>
               </div>
             </div>
 
@@ -452,160 +454,160 @@ const addToVault = async (c: any) => {
                 <button className="btn btn-primary" onClick={clearFilters}>Clear filters</button>
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="cards-grid">
-                {filtered.map((c: any, i: number) => (
-                  <div key={c.id} className="card-tile" style={{animationDelay:`${i*.04}s`}}>
-                    <div className="card-img" style={{background:cardBg(c.sport)}}>
-                      {c.image
-                        ? <img src={c.image} alt={c.player}/>
-                        : <span>{sportEmoji[c.sport]||'🃏'}</span>
-                      }
-                      {c.grade && <div className="grade-chip">{c.grade}</div>}
-                    </div>
-                    <div className="card-body">
-                      <div className="card-player">{c.player}</div>
-                      <div className="card-set">{c.year} {c.brand} · {c.setName} · {c.parallel}</div>
-                      <div className="card-attrs">
-                        {(c.attrs||[]).map((a: string) => (
-                          <span key={a} className={`attr-tag tag-${['rc','auto','numbered','chrome'].includes(a)?a:'other'}`}>{attrLabel(a)}</span>
-                        ))}
-                        {c.grade && <span className="attr-tag" style={{background:'#EEF2FF',color:'#3730A3'}}>{c.grade}</span>}
+              <>
+                <div className="cards-grid">
+                  {paginated.map((c: any, i: number) => (
+                    <div key={c.id} className="card-tile" style={{animationDelay:`${i*.04}s`}}>
+                      <div className="card-img" style={{background:cardBg(c.sport)}}>
+                        {c.image
+                          ? <img src={c.image} alt={c.player}/>
+                          : <span>{sportEmoji[c.sport]||'🃏'}</span>
+                        }
+                        {c.grade && <div className="grade-chip">{c.grade}</div>}
                       </div>
-                      <div className="card-footer" style={{flexDirection:'column',alignItems:'flex-start',gap:'4px'}}>
-  {c.soldData && c.soldData.soldCount > 1 ? (
-    <>
-      <div style={{display:'flex',justifyContent:'space-between',width:'100%',alignItems:'flex-end'}}>
-        <div>
-          <div style={{fontSize:'9px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.04em'}}>Avg Sold</div>
-          <div style={{fontSize:'15px',fontWeight:800,color:'#00A861'}}>{fmtPrice(c.soldData.avgPrice)}</div>
-        </div>
-        <div style={{textAlign:'right'}}>
-          <div style={{fontSize:'9px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.04em'}}>Listed</div>
-          <div style={{fontSize:'13px',fontWeight:800,color:'#1B6FF0'}}>{fmtPrice(c.price)}</div>
-        </div>
-      </div>
-      <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.soldData.soldCount} sales · {fmtPrice(c.soldData.lowPrice)}–{fmtPrice(c.soldData.highPrice)}</div>
-    </>
-  ) : (
-    <>
-      <div className="card-price">{fmtPrice(c.price)}</div>
-      <div className="card-condition">{c.condition}</div>
-    </>
-  )}
-</div>
+                      <div className="card-body">
+                        <div className="card-player">{c.player}</div>
+                        <div className="card-set">{c.year} {c.brand} · {c.setName} · {c.parallel}</div>
+                        <div className="card-attrs">
+                          {(c.attrs||[]).map((a: string) => (
+                            <span key={a} className={`attr-tag tag-${['rc','auto','numbered','chrome'].includes(a)?a:'other'}`}>{attrLabel(a)}</span>
+                          ))}
+                          {c.grade && <span className="attr-tag" style={{background:'#EEF2FF',color:'#3730A3'}}>{c.grade}</span>}
+                        </div>
+                        <div className="card-footer" style={{flexDirection:'column',alignItems:'flex-start',gap:'4px'}}>
+                          {c.soldData && c.soldData.soldCount > 1 ? (
+                            <>
+                              <div style={{display:'flex',justifyContent:'space-between',width:'100%',alignItems:'flex-end'}}>
+                                <div>
+                                  <div style={{fontSize:'9px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.04em'}}>Avg Sold</div>
+                                  <div style={{fontSize:'15px',fontWeight:800,color:'#00A861'}}>{fmtPrice(c.soldData.avgPrice)}</div>
+                                </div>
+                                <div style={{textAlign:'right'}}>
+                                  <div style={{fontSize:'9px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.04em'}}>Listed</div>
+                                  <div style={{fontSize:'13px',fontWeight:800,color:'#1B6FF0'}}>{fmtPrice(c.price)}</div>
+                                </div>
+                              </div>
+                              <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.soldData.soldCount} sales · {fmtPrice(c.soldData.lowPrice)}–{fmtPrice(c.soldData.highPrice)}</div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="card-price">{fmtPrice(c.price)}</div>
+                              <div className="card-condition">{c.condition}</div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="card-actions">
+                        <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-view">
+                          <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{marginRight:'4px'}}/>eBay
+                        </a>
+                        <button className="act-btn act-add" onClick={()=>addToVault(c)}>
+                          <FontAwesomeIcon icon={faPlus} style={{marginRight:'4px'}}/>Vault
+                        </button>
+                        <button className="act-btn act-want" onClick={()=>showToast(`⭐ ${c.player} wishlisted!`)}>
+                          <FontAwesomeIcon icon={faStarRegular}/>
+                        </button>
+                      </div>
                     </div>
-                    <div className="card-actions">
-                      <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-view">
-  <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{marginRight:'4px'}}/>eBay
-</a>
-<button className="act-btn act-add" onClick={()=>addToVault(c)}>
-  <FontAwesomeIcon icon={faPlus} style={{marginRight:'4px'}}/>Vault
-</button>
-<button className="act-btn act-want" onClick={()=>showToast(`⭐ ${c.player} wishlisted!`)}>
-  <FontAwesomeIcon icon={faStarRegular}/>
-</button>
-                    </div>
+                  ))}
+                </div>
+
+                {/* PAGINATION */}
+                {totalPages > 1 && (
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginTop:'24px',paddingTop:'24px',borderTop:'1px solid #EFEFEF',flexWrap:'wrap'}}>
+                    <button className="pagination-btn" disabled={page===1} onClick={()=>{setPage(p=>p-1);window.scrollTo({top:0,behavior:'smooth'})}}>← Prev</button>
+                    {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(
+                      <button key={p} className={`pagination-page${page===p?' on':''}`} onClick={()=>{setPage(p);window.scrollTo({top:0,behavior:'smooth'})}}>{p}</button>
+                    ))}
+                    <button className="pagination-btn" disabled={page===totalPages} onClick={()=>{setPage(p=>p+1);window.scrollTo({top:0,behavior:'smooth'})}}>Next →</button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             ) : (
-              <div className="cards-list">
-                {filtered.map((c: any, i: number) => (
-                  <div key={c.id} className="list-tile" style={{animationDelay:`${i*.03}s`}}>
-  <div className="list-img" style={{background:cardBg(c.sport)}}>
-    {c.image
-      ? <img src={c.image} alt={c.player}/>
-      : <span>{sportEmoji[c.sport]||'🃏'}</span>
-    }
-  </div>
-  <div className="list-main">
-  <div className="list-player">
-    {[c.year, c.brand !== 'Unknown' ? c.brand : '', c.setName !== 'Unknown' ? c.setName : ''].filter(Boolean).join(' ')}
-    {c.cardNum ? ` · ${c.cardNum}` : ''}
-  </div>
-  <div className="list-set">
-    {c.player}
-    {c.parallel && c.parallel !== 'Base' ? ` · ${c.parallel}` : ''}
-    {c.sport && c.sport !== 'Unknown' ? ` · ${c.sport}` : ''}
-  </div>
-    <div className="list-tags">
-      {/* Parallel */}
-      {c.parallel && c.parallel !== 'Base' && (
-        <span className="list-pill pill-parallel">✦ {c.parallel}</span>
-      )}
-      {/* Year */}
-      {c.year && c.year !== 'Unknown' && (
-        <span className="list-pill pill-year">{c.year}</span>
-      )}
-      {/* Condition */}
-      {c.condition && c.condition !== 'Unknown' && (
-        <span className="list-pill pill-condition">
-          {c.condition === 'New/Factory Sealed' ? '🔒 Sealed'
-           : c.condition === 'Graded' ? '🏅 Graded'
-           : c.condition === 'Ungraded' ? 'Raw'
-           : c.condition}
-        </span>
-      )}
-      {/* Grade */}
-      {c.grade && (
-        <span className="list-pill pill-grade">{c.grade}</span>
-      )}
-      {/* Attrs */}
-      {(c.attrs||[]).map((a: string) => (
-        <span key={a} className={`list-pill pill-${a === 'rc' ? 'rc' : a === 'auto' ? 'auto' : a === 'numbered' ? 'numbered' : a === 'chrome' ? 'chrome' : 'condition'}`}>
-          {attrLabel(a)}
-        </span>
-      ))}
-      {/* Sport */}
-      {c.sport && c.sport !== 'Unknown' && (
-        <span className="list-pill pill-condition">{sportEmoji[c.sport]} {c.sport}</span>
-      )}
-    </div>
-  </div>
-  <div className="list-right">
-  {c.soldData && c.soldData.soldCount > 1 ? (
-    <>
-      <div style={{textAlign:'right',marginBottom:'6px'}}>
-        <div className="list-price-lbl">Avg Sold</div>
-        <div className="list-price" style={{color:'#00A861',fontSize:'17px'}}>{fmtPrice(c.soldData.avgPrice)}</div>
-        <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.soldData.soldCount} sales · {fmtPrice(c.soldData.lowPrice)}–{fmtPrice(c.soldData.highPrice)}</div>
-        {c.soldData.lastSold && (
-          <div style={{fontSize:'10px',color:'#00A861',fontWeight:600}}>
-            ↑ {new Date(c.soldData.lastSold).toLocaleDateString('en-US',{month:'short',day:'numeric'})}
-          </div>
-        )}
-      </div>
-      <div style={{textAlign:'right'}}>
-        <div className="list-price-lbl">Listed From</div>
-        <div style={{fontSize:'14px',fontWeight:800,color:'#1B6FF0'}}>{fmtPrice(c.price)}</div>
-        {c.listingCount > 1 && <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.listingCount} listings</div>}
-      </div>
-    </>
-  ) : (
-    <>
-      <div className="list-price-lbl">Market Price</div>
-      <div className="list-price">{fmtPrice(c.price)}</div>
-      {c.listingCount > 1 && (
-        <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.listingCount} listings</div>
-      )}
-    </>
-  )}
-  {c.printRun && (
-    <div style={{fontSize:'11px',color:'#7B4FCA',fontWeight:700,marginTop:'2px'}}>/{c.printRun}</div>
-  )}
-</div>
-  <div className="list-actions">
-    
-      <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'5px'}}>
-  <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
-</a>
-<button className="btn btn-primary" style={{fontSize:'12px',padding:'5px 12px',display:'inline-flex',alignItems:'center',gap:'5px'}} onClick={()=>addToVault(c)}>
-  <FontAwesomeIcon icon={faPlus}/>Vault
-</button>
-  </div>
-</div>
-                ))}
-              </div>
+              <>
+                <div className="cards-list">
+                  {paginated.map((c: any, i: number) => (
+                    <div key={c.id} className="list-tile" style={{animationDelay:`${i*.03}s`}}>
+                      <div className="list-img" style={{background:cardBg(c.sport)}}>
+                        {c.image
+                          ? <img src={c.image} alt={c.player}/>
+                          : <span>{sportEmoji[c.sport]||'🃏'}</span>
+                        }
+                      </div>
+                      <div className="list-main">
+                        <div className="list-player">
+                          {[c.year, c.brand !== 'Unknown' ? c.brand : '', c.setName !== 'Unknown' ? c.setName : ''].filter(Boolean).join(' ')}
+                          {c.cardNum ? ` · ${c.cardNum}` : ''}
+                        </div>
+                        <div className="list-set">
+                          {c.player}
+                          {c.parallel && c.parallel !== 'Base' ? ` · ${c.parallel}` : ''}
+                          {c.sport && c.sport !== 'Unknown' ? ` · ${c.sport}` : ''}
+                        </div>
+                        <div className="list-tags">
+                          {c.parallel && c.parallel !== 'Base' && <span className="list-pill pill-parallel">✦ {c.parallel}</span>}
+                          {c.year && c.year !== 'Unknown' && <span className="list-pill pill-year">{c.year}</span>}
+                          {c.condition && c.condition !== 'Unknown' && (
+                            <span className="list-pill pill-condition">
+                              {c.condition === 'New/Factory Sealed' ? '🔒 Sealed' : c.condition === 'Graded' ? '🏅 Graded' : c.condition === 'Ungraded' ? 'Raw' : c.condition}
+                            </span>
+                          )}
+                          {c.grade && <span className="list-pill pill-grade">{c.grade}</span>}
+                          {(c.attrs||[]).map((a: string) => (
+                            <span key={a} className={`list-pill pill-${a==='rc'?'rc':a==='auto'?'auto':a==='numbered'?'numbered':a==='chrome'?'chrome':'condition'}`}>{attrLabel(a)}</span>
+                          ))}
+                          {c.sport && c.sport !== 'Unknown' && <span className="list-pill pill-condition">{sportEmoji[c.sport]} {c.sport}</span>}
+                        </div>
+                      </div>
+                      <div className="list-right">
+                        {c.soldData && c.soldData.soldCount > 1 ? (
+                          <>
+                            <div style={{textAlign:'right',marginBottom:'6px'}}>
+                              <div className="list-price-lbl">Avg Sold</div>
+                              <div className="list-price" style={{color:'#00A861',fontSize:'17px'}}>{fmtPrice(c.soldData.avgPrice)}</div>
+                              <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.soldData.soldCount} sales · {fmtPrice(c.soldData.lowPrice)}–{fmtPrice(c.soldData.highPrice)}</div>
+                              {c.soldData.lastSold && (
+                                <div style={{fontSize:'10px',color:'#00A861',fontWeight:600}}>↑ {new Date(c.soldData.lastSold).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+                              )}
+                            </div>
+                            <div style={{textAlign:'right'}}>
+                              <div className="list-price-lbl">Listed From</div>
+                              <div style={{fontSize:'14px',fontWeight:800,color:'#1B6FF0'}}>{fmtPrice(c.price)}</div>
+                              {c.listingCount > 1 && <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.listingCount} listings</div>}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="list-price-lbl">Market Price</div>
+                            <div className="list-price">{fmtPrice(c.price)}</div>
+                            {c.listingCount > 1 && <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.listingCount} listings</div>}
+                          </>
+                        )}
+                        {c.printRun && <div style={{fontSize:'11px',color:'#7B4FCA',fontWeight:700,marginTop:'2px'}}>/{c.printRun}</div>}
+                      </div>
+                      <div className="list-actions">
+                        <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'5px'}}>
+                          <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
+                        </a>
+                        <button className="btn btn-primary" style={{fontSize:'12px',padding:'5px 12px',display:'inline-flex',alignItems:'center',gap:'5px'}} onClick={()=>addToVault(c)}>
+                          <FontAwesomeIcon icon={faPlus}/>Vault
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* PAGINATION */}
+                {totalPages > 1 && (
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginTop:'24px',paddingTop:'24px',borderTop:'1px solid #EFEFEF',flexWrap:'wrap'}}>
+                    <button className="pagination-btn" disabled={page===1} onClick={()=>{setPage(p=>p-1);window.scrollTo({top:0,behavior:'smooth'})}}>← Prev</button>
+                    {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(
+                      <button key={p} className={`pagination-page${page===p?' on':''}`} onClick={()=>{setPage(p);window.scrollTo({top:0,behavior:'smooth'})}}>{p}</button>
+                    ))}
+                    <button className="pagination-btn" disabled={page===totalPages} onClick={()=>{setPage(p=>p+1);window.scrollTo({top:0,behavior:'smooth'})}}>Next →</button>
+                  </div>
+                )}
+              </>
             )}
           </main>
         </div>
@@ -615,8 +617,8 @@ const addToVault = async (c: any) => {
         <div style={{maxWidth:'1200px',margin:'0 auto',padding:'28px 24px'}}>
           <div style={{marginBottom:'32px'}}>
             <div className="disc-title">
-  <FontAwesomeIcon icon={faFire} style={{color:'#E8820C'}}/>Trending Searches
-</div>
+              <FontAwesomeIcon icon={faFire} style={{color:'#E8820C'}}/>Trending Searches
+            </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'8px'}}>
               {TRENDING.map((t,i) => (
                 <div key={t} className="trending-item" onClick={() => runSearch(t)}>
@@ -627,11 +629,10 @@ const addToVault = async (c: any) => {
               ))}
             </div>
           </div>
-
           <div>
             <div className="disc-title">
-  <FontAwesomeIcon icon={faStar} style={{color:'#F5A623'}}/>Popular Players
-</div>
+              <FontAwesomeIcon icon={faStar} style={{color:'#F5A623'}}/>Popular Players
+            </div>
             <div className="disc-grid">
               {[
                 {name:'Patrick Mahomes', emoji:'🏈'},
