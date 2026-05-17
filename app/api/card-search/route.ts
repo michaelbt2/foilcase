@@ -122,22 +122,35 @@ function filterRelevantCards(items: any[], player: string) {
                   (title.includes('you pick') && !title.includes(playerLower)) ||
                   (/\d+-\d+/.test(title) && !title.includes(playerLower))
     const isNotCard = title.includes('jersey') ||
-                      title.includes('bobblehead') ||
-                      title.includes('football ball') ||
-                      title.includes('mcfarlane') ||
-                      title.includes('figure') ||
-                      title.includes('collectors tin') ||
-                      title.includes('sealed tin') ||
-                      title.includes(' coa') ||
-                      title.includes('signed football') ||
-                      title.includes('mini helmet') ||
-                      title.includes('helmet') ||
-                      title.includes('cleats') ||
-                      title.includes('funko') ||
-                      title.includes('poster') ||
-                      title.includes('book') ||
-                      title.includes('magazine') ||
-                      title.includes('photo')
+                  title.includes('bobblehead') ||
+                  title.includes('football ball') ||
+                  title.includes('mcfarlane') ||
+                  title.includes('figure') ||
+                  title.includes('collectors tin') ||
+                  title.includes('sealed tin') ||
+                  title.includes(' coa') ||
+                  title.includes('signed football') ||
+                  title.includes('mini helmet') ||
+                  title.includes('helmet') ||
+                  title.includes('cleats') ||
+                  title.includes('funko') ||
+                  title.includes('poster') ||
+                  title.includes('book') ||
+                  title.includes('magazine') ||
+                  title.includes('photo') ||
+                  title.includes('magnet') ||
+                  title.includes('lithograph') ||
+                  title.includes('framed') ||
+                  title.includes('canvas') ||
+                  title.includes('ornament') ||
+                  title.includes('statue') ||
+                  title.includes('keychain') ||
+                  title.includes('sticker') ||
+                  title.includes('wristband') ||
+                  title.includes('chaser pack') ||
+                  title.includes('presale') ||
+                  title.includes('pre-sale') ||
+                  title.includes('mystery')
     return hasPlayer && !isLot && !isNotCard
   })
 }

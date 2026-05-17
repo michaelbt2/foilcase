@@ -1,4 +1,6 @@
-'use client'
+const fs = require('fs');
+
+const content = `'use client'
 import { useState, useEffect } from 'react'
 import Nav from '../components/Nav'
 import { useUser } from '@clerk/nextjs'
@@ -11,17 +13,17 @@ import {
   faArrowTrendUp, faTag,
 } from '@fortawesome/free-solid-svg-icons'
 
-const sportEmoji: Record<string,string> = {
+const sportEmoji = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
   Hockey:'🏒', Soccer:'⚽', Gaming:'🎮'
 }
 
-const sportIcons: Record<string,any> = {
+const sportIcons = {
   Football: faFootball, Baseball: faBaseball, Basketball: faBasketball,
   Hockey: faHockeyPuck, Soccer: faFutbol, Gaming: faGamepad,
 }
 
-const sportColors: Record<string,{bg:string,color:string,border:string}> = {
+const sportColors = {
   Football:   { bg:'#EBF2FF', color:'#1B6FF0', border:'#C5D8FF' },
   Baseball:   { bg:'#E6F9F0', color:'#00A861', border:'#A8DFC4' },
   Basketball: { bg:'#FEF3E2', color:'#E8820C', border:'#F5C880' },
@@ -30,33 +32,33 @@ const sportColors: Record<string,{bg:string,color:string,border:string}> = {
   Gaming:     { bg:'#FDECEA', color:'#D93025', border:'#FFBBB7' },
 }
 
-function truncate(str: string, n: number) {
+function truncate(str, n) {
   return str.length > n ? str.slice(0, n) + '…' : str
 }
 
-function fmtPrice(p: number) {
-  return p ? `$${p.toFixed(2)}` : '—'
+function fmtPrice(p) {
+  return p ? '$' + p.toFixed(2) : '—'
 }
 
-function timeAgo(dateStr: string | null) {
+function timeAgo(dateStr) {
   if (!dateStr) return null
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 60) return `${mins}m ago`
+  if (mins < 60) return mins + 'm ago'
   const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  return `${Math.floor(hrs / 24)}d ago`
+  if (hrs < 24) return hrs + 'h ago'
+  return Math.floor(hrs / 24) + 'd ago'
 }
 
 export default function Browse() {
   const { user } = useUser()
-  const [data, setData]           = useState<any>(null)
+  const [data, setData]           = useState(null)
   const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState<string|null>(null)
+  const [error, setError]         = useState(null)
   const [activeSport, setActiveSport] = useState('all')
-  const [toast, setToast]         = useState<string|null>(null)
+  const [toast, setToast]         = useState(null)
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
 
   useEffect(() => { loadFeed() }, [])
 
@@ -68,14 +70,14 @@ export default function Browse() {
       const json = await res.json()
       if (json.error) throw new Error(json.error)
       setData(json)
-    } catch (e: any) {
+    } catch (e) {
       setError('Could not load market data. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  const addToVault = async (item: any) => {
+  const addToVault = async (item) => {
     if (!user) { showToast('⚠️ Sign in to add cards to your vault'); return }
     try {
       await supabase.from('cards').insert({
@@ -90,7 +92,7 @@ export default function Browse() {
         attrs: [], notes: '',
         img: sportEmoji[item.sport] || '🃏',
       })
-      showToast(`✅ Added to your vault!`)
+      showToast('✅ Added to your vault!')
     } catch {
       showToast('❌ Something went wrong.')
     }
@@ -98,20 +100,17 @@ export default function Browse() {
 
   const SPORTS = ['all','Football','Baseball','Basketball','Hockey','Gaming']
 
-  const filteredDeals = data?.deals?.filter((d: any) =>
+  const filteredDeals = data?.deals?.filter((d) =>
     activeSport === 'all' || d.sport === activeSport
   ) || []
 
-  const filteredSold = data?.recentSold?.filter((d: any) =>
+  const filteredSold = data?.recentSold?.filter((d) =>
     activeSport === 'all' || d.sport === activeSport
   ) || []
 
-  // Aggregate sport summary
-  const sportSummaryMap: Record<string, {avgSold: number, count: number}> = {}
-  data?.sportSummary?.forEach((s: any) => {
-    if (!sportSummaryMap[s.sport]) {
-      sportSummaryMap[s.sport] = { avgSold: 0, count: 0 }
-    }
+  const sportSummaryMap = {}
+  data?.sportSummary?.forEach((s) => {
+    if (!sportSummaryMap[s.sport]) sportSummaryMap[s.sport] = { avgSold: 0, count: 0 }
     sportSummaryMap[s.sport].avgSold += s.avgSold
     sportSummaryMap[s.sport].count++
   })
@@ -121,7 +120,7 @@ export default function Browse() {
 
   return (
     <>
-      <style>{`
+      <style>{\`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F7F7;color:#0D0D0D;-webkit-font-smoothing:antialiased}
         .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 14px;border-radius:100px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;border:none;white-space:nowrap}
@@ -157,8 +156,6 @@ export default function Browse() {
         .deal-title{font-size:12px;font-weight:700;color:#0D0D0D;line-height:1.3}
         .deal-prices{display:flex;align-items:flex-end;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px solid #EFEFEF}
         .deal-listed{font-size:18px;font-weight:800;color:#1B6FF0;letter-spacing:-.3px}
-        .deal-avg{font-size:11px;color:#9A9A9A}
-        .deal-avg span{color:#00A861;font-weight:700}
         .deal-actions{display:flex;gap:6px;padding:0 14px 12px;opacity:0;transition:opacity .15s}
         .deal-card:hover .deal-actions{opacity:1}
         .act-btn{flex:1;padding:6px 0;border-radius:6px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;display:flex;align-items:center;justify-content:center;gap:4px;text-decoration:none}
@@ -167,7 +164,7 @@ export default function Browse() {
         .act-vault{background:#EBF2FF;color:#1B6FF0}
         .act-vault:hover{background:#1B6FF0;color:#fff}
         .sold-feed{display:flex;flex-direction:column;gap:8px}
-        .sold-item{background:#fff;border:1px solid #EFEFEF;border-radius:8px;display:flex;align-items:center;gap:14px;padding:12px 16px;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);animation:fadeUp .3s ease both}
+        .sold-item{background:#fff;border:1px solid #EFEFEF;border-radius:8px;display:flex;align-items:center;gap:14px;padding:12px 16px;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);animation:fadeUp .3s ease both;text-decoration:none;color:inherit}
         .sold-item:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#D8D8D8}
         .sold-img{width:48px;height:67px;border-radius:5px;overflow:hidden;flex-shrink:0;background:#F7F7F7;display:flex;align-items:center;justify-content:center;font-size:24px}
         .sold-img img{width:100%;height:100%;object-fit:cover}
@@ -199,11 +196,10 @@ export default function Browse() {
         @keyframes toastIn{from{transform:translateY(80px);opacity:0}to{transform:translateY(0);opacity:1}}
         .empty-section{background:#fff;border:1.5px dashed #D8D8D8;border-radius:8px;padding:40px 24px;text-align:center;color:#9A9A9A;font-size:14px}
         @media(max-width:768px){.deals-grid{grid-template-columns:repeat(2,1fr)}.sport-grid{grid-template-columns:repeat(3,1fr)}}
-      `}</style>
+      \`}</style>
 
       <Nav />
 
-      {/* HERO */}
       <div className="browse-hero">
         <div className="browse-hero-inner">
           <h1 className="browse-hero-title">What's happening in the <em>market</em></h1>
@@ -212,25 +208,31 @@ export default function Browse() {
             {SPORTS.map(s => (
               <button
                 key={s}
-                className={`sport-pill${activeSport===s?' on':''}`}
+                className={"sport-pill" + (activeSport===s ? ' on' : '')}
                 onClick={() => setActiveSport(s)}
               >
-                {s === 'all' ? '🃏 All Sports' : `${sportEmoji[s]} ${s}`}
+                {s === 'all' ? '🃏 All Sports' : sportEmoji[s] + ' ' + s}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* MARKET BAR */}
       {!loading && data && (
         <div className="market-bar">
           <div className="market-bar-inner">
             <div className="market-stat">
+              <FontAwesomeIcon icon={faBolt} style={{color:'#F5A623',fontSize:'16px'}}/>
+              <div>
+                <div className="market-stat-val">{data.deals?.length || 0} deals</div>
+                <div className="market-stat-lbl">Below avg sold</div>
+              </div>
+            </div>
+            <div className="market-stat">
               <FontAwesomeIcon icon={faChartLine} style={{color:'#00A861',fontSize:'16px'}}/>
               <div>
-                <div className="market-stat-val">{data.recentSold?.length || 0} listings</div>
-<div className="market-stat-lbl">Active now</div>
+                <div className="market-stat-val">{data.recentSold?.length || 0} sales</div>
+                <div className="market-stat-lbl">Tracked today</div>
               </div>
             </div>
             {Object.entries(sportSummaryMap).slice(0,4).map(([sport, info]) => (
@@ -270,32 +272,91 @@ export default function Browse() {
       ) : (
         <div className="browse-main">
 
-          {/* RECENTLY SOLD */}
           <div>
             <div className="section-header">
               <div>
                 <div className="section-title">
-  <FontAwesomeIcon icon={faChartLine} style={{color:'#00A861'}}/>
-  On the Market Now
-</div>
-<div className="section-sub">Active listings across popular players</div>
+                  <FontAwesomeIcon icon={faBolt} style={{color:'#F5A623'}}/>
+                  Best Deals Right Now
+                </div>
+                <div className="section-sub">Cards listed significantly below their average sold price</div>
+              </div>
+              <a href="/search" className="section-link">Search all cards →</a>
+            </div>
+            {filteredDeals.length === 0 ? (
+              <div className="empty-section">No deals found for this sport right now. Try another sport or check back soon.</div>
+            ) : (
+              <div className="deals-grid">
+                {filteredDeals.map((deal, i) => {
+                  const sc = sportColors[deal.sport] || {bg:'#F7F7F7',color:'#555',border:'#E0E0E0'}
+                  return (
+                    <div key={deal.id} className="deal-card" style={{animationDelay: i*.04+'s'}}>
+                      <div className="deal-img">
+                        {deal.image
+                          ? <img src={deal.image} alt={deal.title}/>
+                          : <span>{sportEmoji[deal.sport]||'🃏'}</span>
+                        }
+                        <div className="deal-badge">{deal.savingPct}% below avg</div>
+                        <div className="deal-sport-badge" style={{background:sc.bg,color:sc.color}}>
+                          {sportEmoji[deal.sport]} {deal.sport}
+                        </div>
+                      </div>
+                      <div className="deal-body">
+                        <div className="deal-title">{truncate(deal.title, 60)}</div>
+                        {deal.grade && (
+                          <div style={{fontSize:'11px',fontWeight:700,color:'#002FA7',background:'#EEF2FF',padding:'2px 7px',borderRadius:'100px',display:'inline-flex',width:'fit-content'}}>{deal.grade}</div>
+                        )}
+                        <div className="deal-prices">
+                          <div>
+                            <div style={{fontSize:'10px',color:'#9A9A9A',fontWeight:600,textTransform:'uppercase',letterSpacing:'.04em'}}>Listed</div>
+                            <div className="deal-listed">{fmtPrice(deal.price)}</div>
+                          </div>
+                          <div style={{textAlign:'right'}}>
+                            <div style={{fontSize:'10px',color:'#9A9A9A',fontWeight:600,textTransform:'uppercase',letterSpacing:'.04em'}}>Avg Sold</div>
+                            <div style={{fontSize:'14px',fontWeight:800,color:'#00A861'}}>{fmtPrice(deal.avgSold)}</div>
+                            <div style={{fontSize:'10px',color:'#00A861',fontWeight:600}}>Save {fmtPrice(deal.saving)}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="deal-actions">
+                        <a href={deal.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-ebay">
+                          <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
+                        </a>
+                        <button className="act-btn act-vault" onClick={() => addToVault(deal)}>
+                          <FontAwesomeIcon icon={faPlus}/>Vault
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="section-header">
+              <div>
+                <div className="section-title">
+                  <FontAwesomeIcon icon={faChartLine} style={{color:'#00A861'}}/>
+                  Recently Sold
+                </div>
+                <div className="section-sub">Latest transactions across the market</div>
               </div>
             </div>
-
             {filteredSold.length === 0 ? (
               <div className="empty-section">No recent sales found for this sport.</div>
             ) : (
               <div className="sold-feed">
-                {filteredSold.map((item: any, i: number) => {
+                {filteredSold.map((item, i) => {
                   const sc = sportColors[item.sport] || {bg:'#F7F7F7',color:'#555',border:'#E0E0E0'}
                   return (
-                    <a
+                    
                       key={item.id + i}
                       href={item.itemWebUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="sold-item"
-                      style={{textDecoration:'none',animationDelay:`${i*.03}s`}}
+                      style={{animationDelay: i*.03+'s'}}
                     >
                       <div className="sold-img">
                         {item.image
@@ -328,7 +389,6 @@ export default function Browse() {
             )}
           </div>
 
-          {/* BROWSE BY SPORT */}
           <div>
             <div className="section-header">
               <div>
@@ -343,12 +403,12 @@ export default function Browse() {
               {Object.entries(sportColors).map(([sport, colors]) => {
                 const avg = sportSummaryMap[sport]?.avgSold
                 return (
-                  <a
+                  
                     key={sport}
-                    href={`/search?q=${encodeURIComponent(sport + ' card')}`}
+                    href={'/search?q=' + encodeURIComponent(sport + ' card')}
                     className="sport-card"
                   >
-                    <div className="sport-icon" style={{background:colors.bg,border:`1.5px solid ${colors.border}`}}>
+                    <div className="sport-icon" style={{background:colors.bg,border:'1.5px solid ' + colors.border}}>
                       <FontAwesomeIcon icon={sportIcons[sport]} style={{color:colors.color,fontSize:'20px'}}/>
                     </div>
                     <div className="sport-card-name">{sport}</div>
@@ -368,3 +428,7 @@ export default function Browse() {
     </>
   )
 }
+`;
+
+fs.writeFileSync('app/browse/page.tsx', content);
+console.log('Browse page written successfully');
