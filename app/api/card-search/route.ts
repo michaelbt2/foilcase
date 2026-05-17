@@ -131,7 +131,13 @@ function filterRelevantCards(items: any[], player: string) {
                       title.includes(' coa') ||
                       title.includes('signed football') ||
                       title.includes('mini helmet') ||
-                      title.includes('helmet')
+                      title.includes('helmet') ||
+                      title.includes('cleats') ||
+                      title.includes('funko') ||
+                      title.includes('poster') ||
+                      title.includes('book') ||
+                      title.includes('magazine') ||
+                      title.includes('photo')
     return hasPlayer && !isLot && !isNotCard
   })
 }
@@ -198,7 +204,23 @@ export async function GET(request: NextRequest) {
   try {
     const token = await getEbayToken()
 
-    let query = `"${player}"`
+    // Split query intelligently — quoted player name + free keywords
+    const words = player.trim().split(/\s+/)
+    let playerName = player
+    let keywords: string[] = []
+
+    if (words.length >= 3) {
+      const nameSuffixes = ['jr','sr','ii','iii','iv','v']
+      let splitAt = 2
+      if (words[2] && nameSuffixes.includes(words[2].toLowerCase())) {
+        splitAt = 3
+      }
+      playerName = words.slice(0, splitAt).join(' ')
+      keywords = words.slice(splitAt)
+    }
+
+    let query = `"${playerName}"`
+    if (keywords.length > 0) query += ` ${keywords.join(' ')}`
     if (year)  query += ` ${year}`
     if (set)   query += ` ${set}`
     if (sport === 'Football')   query += ' football'
@@ -210,7 +232,6 @@ export async function GET(request: NextRequest) {
     const offsets = [0, 50, 100, 150]
 
     const [activeResults, soldResults] = await Promise.all([
-      // Active listings — existing logic
       Promise.all(offsets.map(async (offset) => {
         const response = await fetch(
           `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(query)}&filter=categoryIds:212&limit=50&offset=${offset}`,
@@ -226,7 +247,6 @@ export async function GET(request: NextRequest) {
         return data.itemSummaries || []
       })),
 
-      // Sold comps — last 90 days
       Promise.all([0, 50].map(async (offset) => {
         const now = new Date().toISOString()
         const past = new Date(Date.now() - 90 * 86400000).toISOString()
@@ -245,23 +265,23 @@ export async function GET(request: NextRequest) {
       }))
     ])
 
-    // Process active listings
+    // Process active listings using playerName for filtering
     const allActive = activeResults.flat()
-    const filteredActive = filterRelevantCards(allActive, player)
-    const deduplicated = deduplicateCards(filteredActive, player)
+    const filteredActive = filterRelevantCards(allActive, playerName)
+    const deduplicated = deduplicateCards(filteredActive, playerName)
 
-    // Process sold comps
+    // Process sold comps using playerName for filtering
     const allSold = soldResults.flat()
-    const filteredSold = filterRelevantCards(allSold, player)
+    const filteredSold = filterRelevantCards(allSold, playerName)
 
-    // Build sold price map keyed same way as deduplication
+    // Build sold price map
     const soldMap = new Map<string, {
       prices: number[],
       lastSold: string | null,
     }>()
 
     for (const item of filteredSold) {
-      const parsed = parseCardTitle(item.title, player)
+      const parsed = parseCardTitle(item.title, playerName)
       const key = `${parsed.year}-${parsed.brand}-${parsed.setName}-${parsed.cardNum}-${parsed.parallel}`.toLowerCase()
       const price = parseFloat(item.price?.value || '0')
       if (!price) continue
