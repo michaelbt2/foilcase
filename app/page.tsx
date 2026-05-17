@@ -315,7 +315,7 @@ export default function Home() {
               <FontAwesomeIcon icon={faRocket}/>How it works
             </div>
             <h2 className="section-title">Start collecting in <em>minutes</em></h2>
-            <p className="section-sub" style={{margin:'0 auto'}}>FoilCase makes it effortless to catalog, track, and grow your collection — whether you have 10 cards or 10,000.</p>
+            <p className="section-sub" style={{margin:'0 auto'}}>Foilcase makes it effortless to catalog, track, and grow your collection — whether you have 10 cards or 10,000.</p>
           </div>
           <div className="steps">
             {[

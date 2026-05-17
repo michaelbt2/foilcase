@@ -48,7 +48,7 @@ export default function Nav() {
       <style>{`
         .nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid #EFEFEF;height:58px;display:flex;align-items:center}
         .nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;width:100%;display:flex;align-items:center;gap:20px}
-        .nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:#0D0D0D;font-weight:800;font-size:16px;letter-spacing:-.4px}
+        .nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:#0D0D0D;font-weight:800;font-size:19px;letter-spacing:-.4px}
         .nav-logo-icon{width:26px;height:26px;background:#1B6FF0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
         .nav-links{display:flex;gap:2px;list-style:none}
         .nav-links a{text-decoration:none;color:#555;font-size:14px;font-weight:500;padding:5px 10px;border-radius:6px;transition:all .15s}
@@ -66,7 +66,7 @@ export default function Nav() {
           <Link className="nav-logo" href="/">
             <div className="nav-logo-icon">
   <FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'12px',color:'#fff'}}/>
-</div>FoilCase
+</div>foilcase
           </Link>
           <ul className="nav-links">
   <li><Link href="/browse" className={path==='/browse'?'active':''}>Browse</Link></li>
