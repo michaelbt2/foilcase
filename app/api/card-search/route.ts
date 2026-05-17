@@ -319,11 +319,15 @@ export async function GET(request: NextRequest) {
       return { ...card, soldData: null }
     })
 
-    // Sort by year desc then price asc
-    enriched.sort((a, b) => {
-      if (b.year !== a.year) return parseInt(b.year) - parseInt(a.year)
-      return a.price - b.price
-    })
+// Sort: cards with sold data first, then by sold count desc, then year desc
+enriched.sort((a, b) => {
+  const aHasSold = a.soldData && a.soldData.soldCount > 1 ? 1 : 0
+  const bHasSold = b.soldData && b.soldData.soldCount > 1 ? 1 : 0
+  if (bHasSold !== aHasSold) return bHasSold - aHasSold
+  if (bHasSold && aHasSold) return b.soldData.soldCount - a.soldData.soldCount
+  if (b.year !== a.year) return parseInt(b.year) - parseInt(a.year)
+  return a.price - b.price
+})
 
     return NextResponse.json({
       total: enriched.length,
