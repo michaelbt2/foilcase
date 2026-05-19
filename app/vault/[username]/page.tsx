@@ -9,7 +9,7 @@ import {
   faLayerGroup, faChartLine, faMedal, faBoxOpen, faGlobe,
   faLock, faUserPlus, faUserMinus, faGrip, faBars,
   faFootball, faBaseball, faBasketball, faHockeyPuck,
-  faFutbol, faGamepad, faTag, faArrowUpRightFromSquare,
+  faFutbol, faGamepad, faTag, faArrowUpRightFromSquare,faStar, faTrophy, faCrown,
 } from '@fortawesome/free-solid-svg-icons'
 
 const sportEmoji: Record<string,string> = {
@@ -52,7 +52,21 @@ function fmtNum(n: number) {
   if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K'
   return n.toFixed(0)
 }
+function getCollectorBadge(cardCount: number) {
+  if (cardCount >= 500) return { icon: faCrown, color: '#F5A623', bg: '#FEF9EC', label: 'Legend' }
+  if (cardCount >= 250) return { icon: faTrophy, color: '#E8820C', bg: '#FEF3E2', label: 'Elite' }
+  if (cardCount >= 100) return { icon: faMedal, color: '#7B4FCA', bg: '#F2ECFB', label: 'Veteran' }
+  if (cardCount >= 25)  return { icon: faStar, color: '#1B6FF0', bg: '#EBF2FF', label: 'Enthusiast' }
+  return { icon: faLayerGroup, color: '#9A9A9A', bg: '#F7F7F7', label: 'Collector' }
+}
 
+const TIERS = [
+  { label:'Collector', min:1, max:24, border:'#E0E0E0' },
+  { label:'Enthusiast', min:25, max:99, border:'#C5D8FF' },
+  { label:'Veteran', min:100, max:249, border:'#D4BAF0' },
+  { label:'Elite', min:250, max:499, border:'#F5C880' },
+  { label:'Legend', min:500, max:Infinity, border:'#FDDBA0' },
+]
 export default function PublicVault() {
   const params = useParams()
   const username = params.username as string
@@ -259,9 +273,9 @@ export default function PublicVault() {
       {/* VAULT HERO */}
       <div className="vault-hero">
         <div className="vault-hero-inner">
-          <div className="vault-avatar">
-            {(profile.display_name || profile.username || '?')[0].toUpperCase()}
-          </div>
+          <div className="vault-avatar" style={{background:getCollectorBadge(cards.length).bg,border:`3px solid ${TIERS.find(t => cards.length>=t.min && (t.max===Infinity||cards.length<=t.max))?.border||'#E0E0E0'}`}}>
+  <FontAwesomeIcon icon={getCollectorBadge(cards.length).icon} style={{color:getCollectorBadge(cards.length).color,fontSize:'28px'}}/>
+</div>
           <div className="vault-info">
             <div className="vault-display-name">{profile.display_name || profile.username}</div>
             <div className="vault-username">@{profile.username}</div>
