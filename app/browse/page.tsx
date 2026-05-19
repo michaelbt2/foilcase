@@ -196,34 +196,10 @@ export default function Browse() {
 
       <Nav />
 
-{/* SPORT PILLS — below hero, above content */}
-<div style={{background:'#fff',borderBottom:'1px solid #EFEFEF',padding:'14px 24px'}}>
-  <div style={{maxWidth:'1200px',margin:'0 auto',display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
-    <span style={{fontSize:'11px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.08em',marginRight:'4px'}}>Filter:</span>
-    {SPORTS.map(s => (
-      <button
-        key={s}
-        onClick={() => setActiveSport(s)}
-        style={{
-          display:'inline-flex',alignItems:'center',gap:'6px',
-          padding:'6px 14px',borderRadius:'100px',fontSize:'13px',fontWeight:600,
-          cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s',
-          border:`1.5px solid ${activeSport===s?'#0D0D0D':'#EFEFEF'}`,
-          background:activeSport===s?'#0D0D0D':'#fff',
-          color:activeSport===s?'#fff':'#555',
-        }}
-      >
-        {s === 'all'
-          ? <><FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'11px'}}/>All Sports</>
-          : <><FontAwesomeIcon icon={sportIcons[s]} style={{fontSize:'11px'}}/>  {s}</>
-        }
-      </button>
-    ))}
-  </div>
-</div>
+
 
      
-      <div className="browse-hero">
+<div className="browse-hero">
   <div className="browse-hero-inner">
     <h1 className="browse-hero-title">What's happening in the <em>market</em></h1>
     <p className="browse-hero-sub">Live deals, recent sales, and market intelligence — updated in real time</p>
@@ -265,6 +241,32 @@ export default function Browse() {
         ))}
       </div>
     )}
+  </div>
+</div>
+
+{/* SPORT PILLS — below hero, above content */}
+<div style={{background:'#fff',borderBottom:'1px solid #EFEFEF',padding:'14px 24px'}}>
+  <div style={{maxWidth:'1200px',margin:'0 auto',display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
+    <span style={{fontSize:'11px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.08em',marginRight:'4px'}}>Filter:</span>
+    {SPORTS.map(s => (
+      <button
+        key={s}
+        onClick={() => setActiveSport(s)}
+        style={{
+          display:'inline-flex',alignItems:'center',gap:'6px',
+          padding:'6px 14px',borderRadius:'100px',fontSize:'13px',fontWeight:600,
+          cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s',
+          border:`1.5px solid ${activeSport===s?'#0D0D0D':'#EFEFEF'}`,
+          background:activeSport===s?'#0D0D0D':'#fff',
+          color:activeSport===s?'#fff':'#555',
+        }}
+      >
+        {s === 'all'
+          ? <><FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'11px'}}/>All Sports</>
+          : <><FontAwesomeIcon icon={sportIcons[s]} style={{fontSize:'11px'}}/>  {s}</>
+        }
+      </button>
+    ))}
   </div>
 </div>
 
