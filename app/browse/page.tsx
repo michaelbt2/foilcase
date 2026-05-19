@@ -8,7 +8,7 @@ import {
   faMagnifyingGlass, faFire, faArrowUpRightFromSquare,
   faPlus, faChartLine, faBolt, faFootball, faBaseball,
   faBasketball, faHockeyPuck, faGamepad, faFutbol,
-  faArrowTrendUp, faTag,
+  faArrowTrendUp, faTag, faLayerGroup
 } from '@fortawesome/free-solid-svg-icons'
 
 const sportEmoji: Record<string,string> = {
@@ -188,13 +188,6 @@ export default function Browse() {
         .loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;gap:16px}
         .loading-spinner{width:40px;height:40px;border:3px solid #EFEFEF;border-top-color:#1B6FF0;border-radius:50%;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
-        .market-bar{background:#fff;border-bottom:1px solid #EFEFEF;padding:12px 24px}
-        .market-bar-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:24px;overflow-x:auto}
-        .market-stat{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:0 16px;border-right:1px solid #EFEFEF}
-        .market-stat:first-child{padding-left:0}
-        .market-stat:last-child{border-right:none}
-        .market-stat-val{font-size:15px;font-weight:800;color:#0D0D0D}
-        .market-stat-lbl{font-size:11px;color:#9A9A9A}
         .toast{position:fixed;bottom:24px;right:24px;z-index:999;background:#0D0D0D;color:#fff;border-radius:8px;padding:12px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.25);animation:toastIn .3s cubic-bezier(.34,1.56,.64,1);max-width:320px}
         @keyframes toastIn{from{transform:translateY(80px);opacity:0}to{transform:translateY(0);opacity:1}}
         .empty-section{background:#fff;border:1.5px dashed #D8D8D8;border-radius:8px;padding:40px 24px;text-align:center;color:#9A9A9A;font-size:14px}
@@ -203,55 +196,77 @@ export default function Browse() {
 
       <Nav />
 
-      {/* HERO */}
+{/* SPORT PILLS — below hero, above content */}
+<div style={{background:'#fff',borderBottom:'1px solid #EFEFEF',padding:'14px 24px'}}>
+  <div style={{maxWidth:'1200px',margin:'0 auto',display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
+    <span style={{fontSize:'11px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.08em',marginRight:'4px'}}>Filter:</span>
+    {SPORTS.map(s => (
+      <button
+        key={s}
+        onClick={() => setActiveSport(s)}
+        style={{
+          display:'inline-flex',alignItems:'center',gap:'6px',
+          padding:'6px 14px',borderRadius:'100px',fontSize:'13px',fontWeight:600,
+          cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s',
+          border:`1.5px solid ${activeSport===s?'#0D0D0D':'#EFEFEF'}`,
+          background:activeSport===s?'#0D0D0D':'#fff',
+          color:activeSport===s?'#fff':'#555',
+        }}
+      >
+        {s === 'all'
+          ? <><FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'11px'}}/>All Sports</>
+          : <><FontAwesomeIcon icon={sportIcons[s]} style={{fontSize:'11px'}}/>  {s}</>
+        }
+      </button>
+    ))}
+  </div>
+</div>
+
+     
       <div className="browse-hero">
-        <div className="browse-hero-inner">
-          <h1 className="browse-hero-title">What's happening in the <em>market</em></h1>
-          <p className="browse-hero-sub">Live deals, recent sales, and market intelligence — updated in real time</p>
-          <div className="sport-pills">
-            {SPORTS.map(s => (
-              <button
-                key={s}
-                className={`sport-pill${activeSport===s?' on':''}`}
-                onClick={() => setActiveSport(s)}
-              >
-                {s === 'all' ? '🃏 All Sports' : `${sportEmoji[s]} ${s}`}
-              </button>
-            ))}
+  <div className="browse-hero-inner">
+    <h1 className="browse-hero-title">What's happening in the <em>market</em></h1>
+    <p className="browse-hero-sub">Live deals, recent sales, and market intelligence — updated in real time</p>
+
+    {/* LIVE STATS — inside hero */}
+    {!loading && data && (
+      <div style={{display:'flex',gap:'12px',flexWrap:'wrap',justifyContent:'center',marginTop:'24px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'8px',background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.12)',borderRadius:'8px',padding:'10px 16px'}}>
+          <FontAwesomeIcon icon={faBolt} style={{color:'#F5A623',fontSize:'14px'}}/>
+          <div>
+            <div style={{fontSize:'14px',fontWeight:800,color:'#fff'}}>{data.recentSold?.length || 0} listings</div>
+            <div style={{fontSize:'10px',color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.06em'}}>Active now</div>
+          </div>
+        </div>
+        {Object.entries(sportSummaryMap).slice(0,4).map(([sport, info]) => (
+          <div key={sport} style={{display:'flex',alignItems:'center',gap:'8px',background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.12)',borderRadius:'8px',padding:'10px 16px'}}>
+            <FontAwesomeIcon icon={sportIcons[sport]||faTag} style={{color:sportColors[sport]?.color||'#9A9A9A',fontSize:'14px'}}/>
+            <div>
+              <div style={{fontSize:'14px',fontWeight:800,color:'#fff'}}>{fmtPrice(info.avgSold)}</div>
+              <div style={{fontSize:'10px',color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.06em'}}>Avg {sport} Sale</div>
+            </div>
+          </div>
+        ))}
+        <div style={{display:'flex',alignItems:'center',gap:'8px',background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.12)',borderRadius:'8px',padding:'10px 16px'}}>
+          <FontAwesomeIcon icon={faArrowTrendUp} style={{color:'#7EB6FF',fontSize:'14px'}}/>
+          <div>
+            <div style={{fontSize:'14px',fontWeight:800,color:'#fff'}}>{data ? new Date(data.generatedAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : '--'}</div>
+            <div style={{fontSize:'10px',color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.06em'}}>Last updated</div>
           </div>
         </div>
       </div>
+    )}
 
-      {/* MARKET BAR */}
-      {!loading && data && (
-        <div className="market-bar">
-          <div className="market-bar-inner">
-            <div className="market-stat">
-              <FontAwesomeIcon icon={faChartLine} style={{color:'#00A861',fontSize:'16px'}}/>
-              <div>
-                <div className="market-stat-val">{data.recentSold?.length || 0} listings</div>
-<div className="market-stat-lbl">Active now</div>
-              </div>
-            </div>
-            {Object.entries(sportSummaryMap).slice(0,4).map(([sport, info]) => (
-              <div className="market-stat" key={sport}>
-                <FontAwesomeIcon icon={sportIcons[sport]||faTag} style={{color:sportColors[sport]?.color||'#9A9A9A',fontSize:'16px'}}/>
-                <div>
-                  <div className="market-stat-val">{fmtPrice(info.avgSold)}</div>
-                  <div className="market-stat-lbl">Avg {sport} sale</div>
-                </div>
-              </div>
-            ))}
-            <div className="market-stat">
-              <FontAwesomeIcon icon={faArrowTrendUp} style={{color:'#1B6FF0',fontSize:'16px'}}/>
-              <div>
-                <div className="market-stat-val">{new Date(data.generatedAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
-                <div className="market-stat-lbl">Last updated</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    {/* Loading placeholder so hero doesn't jump */}
+    {loading && (
+      <div style={{display:'flex',gap:'12px',flexWrap:'wrap',justifyContent:'center',marginTop:'24px'}}>
+        {[1,2,3,4,5].map(i => (
+          <div key={i} style={{width:'120px',height:'52px',background:'rgba(255,255,255,.06)',borderRadius:'8px',border:'1px solid rgba(255,255,255,.08)'}}/>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
 
       {loading ? (
         <div className="loading-state">
@@ -276,7 +291,7 @@ export default function Browse() {
               <div>
                 <div className="section-title">
   <FontAwesomeIcon icon={faChartLine} style={{color:'#00A861'}}/>
-  On the Market Now
+  On the market now
 </div>
 <div className="section-sub">Active listings across popular players</div>
               </div>
@@ -364,7 +379,51 @@ export default function Browse() {
         </div>
       )}
 
-      {toast && <div className="toast">{toast}</div>}
+      {/* FOOTER */}
+      <footer style={{borderTop:'1px solid #EFEFEF',padding:'48px 24px 32px',background:'#fff',marginTop:'48px'}}>
+        <div style={{maxWidth:'1160px',margin:'0 auto'}}>
+          <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:'48px',marginBottom:'40px'}}>
+            <div>
+              <a href="/" style={{display:'inline-flex',alignItems:'center',gap:'8px',textDecoration:'none',fontWeight:800,fontSize:'16px',color:'#0D0D0D',marginBottom:'12px'}}>
+                <div style={{width:'26px',height:'26px',background:'#1B6FF0',borderRadius:'6px',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'13px'}}>
+                  <FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'11px'}}/>
+                </div>
+                foilcase
+              </a>
+              <div style={{fontSize:'14px',color:'#9A9A9A',lineHeight:1.65,marginTop:'12px',maxWidth:'240px'}}>The definitive online database and collection tracker for trading card enthusiasts worldwide.</div>
+            </div>
+            {[
+              {title:'Product', links:[{l:'Browse',h:'/browse'},{l:'Search',h:'/search'},{l:'My Vault',h:'/collection'},{l:'Community',h:'/community'}]},
+              {title:'Sports', links:[{l:'Baseball',h:'/search?q=baseball'},{l:'Basketball',h:'/search?q=basketball'},{l:'Football',h:'/search?q=football'},{l:'Hockey',h:'/search?q=hockey'},{l:'Soccer',h:'/search?q=soccer'},{l:'Gaming / TCG',h:'/search?q=pokemon'}]},
+              {title:'Company', links:[{l:'About Us',h:'#'},{l:'Community',h:'/community'},{l:'Contact',h:'#'},{l:'Privacy Policy',h:'#'},{l:'Terms of Service',h:'#'}]},
+            ].map(col => (
+              <div key={col.title}>
+                <div style={{fontSize:'12px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.1em',color:'#9A9A9A',marginBottom:'16px'}}>{col.title}</div>
+                <ul style={{listStyle:'none',display:'flex',flexDirection:'column',gap:'10px'}}>
+                  {col.links.map(link => (
+                    <li key={link.l}>
+                      <a href={link.h} style={{fontSize:'14px',color:'#555',textDecoration:'none'}}
+                        onMouseOver={e=>(e.currentTarget.style.color='#0D0D0D')}
+                        onMouseOut={e=>(e.currentTarget.style.color='#555')}
+                      >{link.l}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:'24px',borderTop:'1px solid #EFEFEF',fontSize:'13px',color:'#9A9A9A',flexWrap:'wrap',gap:'12px'}}>
+            <div>© 2026 foilcase. All rights reserved.</div>
+            <div style={{display:'flex',gap:'16px'}}>
+              {[{l:'Privacy',h:'#'},{l:'Terms',h:'#'},{l:'Contact',h:'#'}].map(link => (
+                <a key={link.l} href={link.h} style={{color:'#9A9A9A',textDecoration:'none'}}>{link.l}</a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
+
+{toast && <div className="toast">{toast}</div>}
     </>
   )
 }
