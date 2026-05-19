@@ -18,8 +18,15 @@ import {
   faChevronDown,
   faGrip,
   faBars,
+  faFootball,
+  faBaseball,
+  faBasketball,
+  faHockeyPuck,
+  faGamepad,
+  faLayerGroup,
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
+
 
 const RECENT_SEARCHES = ['Patrick Mahomes','2024 Prizm Football','Charizard PSA 10','Shohei Ohtani RC','LeBron James']
 const TRENDING = ['Caleb Williams RC','2025 Prizm Football','Mahomes Gold /10','Wembanyama Prizm','Charizard 1st Edition']
@@ -335,13 +342,7 @@ function SearchContent() {
             )}
           </div>
 
-          {!submitted && (
-            <div className="search-pills">
-              {RECENT_SEARCHES.map(r => (
-                <button key={r} className="search-pill" onClick={() => runSearch(r)}>{r}</button>
-              ))}
-            </div>
-          )}
+         
         </div>
       </div>
 
@@ -635,25 +636,71 @@ function SearchContent() {
             </div>
             <div className="disc-grid">
               {[
-                {name:'Patrick Mahomes', emoji:'🏈'},
-                {name:'Tom Brady', emoji:'🏈'},
-                {name:'Shohei Ohtani', emoji:'⚾'},
-                {name:'LeBron James', emoji:'🏀'},
-                {name:'Charizard', emoji:'🎮'},
-                {name:'Victor Wembanyama', emoji:'🏀'},
-                {name:'Caleb Williams', emoji:'🏈'},
-                {name:'Connor McDavid', emoji:'🏒'},
-              ].map(p => (
-                <div key={p.name} className="disc-card" onClick={() => runSearch(p.name)}>
-                  <div style={{fontSize:'28px',marginBottom:'8px'}}>{p.emoji}</div>
-                  <div style={{fontSize:'13px',fontWeight:700,color:'#0D0D0D',lineHeight:1.2}}>{p.name}</div>
-                  <div style={{fontSize:'11px',color:'#9A9A9A',marginTop:'2px'}}>Search cards →</div>
-                </div>
-              ))}
+  {name:'Patrick Mahomes', icon:faFootball, color:'#1B6FF0', bg:'#EBF2FF'},
+  {name:'Tom Brady', icon:faFootball, color:'#1B6FF0', bg:'#EBF2FF'},
+  {name:'Shohei Ohtani', icon:faBaseball, color:'#00A861', bg:'#E6F9F0'},
+  {name:'LeBron James', icon:faBasketball, color:'#E8820C', bg:'#FEF3E2'},
+  {name:'Charizard', icon:faGamepad, color:'#D93025', bg:'#FDECEA'},
+  {name:'Victor Wembanyama', icon:faBasketball, color:'#E8820C', bg:'#FEF3E2'},
+  {name:'Caleb Williams', icon:faFootball, color:'#1B6FF0', bg:'#EBF2FF'},
+  {name:'Connor McDavid', icon:faHockeyPuck, color:'#7B4FCA', bg:'#F2ECFB'},
+].map(p => (
+  <div key={p.name} className="disc-card" onClick={() => runSearch(p.name)}>
+    <div style={{width:'44px',height:'44px',borderRadius:'10px',background:p.bg,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'10px'}}>
+      <FontAwesomeIcon icon={p.icon} style={{color:p.color,fontSize:'18px'}}/>
+    </div>
+    <div style={{fontSize:'13px',fontWeight:700,color:'#0D0D0D',lineHeight:1.2}}>{p.name}</div>
+    <div style={{fontSize:'11px',color:'#9A9A9A',marginTop:'2px'}}>Search cards →</div>
+  </div>
+))}
             </div>
           </div>
         </div>
       )}
+
+      {/* FOOTER */}
+      <footer style={{borderTop:'1px solid #EFEFEF',padding:'48px 24px 32px',background:'#fff',marginTop:'48px'}}>
+        <div style={{maxWidth:'1160px',margin:'0 auto'}}>
+          <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:'48px',marginBottom:'40px'}}>
+            <div>
+              <a href="/" style={{display:'inline-flex',alignItems:'center',gap:'8px',textDecoration:'none',fontWeight:800,fontSize:'16px',color:'#0D0D0D',marginBottom:'12px'}}>
+                <div style={{width:'26px',height:'26px',background:'#1B6FF0',borderRadius:'6px',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'13px'}}>
+                  <FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'11px'}}/>
+                </div>
+                foilcase
+              </a>
+              <div style={{fontSize:'14px',color:'#9A9A9A',lineHeight:1.65,marginTop:'12px',maxWidth:'240px'}}>The definitive online database and collection tracker for trading card enthusiasts worldwide.</div>
+            </div>
+            {[
+              {title:'Product', links:[{l:'Browse Cards',h:'/browse'},{l:'Search Database',h:'/search'},{l:'My Vault',h:'/collection'},{l:'Community',h:'/community'}]},
+              {title:'Sports', links:[{l:'Baseball',h:'/search?q=baseball'},{l:'Basketball',h:'/search?q=basketball'},{l:'Football',h:'/search?q=football'},{l:'Hockey',h:'/search?q=hockey'},{l:'Soccer',h:'/search?q=soccer'},{l:'Gaming / TCG',h:'/search?q=pokemon'}]},
+              {title:'Company', links:[{l:'About Us',h:'#'},{l:'Community',h:'/community'},{l:'Contact',h:'#'},{l:'Privacy Policy',h:'#'},{l:'Terms of Service',h:'#'}]},
+            ].map(col => (
+              <div key={col.title}>
+                <div style={{fontSize:'12px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.1em',color:'#9A9A9A',marginBottom:'16px'}}>{col.title}</div>
+                <ul style={{listStyle:'none',display:'flex',flexDirection:'column',gap:'10px'}}>
+                  {col.links.map(link => (
+                    <li key={link.l}>
+                      <a href={link.h} style={{fontSize:'14px',color:'#555',textDecoration:'none',transition:'color .15s'}}
+                        onMouseOver={e=>(e.currentTarget.style.color='#0D0D0D')}
+                        onMouseOut={e=>(e.currentTarget.style.color='#555')}
+                      >{link.l}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:'24px',borderTop:'1px solid #EFEFEF',fontSize:'13px',color:'#9A9A9A',flexWrap:'wrap',gap:'12px'}}>
+            <div>© 2026 foilcase. All rights reserved.</div>
+            <div style={{display:'flex',gap:'16px'}}>
+              {[{l:'Privacy',h:'#'},{l:'Terms',h:'#'},{l:'Contact',h:'#'}].map(link => (
+                <a key={link.l} href={link.h} style={{color:'#9A9A9A',textDecoration:'none'}}>{link.l}</a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {toast && <div className="toast">{toast}</div>}
     </>
