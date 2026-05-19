@@ -58,54 +58,37 @@ export default function PublicVault() {
   const username = params.username as string
   const { user } = useUser()
 
-  const [profile, setProfile]       = useState<any>(null)
-  const [cards, setCards]           = useState<any[]>([])
-  const [loading, setLoading]       = useState(true)
-  const [notFound, setNotFound]     = useState(false)
-  const [isPrivate, setIsPrivate]   = useState(false)
+  const [profile, setProfile]         = useState<any>(null)
+  const [cards, setCards]             = useState<any[]>([])
+  const [loading, setLoading]         = useState(true)
+  const [notFound, setNotFound]       = useState(false)
+  const [isPrivate, setIsPrivate]     = useState(false)
   const [activeSport, setActiveSport] = useState('all')
-  const [viewMode, setViewMode]     = useState<'grid'|'list'>('grid')
+  const [viewMode, setViewMode]       = useState<'grid'|'list'>('grid')
   const [isFollowing, setIsFollowing] = useState(false)
   const [followerCount, setFollowerCount] = useState(0)
   const [followLoading, setFollowLoading] = useState(false)
 
-  useEffect(() => {
-    if (username) loadVault()
-  }, [username])
-
-  useEffect(() => {
-    if (user && profile) checkFollowing()
-  }, [user, profile])
+  useEffect(() => { if (username) loadVault() }, [username])
+  useEffect(() => { if (user && profile) checkFollowing() }, [user, profile])
 
   const loadVault = async () => {
     setLoading(true)
-
-    // Load profile
     const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('username', username)
-      .single()
+      .from('profiles').select('*').eq('username', username).single()
 
     if (!profileData) { setNotFound(true); setLoading(false); return }
     if (!profileData.is_public) { setIsPrivate(true); setLoading(false); return }
-
     setProfile(profileData)
 
-    // Load cards
     const { data: cardsData } = await supabase
-      .from('cards')
-      .select('*')
-      .eq('user_id', profileData.id)
-      .neq('status', 'sold')
-      .order('created_at', { ascending: false })
+      .from('cards').select('*').eq('user_id', profileData.id)
+      .neq('status', 'sold').order('created_at', { ascending: false })
 
     setCards(cardsData || [])
 
-    // Load follower count
     const { count } = await supabase
-      .from('followers')
-      .select('*', { count: 'exact', head: true })
+      .from('followers').select('*', { count: 'exact', head: true })
       .eq('following_id', profileData.id)
 
     setFollowerCount(count || 0)
@@ -114,12 +97,8 @@ export default function PublicVault() {
 
   const checkFollowing = async () => {
     if (!user || !profile) return
-    const { data } = await supabase
-      .from('followers')
-      .select('id')
-      .eq('follower_id', user.id)
-      .eq('following_id', profile.id)
-      .single()
+    const { data } = await supabase.from('followers').select('id')
+      .eq('follower_id', user.id).eq('following_id', profile.id).single()
     setIsFollowing(!!data)
   }
 
@@ -128,76 +107,61 @@ export default function PublicVault() {
     setFollowLoading(true)
     if (isFollowing) {
       await supabase.from('followers').delete()
-        .eq('follower_id', user.id)
-        .eq('following_id', profile.id)
+        .eq('follower_id', user.id).eq('following_id', profile.id)
       setIsFollowing(false)
       setFollowerCount(c => c - 1)
     } else {
-      await supabase.from('followers').insert({
-        follower_id: user.id,
-        following_id: profile.id,
-      })
+      await supabase.from('followers').insert({ follower_id: user.id, following_id: profile.id })
       setIsFollowing(true)
       setFollowerCount(c => c + 1)
     }
     setFollowLoading(false)
   }
 
-  const filtered = cards.filter(c =>
-    activeSport === 'all' || c.sport.startsWith(activeSport)
-  )
-
+  const filtered = cards.filter(c => activeSport === 'all' || c.sport.startsWith(activeSport))
   const totalValue  = cards.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0)
   const totalGraded = cards.filter(c => c.grader && c.grader !== 'Raw').length
   const totalSets   = new Set(cards.map(c => c.set_name)).size
   const isOwner     = user?.id === profile?.id
 
-  if (loading) {
-    return (
-      <>
-        <Nav />
-        <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
-          <div style={{textAlign:'center'}}>
-            <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading vault...</div>
-          </div>
-        </div>
-      </>
-    )
-  }
+  if (loading) return (
+    <>
+      <Nav />
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+        <div style={{fontSize:'16px',fontWeight:600,color:'#555'}}>Loading vault...</div>
+      </div>
+    </>
+  )
 
-  if (notFound) {
-    return (
-      <>
-        <Nav />
-        <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
-          <div style={{textAlign:'center'}}>
-            <div style={{fontSize:'48px',marginBottom:'16px'}}>🔍</div>
-            <div style={{fontSize:'20px',fontWeight:800,marginBottom:'8px'}}>Vault not found</div>
-            <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>No collector with the username <strong>@{username}</strong> exists.</div>
-            <a href="/community" style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'10px 20px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',textDecoration:'none',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:600}}>Browse collectors</a>
-          </div>
+  if (notFound) return (
+    <>
+      <Nav />
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:'48px',marginBottom:'16px'}}>🔍</div>
+          <div style={{fontSize:'20px',fontWeight:800,marginBottom:'8px'}}>Vault not found</div>
+          <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>No collector with the username <strong>@{username}</strong> exists.</div>
+          <a href="/community" style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'10px 20px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',textDecoration:'none',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:600}}>Browse collectors</a>
         </div>
-      </>
-    )
-  }
+      </div>
+    </>
+  )
 
-  if (isPrivate) {
-    return (
-      <>
-        <Nav />
-        <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
-          <div style={{textAlign:'center'}}>
-            <div style={{width:'64px',height:'64px',background:'#F7F7F7',borderRadius:'16px',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px'}}>
-              <FontAwesomeIcon icon={faLock} style={{color:'#9A9A9A',fontSize:'28px'}}/>
-            </div>
-            <div style={{fontSize:'20px',fontWeight:800,marginBottom:'8px'}}>This vault is private</div>
-            <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>@{username} hasn't made their collection public yet.</div>
-            <a href="/community" style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'10px 20px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',textDecoration:'none',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:600}}>Browse collectors</a>
+  if (isPrivate) return (
+    <>
+      <Nav />
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{width:'64px',height:'64px',background:'#F7F7F7',borderRadius:'16px',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px'}}>
+            <FontAwesomeIcon icon={faLock} style={{color:'#9A9A9A',fontSize:'28px'}}/>
           </div>
+          <div style={{fontSize:'20px',fontWeight:800,marginBottom:'8px'}}>This vault is private</div>
+          <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>@{username} hasn't made their collection public yet.</div>
+          <a href="/community" style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'10px 20px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',textDecoration:'none',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:600}}>Browse collectors</a>
         </div>
-      </>
-    )
-  }
+      </div>
+    </>
+  )
 
   return (
     <>
@@ -227,7 +191,7 @@ export default function PublicVault() {
         .vault-stat-lbl{font-size:11px;color:#9A9A9A;margin-top:2px}
         .vault-main{max-width:1200px;margin:0 auto;padding:24px}
         .sport-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
-        .sport-tab{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #EFEFEF;background:#fff;color:#555;transition:all .15s;font-family:'Plus Jakarta Sans,sans-serif'}
+        .sport-tab{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #EFEFEF;background:#fff;color:#555;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif}
         .sport-tab:hover{border-color:#D8D8D8;color:#0D0D0D}
         .sport-tab.on{background:#0D0D0D;color:#fff;border-color:#0D0D0D}
         .toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
@@ -242,6 +206,7 @@ export default function PublicVault() {
         .card-img img{width:100%;height:100%;object-fit:cover}
         .card-status{position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;padding:3px 7px;border-radius:100px;letter-spacing:.04em;text-transform:uppercase}
         .status-trade{background:#FEF3E2;color:#E8820C}
+        .status-sale{background:#EBF2FF;color:#1B6FF0}
         .grade-chip{position:absolute;bottom:8px;left:8px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:4px}
         .grade-PSA{background:#002FA7;color:#fff}
         .grade-BGS{background:#C41E3A;color:#fff}
@@ -254,7 +219,7 @@ export default function PublicVault() {
         .cards-list{display:flex;flex-direction:column;gap:10px}
         .list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:8px;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
         .list-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.07);border-color:#D8D8D8}
-        .list-img{width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;margin:10px 0 10px 14px;border-radius:6px;overflow:hidden;background:#F7F7F7}
+        .list-img{width:60px;height:84px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;margin:10px 0 10px 14px;border-radius:6px;overflow:hidden;background:#F7F7F7}
         .list-img img{width:100%;height:100%;object-fit:cover}
         .list-main{flex:1;padding:10px 14px;min-width:0}
         .list-player{font-size:14px;font-weight:700;color:#0D0D0D}
@@ -296,9 +261,7 @@ export default function PublicVault() {
           </div>
           <div className="vault-actions">
             {isOwner ? (
-              <a href="/settings" className="btn btn-outline">
-                Edit Profile
-              </a>
+              <a href="/settings" className="btn btn-outline">Edit Profile</a>
             ) : (
               <button
                 className={`btn ${isFollowing ? 'btn-outline' : 'btn-primary'}`}
@@ -313,7 +276,7 @@ export default function PublicVault() {
               className="btn btn-outline"
               onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!') }}
             >
-              Share
+              Share Vault
             </button>
           </div>
         </div>
@@ -323,28 +286,28 @@ export default function PublicVault() {
       <div className="vault-stats">
         <div className="vault-stats-inner">
           <div className="vault-stat">
-            <div className="vault-stat-icon" style={{background:'#EBF2FF'}}>
+            <div className="vault-stat-icon" style={{background:'#EBF2FF',display:'flex',alignItems:'center',justifyContent:'center'}}>
               <FontAwesomeIcon icon={faLayerGroup} style={{color:'#1B6FF0'}}/>
             </div>
             <div className="vault-stat-val">{cards.length}</div>
             <div className="vault-stat-lbl">Total Cards</div>
           </div>
           <div className="vault-stat">
-            <div className="vault-stat-icon" style={{background:'#E6F9F0'}}>
+            <div className="vault-stat-icon" style={{background:'#E6F9F0',display:'flex',alignItems:'center',justifyContent:'center'}}>
               <FontAwesomeIcon icon={faChartLine} style={{color:'#00A861'}}/>
             </div>
             <div className="vault-stat-val" style={{color:'#00A861'}}>${fmtNum(totalValue)}</div>
             <div className="vault-stat-lbl">Est. Value</div>
           </div>
           <div className="vault-stat">
-            <div className="vault-stat-icon" style={{background:'#F2ECFB'}}>
+            <div className="vault-stat-icon" style={{background:'#F2ECFB',display:'flex',alignItems:'center',justifyContent:'center'}}>
               <FontAwesomeIcon icon={faMedal} style={{color:'#7B4FCA'}}/>
             </div>
             <div className="vault-stat-val">{totalGraded}</div>
             <div className="vault-stat-lbl">Graded Cards</div>
           </div>
           <div className="vault-stat">
-            <div className="vault-stat-icon" style={{background:'#FEF3E2'}}>
+            <div className="vault-stat-icon" style={{background:'#FEF3E2',display:'flex',alignItems:'center',justifyContent:'center'}}>
               <FontAwesomeIcon icon={faBoxOpen} style={{color:'#E8820C'}}/>
             </div>
             <div className="vault-stat-val">{totalSets}</div>
@@ -411,6 +374,9 @@ export default function PublicVault() {
                       <FontAwesomeIcon icon={faTag} style={{marginRight:'3px'}}/>For Trade
                     </div>
                   )}
+                  {c.status === 'sale' && (
+                    <div className="card-status status-sale">For Sale</div>
+                  )}
                   {c.grader && c.grader !== 'Raw' && (
                     <div className={`grade-chip grade-${c.grader}`}>{c.grader} {c.grade}</div>
                   )}
@@ -423,7 +389,9 @@ export default function PublicVault() {
                   </div>
                   <div className="card-attrs">
                     {(c.attrs||[]).map((a:string) => (
-                      <span key={a} className="attr-tag">{attrLabel(a)}</span>
+                      <span key={a} className="attr-tag">
+                        {a === 'numbered' && c.print_run ? c.print_run : attrLabel(a)}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -448,12 +416,26 @@ export default function PublicVault() {
                   </div>
                   <div className="list-attrs">
                     {(c.attrs||[]).map((a:string) => (
-                      <span key={a} className="attr-tag">{attrLabel(a)}</span>
+                      <span key={a} className="attr-tag">
+                        {a === 'numbered' && c.print_run ? c.print_run : attrLabel(a)}
+                      </span>
                     ))}
                     {c.status === 'trade' && (
                       <span className="attr-tag" style={{background:'#FEF3E2',color:'#E8820C',border:'1px solid #F5C880'}}>
                         <FontAwesomeIcon icon={faTag} style={{marginRight:'3px'}}/>For Trade
                       </span>
+                    )}
+                    {c.status === 'sale' && c.ebay_listing_url && (
+                      <a
+                        href={c.ebay_listing_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="attr-tag"
+                        style={{background:'#EBF2FF',color:'#1B6FF0',border:'1px solid #C5D8FF',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'4px'}}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        View on eBay
+                      </a>
                     )}
                   </div>
                 </div>
