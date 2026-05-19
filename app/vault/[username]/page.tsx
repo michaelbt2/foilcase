@@ -9,7 +9,7 @@ import {
   faLayerGroup, faChartLine, faMedal, faBoxOpen, faGlobe,
   faLock, faUserPlus, faUserMinus, faGrip, faBars,
   faFootball, faBaseball, faBasketball, faHockeyPuck,
-  faFutbol, faGamepad, faTag,
+  faFutbol, faGamepad, faTag, faArrowUpRightFromSquare,
 } from '@fortawesome/free-solid-svg-icons'
 
 const sportEmoji: Record<string,string> = {
@@ -58,19 +58,22 @@ export default function PublicVault() {
   const username = params.username as string
   const { user } = useUser()
 
-  const [profile, setProfile]         = useState<any>(null)
-  const [cards, setCards]             = useState<any[]>([])
-  const [loading, setLoading]         = useState(true)
-  const [notFound, setNotFound]       = useState(false)
-  const [isPrivate, setIsPrivate]     = useState(false)
-  const [activeSport, setActiveSport] = useState('all')
-  const [viewMode, setViewMode]       = useState<'grid'|'list'>('grid')
-  const [isFollowing, setIsFollowing] = useState(false)
+  const [profile, setProfile]           = useState<any>(null)
+  const [cards, setCards]               = useState<any[]>([])
+  const [loading, setLoading]           = useState(true)
+  const [notFound, setNotFound]         = useState(false)
+  const [isPrivate, setIsPrivate]       = useState(false)
+  const [activeSport, setActiveSport]   = useState('all')
+  const [viewMode, setViewMode]         = useState<'grid'|'list'>('grid')
+  const [isFollowing, setIsFollowing]   = useState(false)
   const [followerCount, setFollowerCount] = useState(0)
   const [followLoading, setFollowLoading] = useState(false)
+  const [selectedCard, setSelectedCard] = useState<any>(null)
+  const [cardImageTab, setCardImageTab] = useState<'front'|'back'>('front')
 
   useEffect(() => { if (username) loadVault() }, [username])
   useEffect(() => { if (user && profile) checkFollowing() }, [user, profile])
+  useEffect(() => { if (selectedCard) setCardImageTab('front') }, [selectedCard?.id])
 
   const loadVault = async () => {
     setLoading(true)
@@ -199,7 +202,7 @@ export default function PublicVault() {
         .vbtn{padding:5px 8px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:#9A9A9A;font-size:15px;transition:all .12s}
         .vbtn.on{background:#fff;color:#0D0D0D;box-shadow:0 1px 3px rgba(0,0,0,.06)}
         .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
-        .card-tile{background:#fff;border:1px solid #EFEFEF;border-radius:8px;overflow:hidden;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;flex-direction:column;animation:fadeUp .3s ease both}
+        .card-tile{background:#fff;border:1px solid #EFEFEF;border-radius:8px;overflow:hidden;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;flex-direction:column;animation:fadeUp .3s ease both;cursor:pointer}
         .card-tile:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.10);border-color:#D8D8D8}
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
         .card-img{aspect-ratio:2.5/3.5;width:100%;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden;background:#F7F7F7}
@@ -217,7 +220,7 @@ export default function PublicVault() {
         .card-attrs{display:flex;flex-wrap:wrap;gap:4px}
         .attr-tag{font-size:11px;font-weight:600;padding:3px 8px;border-radius:100px;background:#F0F0F0;color:#444;border:1px solid #E0E0E0}
         .cards-list{display:flex;flex-direction:column;gap:10px}
-        .list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:8px;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+        .list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:8px;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer}
         .list-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.07);border-color:#D8D8D8}
         .list-img{width:60px;height:84px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;margin:10px 0 10px 14px;border-radius:6px;overflow:hidden;background:#F7F7F7}
         .list-img img{width:100%;height:100%;object-fit:cover}
@@ -229,7 +232,26 @@ export default function PublicVault() {
         .list-val{font-size:16px;font-weight:800;color:#1B6FF0}
         .list-val-lbl{font-size:10px;color:#9A9A9A;font-weight:600;text-transform:uppercase;margin-bottom:2px}
         .empty-state{background:#fff;border:1.5px dashed #D8D8D8;border-radius:8px;padding:64px 24px;text-align:center}
-        @media(max-width:768px){.vault-stats-inner{grid-template-columns:1fr 1fr}.vault-hero-inner{flex-direction:column}}
+        .card-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+        .card-modal{background:#fff;border-radius:12px;width:100%;max-width:680px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.2);animation:modalIn .2s ease}
+        @keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+        .card-modal-body{display:grid;grid-template-columns:260px 1fr;flex:1;overflow:hidden}
+        .card-modal-left{background:#F7F7F7;border-right:1px solid #EFEFEF;padding:20px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+        .card-modal-right{padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+        .card-modal-img{border-radius:8px;overflow:hidden;background:#EFEFEF;display:flex;align-items:center;justify-content:center;aspect-ratio:2.5/3.5}
+        .card-modal-img img{width:100%;height:100%;object-fit:cover}
+        .card-modal-tab{display:flex;gap:4px;background:#EFEFEF;border-radius:8px;padding:3px}
+        .card-modal-tab-btn{flex:1;padding:5px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;background:transparent;color:#9A9A9A}
+        .card-modal-tab-btn.on{background:#fff;color:#0D0D0D;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+        .modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #EFEFEF;flex-shrink:0}
+        .modal-hdr-title{font-size:15px;font-weight:700;color:#0D0D0D}
+        .modal-close{width:28px;height:28px;border-radius:50%;border:none;background:#F7F7F7;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#555;transition:all .15s}
+        .modal-close:hover{background:#EFEFEF;color:#0D0D0D}
+        .detail-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #EFEFEF;font-size:13px}
+        .detail-row:last-child{border-bottom:none}
+        .detail-lbl{color:#9A9A9A;font-weight:500}
+        .detail-val{font-weight:600;color:#0D0D0D;text-align:right}
+        @media(max-width:768px){.vault-stats-inner{grid-template-columns:1fr 1fr}.vault-hero-inner{flex-direction:column}.card-modal-body{grid-template-columns:1fr}.card-modal-left{border-right:none;border-bottom:1px solid #EFEFEF}}
       `}</style>
 
       <Nav />
@@ -363,7 +385,7 @@ export default function PublicVault() {
         ) : viewMode === 'grid' ? (
           <div className="cards-grid">
             {filtered.map((c,i) => (
-              <div key={c.id} className="card-tile" style={{animationDelay:`${i*.03}s`}}>
+              <div key={c.id} className="card-tile" style={{animationDelay:`${i*.03}s`}} onClick={() => setSelectedCard(c)}>
                 <div className="card-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
                   {c.card_image_url
                     ? <img src={c.card_image_url} alt={c.player}/>
@@ -401,7 +423,7 @@ export default function PublicVault() {
         ) : (
           <div className="cards-list">
             {filtered.map((c,i) => (
-              <div key={c.id} className="list-tile" style={{animationDelay:`${i*.025}s`}}>
+              <div key={c.id} className="list-tile" style={{animationDelay:`${i*.025}s`}} onClick={() => setSelectedCard(c)}>
                 <div className="list-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
                   {c.card_image_url
                     ? <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
@@ -456,6 +478,111 @@ export default function PublicVault() {
           </div>
         )}
       </div>
+
+      {/* CARD DETAIL MODAL */}
+      {selectedCard && (
+        <div className="card-modal-overlay" onClick={() => setSelectedCard(null)}>
+          <div className="card-modal" onClick={e => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="modal-hdr">
+              <div className="modal-hdr-title">{selectedCard.player}</div>
+              <button className="modal-close" onClick={() => setSelectedCard(null)}>✕</button>
+            </div>
+
+            {/* Body */}
+            <div className="card-modal-body">
+
+              {/* Left — image */}
+              <div className="card-modal-left">
+                {selectedCard.card_image_back_url && (
+                  <div className="card-modal-tab">
+                    <button
+                      className={`card-modal-tab-btn${cardImageTab==='front'?' on':''}`}
+                      onClick={() => setCardImageTab('front')}
+                    >Front</button>
+                    <button
+                      className={`card-modal-tab-btn${cardImageTab==='back'?' on':''}`}
+                      onClick={() => setCardImageTab('back')}
+                    >Back</button>
+                  </div>
+                )}
+                <div className="card-modal-img" style={{background:(cardImageTab==='front'?selectedCard.card_image_url:selectedCard.card_image_back_url)?'#000':cardBg(selectedCard.sport)}}>
+                  {cardImageTab === 'front' ? (
+                    selectedCard.card_image_url
+                      ? <img src={selectedCard.card_image_url} alt={selectedCard.player}/>
+                      : <span style={{fontSize:'64px'}}>{sportEmoji[selectedCard.sport]||'🃏'}</span>
+                  ) : (
+                    selectedCard.card_image_back_url
+                      ? <img src={selectedCard.card_image_back_url} alt={`${selectedCard.player} back`}/>
+                      : <span style={{fontSize:'64px'}}>{sportEmoji[selectedCard.sport]||'🃏'}</span>
+                  )}
+                </div>
+
+                {/* Status badges */}
+                <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+                  {selectedCard.status === 'trade' && (
+                    <div style={{background:'#FEF3E2',color:'#E8820C',border:'1px solid #F5C880',borderRadius:'6px',padding:'8px 12px',fontSize:'12px',fontWeight:700,textAlign:'center'}}>
+                      <FontAwesomeIcon icon={faTag} style={{marginRight:'6px'}}/>For Trade
+                    </div>
+                  )}
+                  {selectedCard.status === 'sale' && selectedCard.ebay_listing_url && (
+                    <a
+                      href={selectedCard.ebay_listing_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{background:'#1B6FF0',color:'#fff',borderRadius:'6px',padding:'8px 12px',fontSize:'12px',fontWeight:700,textAlign:'center',textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px'}}
+                    >
+                      <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>View on eBay
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Right — details */}
+              <div className="card-modal-right">
+                <div>
+                  <div style={{fontSize:'22px',fontWeight:800,letterSpacing:'-.5px',color:'#0D0D0D',marginBottom:'4px'}}>{selectedCard.player}</div>
+                  <div style={{fontSize:'13px',color:'#9A9A9A'}}>
+                    {[selectedCard.year, selectedCard.brand!=='Unknown'?selectedCard.brand:'', selectedCard.set_name!=='Unknown'?selectedCard.set_name:''].filter(Boolean).join(' ')}
+                    {selectedCard.cardnum ? ` · ${selectedCard.cardnum}` : ''}
+                  </div>
+                </div>
+
+                {/* Attributes */}
+                {(selectedCard.attrs||[]).length > 0 && (
+                  <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+                    {(selectedCard.attrs||[]).map((a:string) => (
+                      <span key={a} className="attr-tag">
+                        {a === 'numbered' && selectedCard.print_run ? selectedCard.print_run : attrLabel(a)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Detail rows */}
+                <div style={{background:'#F7F7F7',borderRadius:'8px',padding:'4px 14px'}}>
+                  {[
+                    {lbl:'Sport', val:selectedCard.sport},
+                    {lbl:'Year', val:selectedCard.year||'-'},
+                    {lbl:'Brand', val:selectedCard.brand!=='Unknown'?selectedCard.brand:'-'},
+                    {lbl:'Set Name', val:selectedCard.set_name!=='Unknown'?selectedCard.set_name:'-'},
+                    {lbl:'Card Number', val:selectedCard.cardnum||'-'},
+                    {lbl:'Condition', val:selectedCard.condition||'-'},
+                    {lbl:'Grading', val:selectedCard.grader&&selectedCard.grader!=='Raw'?`${selectedCard.grader} ${selectedCard.grade}`:'Raw (Ungraded)'},
+                    {lbl:'Quantity', val:String(selectedCard.qty||1)},
+                  ].filter(r => r.val && r.val !== '-' && r.val !== 'Unknown').map(r => (
+                    <div key={r.lbl} className="detail-row">
+                      <span className="detail-lbl">{r.lbl}</span>
+                      <span className="detail-val">{r.val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
