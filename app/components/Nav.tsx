@@ -17,25 +17,25 @@ function NavActions() {
   if (!isLoaded) return null
 
   if (isSignedIn) {
-  return (
-    <div className="nav-actions">
-      <Link className="btn btn-ghost" href="/collection">My Vault</Link>
-      <Link className="btn btn-ghost" href="/settings" style={{padding:'8px 10px'}}>
-        <FontAwesomeIcon icon={faGear}/>
-      </Link>
-      <UserButton />
-    </div>
-  )
-}
+    return (
+      <div className="nav-actions">
+        <Link className="btn btn-ghost" href="/collection">My Vault</Link>
+        <Link className="btn btn-ghost" href="/settings" style={{padding:'8px 10px'}}>
+          <FontAwesomeIcon icon={faGear}/>
+        </Link>
+        <UserButton />
+      </div>
+    )
+  }
 
   return (
     <div className="nav-actions">
       <Link className="btn btn-ghost" href="/sign-in">
-  <FontAwesomeIcon icon={faRightToBracket} style={{marginRight:'5px'}}/>Log in
-</Link>
-<Link className="btn btn-primary" href="/sign-up">
-  <FontAwesomeIcon icon={faUserPlus} style={{marginRight:'5px'}}/>Get started free
-</Link>
+        <FontAwesomeIcon icon={faRightToBracket} style={{marginRight:'5px'}}/>Log in
+      </Link>
+      <Link className="btn btn-primary" href="/sign-up">
+        <FontAwesomeIcon icon={faUserPlus} style={{marginRight:'5px'}}/>Get started free
+      </Link>
     </div>
   )
 }
@@ -65,18 +65,18 @@ export default function Nav() {
         <div className="nav-inner">
           <Link className="nav-logo" href="/">
             <div className="nav-logo-icon">
-  <FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'12px',color:'#fff'}}/>
-</div>foilcase
+              <FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'12px',color:'#fff'}}/>
+            </div>foilcase
           </Link>
           <ul className="nav-links">
-  <li><Link href="/browse" className={path==='/browse'?'active':''}>Browse</Link></li>
-  <li><Link href="/search" className={path==='/search'?'active':''}>
-    <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'5px'}}/>Search
-  </Link></li>
-  <li><Link href="/community" className={path==='/community'?'active':''}>
-    <FontAwesomeIcon icon={faUsers} style={{marginRight:'5px'}}/>Community
-  </Link></li>
-</ul>
+            <li><Link href="/community" className={path==='/community'?'active':''}>
+              <FontAwesomeIcon icon={faUsers} style={{marginRight:'5px'}}/>Community
+            </Link></li>
+            <li><Link href="/browse" className={path==='/browse'?'active':''}>Browse</Link></li>
+            <li><Link href="/search" className={path==='/search'?'active':''}>
+              <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'5px'}}/>Search
+            </Link></li>
+          </ul>
           <NavActions />
         </div>
       </nav>
