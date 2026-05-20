@@ -632,9 +632,9 @@ function SearchContent() {
           </main>
         </div>
       ) : (
-
-        /* DISCOVERY */
         <div style={{maxWidth:'1200px',margin:'0 auto',padding:'28px 24px'}}>
+
+          {/* Trending Searches */}
           <div style={{marginBottom:'32px'}}>
             <div className="disc-title">
               <FontAwesomeIcon icon={faFire} style={{color:'#E8820C'}}/>Trending Searches
@@ -649,31 +649,41 @@ function SearchContent() {
               ))}
             </div>
           </div>
+
+          {/* Popular Players by Sport */}
           <div>
             <div className="disc-title">
               <FontAwesomeIcon icon={faStar} style={{color:'#F5A623'}}/>Popular Players
             </div>
-            <div className="disc-grid">
-              {[
-  {name:'Patrick Mahomes', icon:faFootball, color:'#1B6FF0', bg:'#EBF2FF'},
-  {name:'Tom Brady', icon:faFootball, color:'#1B6FF0', bg:'#EBF2FF'},
-  {name:'Shohei Ohtani', icon:faBaseball, color:'#00A861', bg:'#E6F9F0'},
-  {name:'LeBron James', icon:faBasketball, color:'#E8820C', bg:'#FEF3E2'},
-  {name:'Charizard', icon:faGamepad, color:'#D93025', bg:'#FDECEA'},
-  {name:'Victor Wembanyama', icon:faBasketball, color:'#E8820C', bg:'#FEF3E2'},
-  {name:'Caleb Williams', icon:faFootball, color:'#1B6FF0', bg:'#EBF2FF'},
-  {name:'Connor McDavid', icon:faHockeyPuck, color:'#7B4FCA', bg:'#F2ECFB'},
-].map(p => (
-  <div key={p.name} className="disc-card" onClick={() => runSearch(p.name)}>
-    <div style={{width:'44px',height:'44px',borderRadius:'10px',background:p.bg,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'10px'}}>
-      <FontAwesomeIcon icon={p.icon} style={{color:p.color,fontSize:'18px'}}/>
-    </div>
-    <div style={{fontSize:'13px',fontWeight:700,color:'#0D0D0D',lineHeight:1.2}}>{p.name}</div>
-    <div style={{fontSize:'11px',color:'#9A9A9A',marginTop:'2px'}}>Search cards →</div>
-  </div>
-))}
-            </div>
+            {[
+              {sport:'Football', icon:faFootball, color:'#1B6FF0', bg:'#EBF2FF', players:['Patrick Mahomes','Josh Allen','Caleb Williams','Joe Burrow','Lamar Jackson','Tom Brady']},
+              {sport:'Basketball', icon:faBasketball, color:'#E8820C', bg:'#FEF3E2', players:['LeBron James','Stephen Curry','Victor Wembanyama','Jayson Tatum','Luka Doncic','Nikola Jokic']},
+              {sport:'Baseball', icon:faBaseball, color:'#00A861', bg:'#E6F9F0', players:['Shohei Ohtani','Juan Soto','Ronald Acuna Jr','Julio Rodriguez','Fernando Tatis Jr','Mike Trout']},
+              {sport:'Hockey', icon:faHockeyPuck, color:'#7B4FCA', bg:'#F2ECFB', players:['Connor McDavid','Nathan MacKinnon','Sidney Crosby','Auston Matthews','Leon Draisaitl','Cale Makar']},
+              {sport:'Gaming / TCG', icon:faGamepad, color:'#D93025', bg:'#FDECEA', players:['Charizard','Pikachu','Black Lotus','Mox Ruby','Lorcana Elsa','Mewtwo']},
+            ].map(group => (
+              <div key={group.sport} style={{marginBottom:'28px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px',paddingBottom:'8px',borderBottom:'1px solid #EFEFEF'}}>
+                  <div style={{width:'28px',height:'28px',borderRadius:'8px',background:group.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <FontAwesomeIcon icon={group.icon} style={{color:group.color,fontSize:'13px'}}/>
+                  </div>
+                  <span style={{fontSize:'14px',fontWeight:700,color:'#0D0D0D'}}>{group.sport}</span>
+                </div>
+                <div className="disc-grid">
+                  {group.players.map(p => (
+                    <div key={p} className="disc-card" onClick={() => runSearch(p)}>
+                      <div style={{width:'36px',height:'36px',borderRadius:'8px',background:group.bg,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'8px'}}>
+                        <FontAwesomeIcon icon={group.icon} style={{color:group.color,fontSize:'14px'}}/>
+                      </div>
+                      <div style={{fontSize:'12px',fontWeight:700,color:'#0D0D0D',lineHeight:1.2}}>{p}</div>
+                      <div style={{fontSize:'10px',color:'#9A9A9A',marginTop:'2px'}}>Search cards →</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
+
         </div>
       )}
 
