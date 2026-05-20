@@ -103,18 +103,20 @@ export default function Browse() {
   ) || []
 
   const filteredSold = data?.recentSold?.filter((d: any) =>
-    activeSport === 'all' || d.sport === activeSport
-  ) || []
+  activeSport === 'all' || d.sport === activeSport || 
+  (activeSport === 'Gaming' && (d.sport === 'Gaming' || d.sport === 'Gaming / TCG'))
+) || []
 
   // Aggregate sport summary
   const sportSummaryMap: Record<string, {avgSold: number, count: number}> = {}
   data?.sportSummary?.forEach((s: any) => {
-    if (!sportSummaryMap[s.sport]) {
-      sportSummaryMap[s.sport] = { avgSold: 0, count: 0 }
-    }
-    sportSummaryMap[s.sport].avgSold += s.avgSold
-    sportSummaryMap[s.sport].count++
-  })
+  const sport = s.sport === 'Gaming / TCG' ? 'Gaming' : s.sport
+  if (!sportSummaryMap[sport]) {
+    sportSummaryMap[sport] = { avgSold: 0, count: 0 }
+  }
+  sportSummaryMap[sport].avgSold += s.avgSold
+  sportSummaryMap[sport].count++
+})
   Object.keys(sportSummaryMap).forEach(k => {
     sportSummaryMap[k].avgSold = sportSummaryMap[k].avgSold / sportSummaryMap[k].count
   })

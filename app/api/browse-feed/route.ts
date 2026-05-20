@@ -25,15 +25,24 @@ async function getEbayToken(): Promise<string> {
 
 // Preset queries covering popular players across sports
 const FEED_QUERIES = [
+  // Football — 3 queries
   { q: '"Patrick Mahomes"', sport: 'Football' },
   { q: '"Josh Allen"', sport: 'Football' },
   { q: '"Caleb Williams" rookie', sport: 'Football' },
+  // Basketball — 3 queries
   { q: '"LeBron James"', sport: 'Basketball' },
   { q: '"Victor Wembanyama" prizm', sport: 'Basketball' },
+  { q: '"Stephen Curry" prizm', sport: 'Basketball' },
+  // Baseball — 3 queries
   { q: '"Shohei Ohtani"', sport: 'Baseball' },
   { q: '"Juan Soto"', sport: 'Baseball' },
+  { q: '"Ronald Acuna" prizm', sport: 'Baseball' },
+  // Hockey — 2 queries
   { q: '"Connor McDavid"', sport: 'Hockey' },
+  { q: '"Nathan MacKinnon"', sport: 'Hockey' },
+  // Gaming — 2 queries
   { q: 'Charizard PSA', sport: 'Gaming' },
+  { q: 'Pikachu card PSA', sport: 'Gaming' },
 ]
 
 function isNotCard(title: string) {
@@ -149,16 +158,22 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.savingPct - a.savingPct)
       .slice(0, 12)
 
-    // Flatten all recent sold, sort by most recent
-    const allRecentSold = results
-      .flatMap(r => r.recentSold)
-      .sort((a, b) => {
-        if (!a.soldDate && !b.soldDate) return 0
-        if (!a.soldDate) return 1
-        if (!b.soldDate) return -1
-        return new Date(b.soldDate).getTime() - new Date(a.soldDate).getTime()
-      })
-      .slice(0, 20)
+// Interleave results across sports so every sport is represented
+const allRecentSold: any[] = []
+const maxPerQuery = 2
+results.forEach(r => {
+  allRecentSold.push(...r.recentSold.slice(0, maxPerQuery))
+})
+// Fill remaining slots with any leftover items
+const usedIds = new Set(allRecentSold.map(i => i.id))
+results.forEach(r => {
+  r.recentSold.slice(maxPerQuery).forEach((i: any) => {
+    if (!usedIds.has(i.id) && allRecentSold.length < 30) {
+      allRecentSold.push(i)
+      usedIds.add(i.id)
+    }
+  })
+})
 
     // Market summary per sport
     const sportSummary = results.map(r => ({
