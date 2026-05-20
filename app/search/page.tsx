@@ -29,7 +29,7 @@ import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 
 
 const RECENT_SEARCHES = ['Patrick Mahomes','2024 Prizm Football','Charizard PSA 10','Shohei Ohtani RC','LeBron James']
-const TRENDING = ['Caleb Williams RC','2025 Prizm Football','Mahomes Gold /10','Wembanyama Prizm','Charizard 1st Edition']
+const TRENDING_FALLBACK = ['Caleb Williams RC','2025 Prizm Football','Mahomes Gold /10','Wembanyama Prizm','Charizard 1st Edition']
 const PER_PAGE = 24
 
 const sportEmoji: Record<string,string> = { Football:'🏈', Baseball:'⚾', Basketball:'🏀', Hockey:'🏒', Soccer:'⚽', Gaming:'🎮' }
@@ -71,6 +71,7 @@ function SearchContent() {
   const [viewMode, setViewMode]       = useState<'grid'|'list'>('grid')
   const [toast, setToast]             = useState<string|null>(null)
   const [page, setPage]               = useState(1)
+  const [trending, setTrending]       = useState<string[]>(TRENDING_FALLBACK)
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
 
@@ -123,6 +124,13 @@ function SearchContent() {
     setSearchError(null)
     setLiveResults([])
     setPage(1)
+
+    // Log search query — fire and forget, don't block results
+    supabase.from('searches').insert({
+      query: q.trim().toLowerCase(),
+      user_id: user?.id || null,
+    }).then(() => {})
+
     try {
       const sportParam = sport !== 'all' ? `&sport=${encodeURIComponent(sport)}` : ''
       const res = await fetch(`/api/card-search?player=${encodeURIComponent(q)}${sportParam}&limit=72`)
@@ -142,6 +150,17 @@ function SearchContent() {
   }, [])
 
   useEffect(() => { setPage(1) }, [sport, grading, priceMin, priceMax, yearMin, yearMax, activeAttrs, sortBy])
+
+  useEffect(() => {
+    fetch('/api/trending')
+      .then(r => r.json())
+      .then(data => {
+        if (data.trending && data.trending.length >= 3) {
+          setTrending(data.trending.map((t: any) => t.label))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const filtered = liveResults.filter((c: any) => {
     if (sport !== 'all' && c.sport !== sport) return false
@@ -383,7 +402,7 @@ function SearchContent() {
 
             <div className="filter-card">
               <div className="filter-title">🔥 Trending</div>
-              {TRENDING.map((t,i) => (
+              {trending.map((t,i) => (
                 <div key={t} className="trending-item" onClick={() => runSearch(t)}>
                   <span className="trending-rank">#{i+1}</span>
                   <span className="trending-name">{t}</span>
@@ -621,7 +640,7 @@ function SearchContent() {
               <FontAwesomeIcon icon={faFire} style={{color:'#E8820C'}}/>Trending Searches
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'8px'}}>
-              {TRENDING.map((t,i) => (
+              {trending.map((t,i) => (
                 <div key={t} className="trending-item" onClick={() => runSearch(t)}>
                   <span className="trending-rank">#{i+1}</span>
                   <span className="trending-name">{t}</span>
