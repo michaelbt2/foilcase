@@ -4,11 +4,10 @@ import { usePathname } from 'next/navigation'
 import { useUser, UserButton } from '@clerk/nextjs'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faMagnifyingGlass,
   faLayerGroup,
   faRightToBracket,
   faUserPlus,
-  faTableCells, faUsers, faGear,
+  faGear,
 } from '@fortawesome/free-solid-svg-icons'
 
 function NavActions() {
@@ -20,8 +19,8 @@ function NavActions() {
     return (
       <div className="nav-actions">
         <Link className="btn btn-ghost" href="/collection">My Vault</Link>
-        <Link className="btn btn-ghost" href="/settings" style={{padding:'8px 10px'}}>
-          <FontAwesomeIcon icon={faGear}/>
+        <Link className="btn btn-ghost" href="/settings">
+          <FontAwesomeIcon icon={faGear} style={{marginRight:'5px'}}/>Settings
         </Link>
         <UserButton />
       </div>
@@ -56,7 +55,7 @@ export default function Nav() {
         .nav-links a.active{color:#1B6FF0;background:#EBF2FF}
         .nav-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
         .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 14px;border-radius:100px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;border:none;white-space:nowrap}
-        .btn-ghost{background:transparent;color:#555}
+        .btn-ghost{background:transparent;color:#555;font-size:14px;font-weight:500;padding:5px 10px;border-radius:6px}
         .btn-ghost:hover{background:#F7F7F7;color:#0D0D0D}
         .btn-primary{background:#1B6FF0;color:#fff}
         .btn-primary:hover{background:#0A4DBF;transform:translateY(-1px)}
@@ -69,13 +68,9 @@ export default function Nav() {
             </div>foilcase
           </Link>
           <ul className="nav-links">
-            <li><Link href="/community" className={path==='/community'?'active':''}>
-              <FontAwesomeIcon icon={faUsers} style={{marginRight:'5px'}}/>Community
-            </Link></li>
-            <li><Link href="/browse" className={path==='/browse'?'active':''}>Browse</Link></li>
-            <li><Link href="/search" className={path==='/search'?'active':''}>
-              <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'5px'}}/>Search
-            </Link></li>
+            <li><Link href="/community" className={path==='/community'?'active':''}>Community</Link></li>
+            <li><Link href="/browse" className={path==='/browse'?'active':''}>Market</Link></li>
+            <li><Link href="/search" className={path==='/search'?'active':''}>Search</Link></li>
           </ul>
           <NavActions />
         </div>
