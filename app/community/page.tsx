@@ -290,16 +290,16 @@ export default function Community() {
                       display:'flex',alignItems:'center',gap:'8px',padding:'8px 10px',borderRadius:'6px',
                       border:`1.5px solid ${isCurrent?tier.border:achieved?tier.border:'#EFEFEF'}`,
                       background:isCurrent?tier.bg:achieved?tier.bg:'#F7F7F7',
-                      opacity:user?(achieved?1:0.45):1,
+                      opacity: 1,
                       position:'relative',
                     }}>
-                      <div style={{width:'24px',height:'24px',borderRadius:'50%',background:achieved&&user?tier.bg:'#EFEFEF',display:'flex',alignItems:'center',justifyContent:'center',border:`1.5px solid ${achieved&&user?tier.border:'#E0E0E0'}`,flexShrink:0}}>
-                        <FontAwesomeIcon icon={tier.icon} style={{color:achieved&&user?tier.color:'#9A9A9A',fontSize:'11px'}}/>
-                      </div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:'12px',fontWeight:700,color:achieved&&user?tier.color:'#9A9A9A'}}>{tier.label}</div>
-                        <div style={{fontSize:'10px',color:'#9A9A9A'}}>{tier.max===Infinity?`${tier.min}+ cards`:`${tier.min}–${tier.max}`}</div>
-                      </div>
+                      <div style={{width:'24px',height:'24px',borderRadius:'50%',background:achieved&&user?tier.bg:'#F0F0F0',display:'flex',alignItems:'center',justifyContent:'center',border:`1.5px solid ${achieved&&user?tier.border:'#C8C8C8'}`,flexShrink:0}}>
+  <FontAwesomeIcon icon={tier.icon} style={{color:achieved&&user?tier.color:'#666',fontSize:'11px'}}/>
+</div>
+<div style={{flex:1}}>
+  <div style={{fontSize:'12px',fontWeight:700,color:achieved&&user?tier.color:'#444'}}>{tier.label}</div>
+  <div style={{fontSize:'10px',color:'#666'}}>{tier.max===Infinity?`${tier.min}+ cards`:`${tier.min}–${tier.max}`}</div>
+</div>
                       {isCurrent && user && (
                         <div style={{fontSize:'9px',fontWeight:700,background:tier.color,color:'#fff',padding:'2px 6px',borderRadius:'100px',flexShrink:0}}>YOU</div>
                       )}
@@ -481,21 +481,16 @@ export default function Community() {
                     )}
                   </div>
 
-                  {/* Stats */}
-                  <div className="profile-stats">
-                    <div className="profile-stat">
-                      <div className="profile-stat-val">{p.cardCount||0}</div>
-                      <div className="profile-stat-lbl">Cards</div>
-                    </div>
-                    <div className="profile-stat">
-                      <div className="profile-stat-val" style={{color:'#00A861'}}>${fmtNum(p.totalValue||0)}</div>
-                      <div className="profile-stat-lbl">Value</div>
-                    </div>
-                    <div className="profile-stat">
-                      <div className="profile-stat-val">{p.followerCount||0}</div>
-                      <div className="profile-stat-lbl">Followers</div>
-                    </div>
-                  </div>
+                 <div className="profile-stats">
+  <div className="profile-stat">
+    <div className="profile-stat-val">{p.cardCount||0}</div>
+    <div className="profile-stat-lbl">Cards</div>
+  </div>
+  <div className="profile-stat">
+    <div className="profile-stat-val">{p.followerCount||0}</div>
+    <div className="profile-stat-lbl">Followers</div>
+  </div>
+</div>
 
                   {/* Actions */}
                   <div className="profile-actions">
