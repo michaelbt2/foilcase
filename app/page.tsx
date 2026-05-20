@@ -132,31 +132,31 @@ export default function Home() {
             <Link className="btn btn-primary btn-xl" href="/collection">
               <FontAwesomeIcon icon={faRocket} style={{marginRight:'6px'}}/>Start your vault free
             </Link>
-            <Link className="btn btn-outline btn-xl" href="/browse">Browse cards</Link>
+            <Link className="btn btn-outline btn-xl" href="/community">Browse public vaults</Link>
           </div>
           <div className="hero-stats">
-            <div>
-              <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
-                <FontAwesomeIcon icon={faLayerGroup} style={{color:'#1B6FF0',fontSize:'14px'}}/>
-                <div className="hero-stat-val">2.4M+</div>
-              </div>
-              <div className="hero-stat-lbl">Cards in database</div>
-            </div>
-            <div>
-              <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
-                <FontAwesomeIcon icon={faShield} style={{color:'#1B6FF0',fontSize:'14px'}}/>
-                <div className="hero-stat-val">18K+</div>
-              </div>
-              <div className="hero-stat-lbl">Sets catalogued</div>
-            </div>
-            <div>
-              <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
-                <FontAwesomeIcon icon={faBolt} style={{color:'#1B6FF0',fontSize:'14px'}}/>
-                <div className="hero-stat-val">Free</div>
-              </div>
-              <div className="hero-stat-lbl">To start collecting</div>
-            </div>
-          </div>
+  <div>
+    <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+      <FontAwesomeIcon icon={faLayerGroup} style={{color:'#1B6FF0',fontSize:'14px'}}/>
+      <div className="hero-stat-val">5+</div>
+    </div>
+    <div className="hero-stat-lbl">Sports & TCG supported</div>
+  </div>
+  <div>
+    <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+      <FontAwesomeIcon icon={faUsers} style={{color:'#1B6FF0',fontSize:'14px'}}/>
+      <div className="hero-stat-val">Live</div>
+    </div>
+    <div className="hero-stat-lbl">eBay market pricing</div>
+  </div>
+  <div>
+    <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+      <FontAwesomeIcon icon={faBolt} style={{color:'#1B6FF0',fontSize:'14px'}}/>
+      <div className="hero-stat-val">Free</div>
+    </div>
+    <div className="hero-stat-lbl">To start collecting</div>
+  </div>
+</div>
         </div>
 
         {/* HERO VISUAL */}
@@ -232,23 +232,22 @@ export default function Home() {
                 <div style={{fontSize:'11px',color:'#9A9A9A',marginTop:'3px'}}>across 47 cards · 3 sports</div>
               </div>
 
-              {/* Set completion */}
-              <div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:'14px',padding:'12px 16px',boxShadow:'0 1px 3px rgba(0,0,0,.05)'}}>
-                <div style={{fontSize:'11px',fontWeight:700,color:'#555',marginBottom:'10px'}}>Set Completion</div>
-                {[
-                  {label:'2024 Topps Chrome Baseball',pct:78,color:'#1B6FF0'},
-                  {label:'2023 Prizm Basketball',pct:45,color:'#7B4FCA'},
-                  {label:'2024 SP Game Used Hockey',pct:32,color:'#00A861'},
-                ].map((row,i) => (
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'11px',color:'#555',marginBottom:i<2?'8px':0}}>
-                    <span style={{flex:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{row.label}</span>
-                    <div style={{width:'60px',height:'4px',background:'#EFEFEF',borderRadius:'10px',overflow:'hidden',flexShrink:0}}>
-                      <div style={{width:`${row.pct}%`,height:'100%',background:row.color,borderRadius:'10px'}}></div>
-                    </div>
-                    <span style={{fontWeight:700,width:'28px',textAlign:'right',flexShrink:0}}>{row.pct}%</span>
-                  </div>
-                ))}
-              </div>
+              {/* Community preview */}
+<div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:'14px',padding:'12px 16px',boxShadow:'0 1px 3px rgba(0,0,0,.05)'}}>
+  <div style={{fontSize:'11px',fontWeight:700,color:'#555',marginBottom:'10px'}}>Top Collectors</div>
+  {[
+    {initials:'MJ',bg:'#1B6FF0',name:'michael_j',cards:847,sport:'🏀🏈'},
+    {initials:'SK',bg:'#00A861',name:'sk_collector',cards:412,sport:'⚾🃏'},
+    {initials:'TR',bg:'#7B4FCA',name:'tradingpro',cards:291,sport:'🏒🏈'},
+  ].map((col,i) => (
+    <div key={i} style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'11px',color:'#555',marginBottom:i<2?'8px':0}}>
+      <div style={{width:'24px',height:'24px',borderRadius:'50%',background:col.bg,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'9px',fontWeight:700,flexShrink:0}}>{col.initials}</div>
+      <span style={{flex:1,fontWeight:600}}>@{col.name}</span>
+      <span style={{color:'#9A9A9A'}}>{col.sport}</span>
+      <span style={{fontWeight:700,color:'#1B6FF0'}}>{col.cards}</span>
+    </div>
+  ))}
+</div>
             </div>
 
             {/* Floating grade badge */}
@@ -383,9 +382,9 @@ export default function Home() {
               <Link className="btn btn-white btn-xl" href="/collection">
                 <FontAwesomeIcon icon={faRocket} style={{marginRight:'6px'}}/>Create free vault
               </Link>
-              <Link className="btn btn-dim btn-xl" href="/browse">
-                <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'6px'}}/>Browse cards
-              </Link>
+              <Link className="btn btn-dim btn-xl" href="/community">
+  <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'6px'}}/>Browse public vaults
+</Link>
             </div>
           </div>
         </div>
