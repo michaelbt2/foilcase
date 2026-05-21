@@ -37,6 +37,10 @@ const FEED_QUERIES = [
   { q: '"Nathan MacKinnon"', sport: 'Hockey' },
   { q: 'Charizard PSA', sport: 'Gaming' },
   { q: 'Pikachu card PSA', sport: 'Gaming' },
+// Soccer — 2 queries
+{ q: '"Lionel Messi" card', sport: 'Soccer' },
+{ q: '"Kylian Mbappe" card', sport: 'Soccer' },
+
 ]
 
 // Auction queries for ending-soon section
@@ -45,6 +49,7 @@ const AUCTION_QUERIES = [
   { q: 'PSA basketball card prizm', sport: 'Basketball' },
   { q: 'PSA baseball card rookie', sport: 'Baseball' },
   { q: 'PSA hockey card rookie', sport: 'Hockey' },
+{ q: 'Messi soccer card graded', sport: 'Soccer' },
   { q: 'PSA Charizard pokemon card', sport: 'Gaming' },
 ]
 

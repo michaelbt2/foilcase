@@ -96,14 +96,14 @@ export default function Browse() {
     }
   }
 
-  const SPORTS = ['all','Football','Baseball','Basketball','Hockey','Gaming']
-
+const SPORTS = ['all','Football','Baseball','Basketball','Hockey','Soccer','Gaming']
   const filteredDeals = data?.deals?.filter((d: any) =>
     activeSport === 'all' || d.sport === activeSport
   ) || []
 const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
   activeSport === 'all' || d.sport === activeSport ||
-  (activeSport === 'Gaming' && (d.sport === 'Gaming' || d.sport === 'Gaming / TCG'))
+  (activeSport === 'Gaming' && (d.sport === 'Gaming' || d.sport === 'Gaming / TCG')) ||
+  (activeSport === 'Soccer' && d.sport === 'Soccer')
 ) || []
   const filteredSold = data?.recentSold?.filter((d: any) =>
   activeSport === 'all' || d.sport === activeSport || 
