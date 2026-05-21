@@ -406,13 +406,11 @@ export default function Home() {
             {[
               {title:'Product',links:['Browse Cards','Search Database','My Vault','Wishlists','Set Checklists','Pricing']},
               {title:'Sports',links:['Baseball','Basketball','Football','Hockey','Soccer','Gaming / TCG']},
-              {title:'Company',links:['About Us','Blog','Community Forums','Contact','Privacy Policy','Terms of Service']},
-            ].map(col => (
+{title:'Company',links:['About Us','Blog','Community Forums','Contact','Privacy Policy','Terms of Service']},            ].map(col => (
               <div key={col.title}>
                 <div className="footer-col-title">{col.title}</div>
                 <ul className="footer-links">
-                  {col.links.map(l => <li key={l}><a href="#">{l}</a></li>)}
-                </ul>
+{col.links.map(l => <li key={l}><a href={l==='About Us'?'/about':l==='Community Forums'?'/community':'#'}>{l}</a></li>)}                </ul>
               </div>
             ))}
           </div>

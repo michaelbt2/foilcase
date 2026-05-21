@@ -703,8 +703,7 @@ function SearchContent() {
             {[
               {title:'Product', links:[{l:'Browse Cards',h:'/browse'},{l:'Search Database',h:'/search'},{l:'My Vault',h:'/collection'},{l:'Community',h:'/community'}]},
               {title:'Sports', links:[{l:'Baseball',h:'/search?q=baseball'},{l:'Basketball',h:'/search?q=basketball'},{l:'Football',h:'/search?q=football'},{l:'Hockey',h:'/search?q=hockey'},{l:'Soccer',h:'/search?q=soccer'},{l:'Gaming / TCG',h:'/search?q=pokemon'}]},
-              {title:'Company', links:[{l:'About Us',h:'#'},{l:'Community',h:'/community'},{l:'Contact',h:'#'},{l:'Privacy Policy',h:'#'},{l:'Terms of Service',h:'#'}]},
-            ].map(col => (
+{title:'Company', links:[{l:'About Us',h:'/about'},{l:'Community',h:'/community'},{l:'Contact',h:'#'},{l:'Privacy Policy',h:'#'},{l:'Terms of Service',h:'#'}]},            ].map(col => (
               <div key={col.title}>
                 <div style={{fontSize:'12px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.1em',color:'#9A9A9A',marginBottom:'16px'}}>{col.title}</div>
                 <ul style={{listStyle:'none',display:'flex',flexDirection:'column',gap:'10px'}}>
