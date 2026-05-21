@@ -23,26 +23,29 @@ async function getEbayToken(): Promise<string> {
   return cachedToken!
 }
 
-// Preset queries covering popular players across sports
 const FEED_QUERIES = [
-  // Football — 3 queries
   { q: '"Patrick Mahomes"', sport: 'Football' },
   { q: '"Josh Allen"', sport: 'Football' },
   { q: '"Caleb Williams" rookie', sport: 'Football' },
-  // Basketball — 3 queries
   { q: '"LeBron James"', sport: 'Basketball' },
   { q: '"Victor Wembanyama" prizm', sport: 'Basketball' },
   { q: '"Stephen Curry" prizm', sport: 'Basketball' },
-  // Baseball — 3 queries
   { q: '"Shohei Ohtani"', sport: 'Baseball' },
   { q: '"Juan Soto"', sport: 'Baseball' },
   { q: '"Ronald Acuna" prizm', sport: 'Baseball' },
-  // Hockey — 2 queries
   { q: '"Connor McDavid"', sport: 'Hockey' },
   { q: '"Nathan MacKinnon"', sport: 'Hockey' },
-  // Gaming — 2 queries
   { q: 'Charizard PSA', sport: 'Gaming' },
   { q: 'Pikachu card PSA', sport: 'Gaming' },
+]
+
+// Auction queries for ending-soon section
+const AUCTION_QUERIES = [
+  { q: 'PSA football card rookie', sport: 'Football' },
+  { q: 'PSA basketball card prizm', sport: 'Basketball' },
+  { q: 'PSA baseball card rookie', sport: 'Baseball' },
+  { q: 'PSA hockey card rookie', sport: 'Hockey' },
+  { q: 'PSA Charizard pokemon card', sport: 'Gaming' },
 ]
 
 function isNotCard(title: string) {
@@ -81,101 +84,130 @@ export async function GET(request: NextRequest) {
   try {
     const token = await getEbayToken()
 
-    // Fetch active listings and sold comps for all queries in parallel
-    const results = await Promise.all(
-      FEED_QUERIES.map(async ({ q, sport }) => {
-        const [activeRes, soldRes] = await Promise.all([
-          fetch(
-            `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212&limit=20`,
+    // Fetch ending-soon graded auctions in parallel with main feed
+    const [results, auctionResults] = await Promise.all([
+
+      // Main feed queries
+      Promise.all(
+        FEED_QUERIES.map(async ({ q, sport }) => {
+          const [activeRes, soldRes] = await Promise.all([
+            fetch(
+              `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212&limit=20`,
+              { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
+            ).then(r => r.json()),
+            fetch(
+              `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212,buyingOptions:{FIXED_PRICE},itemEndDate:[${new Date(Date.now() - 30 * 86400000).toISOString()}..${new Date().toISOString()}]&limit=20`,
+              { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
+            ).then(r => r.json()),
+          ])
+
+          const active = (activeRes.itemSummaries || []).filter((i: any) => !isNotCard(i.title))
+          const sold   = (soldRes.itemSummaries  || []).filter((i: any) => !isNotCard(i.title))
+
+          const soldPrices = sold.map((i: any) => parseFloat(i.price?.value || '0')).filter(Boolean)
+          const avgSold = soldPrices.length
+            ? soldPrices.reduce((a: number, b: number) => a + b, 0) / soldPrices.length
+            : null
+
+          const deals = avgSold
+            ? active
+                .map((i: any) => {
+                  const price = parseFloat(i.price?.value || '0')
+                  const saving = avgSold - price
+                  const savingPct = Math.round((saving / avgSold) * 100)
+                  return {
+                    id: i.itemId, title: i.title, price,
+                    avgSold: Math.round(avgSold * 100) / 100,
+                    saving: Math.round(saving * 100) / 100,
+                    savingPct,
+                    image: i.image?.imageUrl || i.thumbnailImages?.[0]?.imageUrl || null,
+                    itemWebUrl: i.itemWebUrl, sport,
+                    year: parseYear(i.title),
+                    grade: parseGrade(i.title),
+                    printRun: parsePrintRun(i.title),
+                  }
+                })
+                .filter((i: any) => i.savingPct >= 20 && i.price >= 20 && i.price < 300 && i.saving >= 15)
+                .sort((a: any, b: any) => b.savingPct - a.savingPct)
+                .slice(0, 3)
+            : []
+
+          const recentSold = sold
+            .slice(0, 5)
+            .map((i: any) => ({
+              id: i.itemId, title: i.title,
+              price: parseFloat(i.currentBidPrice?.value || i.price?.value || '0'),
+              image: i.image?.imageUrl || i.thumbnailImages?.[0]?.imageUrl || null,
+              itemWebUrl: i.itemWebUrl, sport,
+              year: parseYear(i.title),
+              grade: parseGrade(i.title),
+              soldDate: i.itemEndDate || null,
+            }))
+            .filter((i: any) => i.price > 0)
+
+          return { sport, deals, recentSold, avgSold, query: q }
+        })
+      ),
+
+      // Ending-soon graded auctions
+      Promise.all(
+        AUCTION_QUERIES.map(async ({ q, sport }) => {
+          const now = new Date()
+          const in2hrs = new Date(now.getTime() + 2 * 3600000)
+          const res = await fetch(
+            `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212,buyingOptions:{AUCTION},itemEndDate:[${now.toISOString()}..${in2hrs.toISOString()}]&sort=endTimeSoonest&limit=10`,
             { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
-          ).then(r => r.json()),
+          ).then(r => r.json())
 
-          fetch(
-            `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212,buyingOptions:{FIXED_PRICE},itemEndDate:[${new Date(Date.now() - 30 * 86400000).toISOString()}..${new Date().toISOString()}]&limit=20`,
-            { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
-          ).then(r => r.json()),
-        ])
+          const items = (res.itemSummaries || [])
+            .filter((i: any) => !isNotCard(i.title))
+            .filter((i: any) => parseGrade(i.title) !== null) // graded only
+            .slice(0, 3)
+            .map((i: any) => ({
+              id: i.itemId,
+              title: i.title,
+              price: parseFloat(i.price?.value || '0'),
+              image: i.image?.imageUrl || i.thumbnailImages?.[0]?.imageUrl || null,
+              itemWebUrl: i.itemWebUrl,
+              sport,
+              year: parseYear(i.title),
+              grade: parseGrade(i.title),
+              endTime: i.itemEndDate || null,
+              bidCount: i.bidCount || 0,
+            }))
 
-        const active = (activeRes.itemSummaries || []).filter((i: any) => !isNotCard(i.title))
-        const sold   = (soldRes.itemSummaries  || []).filter((i: any) => !isNotCard(i.title))
+          return items
+        })
+      ),
+    ])
 
-        // Compute avg sold price across all sold items for this query
-        const soldPrices = sold.map((i: any) => parseFloat(i.price?.value || '0')).filter(Boolean)
-        const avgSold = soldPrices.length
-          ? soldPrices.reduce((a: number, b: number) => a + b, 0) / soldPrices.length
-          : null
+    // Flatten and deduplicate ending-soon auctions
+    const endingSoon = auctionResults
+      .flat()
+      .filter((i: any) => i.endTime)
+      .sort((a: any, b: any) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
+      .slice(0, 8)
 
-        // Best deals — active listings significantly below avg sold
-        const deals = avgSold
-          ? active
-              .map((i: any) => {
-                const price = parseFloat(i.price?.value || '0')
-                const saving = avgSold - price
-                const savingPct = Math.round((saving / avgSold) * 100)
-                return {
-                  id: i.itemId,
-                  title: i.title,
-                  price,
-                  avgSold: Math.round(avgSold * 100) / 100,
-                  saving: Math.round(saving * 100) / 100,
-                  savingPct,
-                  image: i.image?.imageUrl || i.thumbnailImages?.[0]?.imageUrl || null,
-                  itemWebUrl: i.itemWebUrl,
-                  sport,
-                  year: parseYear(i.title),
-                  grade: parseGrade(i.title),
-                  printRun: parsePrintRun(i.title),
-                }
-              })
-              .filter((i: any) => i.savingPct >= 20 && i.price >= 20 && i.price < 300 && i.saving >= 15)
-              .sort((a: any, b: any) => b.savingPct - a.savingPct)
-              .slice(0, 3)
-          : []
-
-        // Recently sold — last 5 sold items with price
-        const recentSold = sold
-          .slice(0, 5)
-          .map((i: any) => ({
-            id: i.itemId,
-            title: i.title,
-            price: parseFloat(i.price?.value || '0'),
-            image: i.image?.imageUrl || i.thumbnailImages?.[0]?.imageUrl || null,
-            itemWebUrl: i.itemWebUrl,
-            sport,
-            year: parseYear(i.title),
-            grade: parseGrade(i.title),
-            soldDate: i.itemEndDate || null,
-          }))
-          .filter((i: any) => i.price > 0)
-
-        return { sport, deals, recentSold, avgSold, query: q }
-      })
-    )
-
-    // Flatten and sort all deals by saving %
     const allDeals = results
       .flatMap(r => r.deals)
       .sort((a, b) => b.savingPct - a.savingPct)
       .slice(0, 12)
 
-// Interleave results across sports so every sport is represented
-const allRecentSold: any[] = []
-const maxPerQuery = 2
-results.forEach(r => {
-  allRecentSold.push(...r.recentSold.slice(0, maxPerQuery))
-})
-// Fill remaining slots with any leftover items
-const usedIds = new Set(allRecentSold.map(i => i.id))
-results.forEach(r => {
-  r.recentSold.slice(maxPerQuery).forEach((i: any) => {
-    if (!usedIds.has(i.id) && allRecentSold.length < 30) {
-      allRecentSold.push(i)
-      usedIds.add(i.id)
-    }
-  })
-})
+    const allRecentSold: any[] = []
+    const maxPerQuery = 2
+    results.forEach(r => {
+      allRecentSold.push(...r.recentSold.slice(0, maxPerQuery))
+    })
+    const usedIds = new Set(allRecentSold.map(i => i.id))
+    results.forEach(r => {
+      r.recentSold.slice(maxPerQuery).forEach((i: any) => {
+        if (!usedIds.has(i.id) && allRecentSold.length < 30) {
+          allRecentSold.push(i)
+          usedIds.add(i.id)
+        }
+      })
+    })
 
-    // Market summary per sport
     const sportSummary = results.map(r => ({
       sport: r.sport,
       avgSold: r.avgSold,
@@ -185,6 +217,7 @@ results.forEach(r => {
     return NextResponse.json({
       deals: allDeals,
       recentSold: allRecentSold,
+      endingSoon,
       sportSummary,
       generatedAt: new Date().toISOString(),
     })

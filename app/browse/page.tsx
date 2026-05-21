@@ -101,7 +101,10 @@ export default function Browse() {
   const filteredDeals = data?.deals?.filter((d: any) =>
     activeSport === 'all' || d.sport === activeSport
   ) || []
-
+const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
+  activeSport === 'all' || d.sport === activeSport ||
+  (activeSport === 'Gaming' && (d.sport === 'Gaming' || d.sport === 'Gaming / TCG'))
+) || []
   const filteredSold = data?.recentSold?.filter((d: any) =>
   activeSport === 'all' || d.sport === activeSport || 
   (activeSport === 'Gaming' && (d.sport === 'Gaming' || d.sport === 'Gaming / TCG'))
@@ -288,6 +291,70 @@ export default function Browse() {
         </div>
       ) : (
         <div className="browse-main">
+
+{/* ENDING SOON */}
+{filteredEndingSoon.length > 0 && (
+  <div>
+    <div className="section-header">
+      <div>
+        <div className="section-title">
+          <FontAwesomeIcon icon={faBolt} style={{color:'#D93025'}}/>
+          Ending Soon
+          <span style={{fontSize:'12px',fontWeight:600,color:'#fff',background:'#D93025',padding:'2px 8px',borderRadius:'100px',marginLeft:'4px'}}>LIVE</span>
+        </div>
+        <div className="section-sub">Graded card auctions ending within 2 hours</div>
+      </div>
+    </div>
+    <div className="sold-feed">
+      {filteredEndingSoon.map((item: any, i: number) => {
+        const sc = sportColors[item.sport] || {bg:'#F7F7F7',color:'#555',border:'#E0E0E0'}
+        const endTime = item.endTime ? new Date(item.endTime) : null
+        const minsLeft = endTime ? Math.max(0, Math.floor((endTime.getTime() - Date.now()) / 60000)) : null
+        const urgent = minsLeft !== null && minsLeft < 30
+        return (
+          <a
+            key={item.id + i}
+            href={item.itemWebUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sold-item"
+            style={{textDecoration:'none',animationDelay:`${i*.03}s`,borderColor:urgent?'#FFBBB7':'#EFEFEF'}}
+          >
+            <div className="sold-img">
+              {item.image
+                ? <img src={item.image} alt={item.title}/>
+                : <span>{sportEmoji[item.sport]||'🃏'}</span>
+              }
+            </div>
+            <div className="sold-info">
+              <div className="sold-title">{truncate(item.title, 70)}</div>
+              <div className="sold-meta">
+                <span className="sold-sport" style={{background:sc.bg,color:sc.color}}>
+                  {sportEmoji[item.sport]} {item.sport}
+                </span>
+                {item.grade && (
+                  <span style={{fontSize:'10px',fontWeight:700,color:'#002FA7',background:'#EEF2FF',padding:'2px 7px',borderRadius:'100px'}}>{item.grade}</span>
+                )}
+                {item.bidCount > 0 && (
+                  <span style={{fontSize:'10px',color:'#9A9A9A'}}>{item.bidCount} bid{item.bidCount!==1?'s':''}</span>
+                )}
+              </div>
+            </div>
+            <div className="sold-right">
+  <div style={{fontSize:'11px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:'4px'}}>Auction</div>
+  {minsLeft !== null && (
+    <div style={{fontSize:'13px',fontWeight:800,color:urgent?'#D93025':'#E8820C'}}>
+      {urgent ? '🔴' : '🟡'} {minsLeft < 60 ? `${minsLeft}m left` : `${Math.floor(minsLeft/60)}h ${minsLeft%60}m left`}
+    </div>
+  )}
+  <div style={{fontSize:'10px',color:'#1B6FF0',fontWeight:600,marginTop:'2px'}}>View on eBay →</div>
+</div>
+          </a>
+        )
+      })}
+    </div>
+  </div>
+)}
 
           {/* RECENTLY SOLD */}
           <div>
