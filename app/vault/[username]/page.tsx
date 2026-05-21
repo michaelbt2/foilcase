@@ -140,7 +140,7 @@ export default function PublicVault() {
   const totalGraded = cards.filter(c => c.grader && c.grader !== 'Raw').length
   const totalSets   = new Set(cards.map(c => c.set_name)).size
   const isOwner     = user?.id === profile?.id
-
+const [lightboxImage, setLightboxImage] = useState<string|null>(null)
   if (loading) return (
     <>
       <Nav />
@@ -201,7 +201,7 @@ export default function PublicVault() {
         .btn-outline{background:transparent;color:#0D0D0D;border:1.5px solid #D8D8D8}
         .btn-outline:hover{border-color:#0D0D0D}
         .vault-stats{background:#F7F7F7;border-bottom:1px solid #EFEFEF;padding:16px 24px}
-        .vault-stats-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+        .vault-stats-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
         .vault-stat{background:#fff;border:1px solid #EFEFEF;border-radius:8px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
         .vault-stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:8px}
         .vault-stat-val{font-size:20px;font-weight:800;letter-spacing:-.5px}
@@ -253,7 +253,7 @@ export default function PublicVault() {
         .card-modal-left{background:#F7F7F7;border-right:1px solid #EFEFEF;padding:20px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
         .card-modal-right{padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
         .card-modal-img{border-radius:8px;overflow:hidden;background:#EFEFEF;display:flex;align-items:center;justify-content:center;aspect-ratio:2.5/3.5}
-        .card-modal-img img{width:100%;height:100%;object-fit:cover}
+        .card-modal-img img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}
         .card-modal-tab{display:flex;gap:4px;background:#EFEFEF;border-radius:8px;padding:3px}
         .card-modal-tab-btn{flex:1;padding:5px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;background:transparent;color:#9A9A9A}
         .card-modal-tab-btn.on{background:#fff;color:#0D0D0D;box-shadow:0 1px 3px rgba(0,0,0,.08)}
@@ -266,6 +266,12 @@ export default function PublicVault() {
         .detail-lbl{color:#9A9A9A;font-weight:500}
         .detail-val{font-weight:600;color:#0D0D0D;text-align:right}
         @media(max-width:768px){.vault-stats-inner{grid-template-columns:1fr 1fr}.vault-hero-inner{flex-direction:column}.card-modal-body{grid-template-columns:1fr}.card-modal-left{border-right:none;border-bottom:1px solid #EFEFEF}}
+        .lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.lightbox-img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 24px 64px rgba(0,0,0,.5);animation:scaleIn .2s ease}
+@keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.lightbox-close{position:fixed;top:20px;right:24px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.lightbox-close:hover{background:rgba(255,255,255,.2)}
       `}</style>
 
       <Nav />
@@ -328,13 +334,7 @@ export default function PublicVault() {
             <div className="vault-stat-val">{cards.length}</div>
             <div className="vault-stat-lbl">Total Cards</div>
           </div>
-          <div className="vault-stat">
-            <div className="vault-stat-icon" style={{background:'#E6F9F0',display:'flex',alignItems:'center',justifyContent:'center'}}>
-              <FontAwesomeIcon icon={faChartLine} style={{color:'#00A861'}}/>
-            </div>
-            <div className="vault-stat-val" style={{color:'#00A861'}}>${fmtNum(totalValue)}</div>
-            <div className="vault-stat-lbl">Est. Value</div>
-          </div>
+          
           <div className="vault-stat">
             <div className="vault-stat-icon" style={{background:'#F2ECFB',display:'flex',alignItems:'center',justifyContent:'center'}}>
               <FontAwesomeIcon icon={faMedal} style={{color:'#7B4FCA'}}/>
@@ -399,12 +399,12 @@ export default function PublicVault() {
         ) : viewMode === 'grid' ? (
           <div className="cards-grid">
             {filtered.map((c,i) => (
-              <div key={c.id} className="card-tile" style={{animationDelay:`${i*.03}s`}} onClick={() => setSelectedCard(c)}>
-                <div className="card-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
-                  {c.card_image_url
-                    ? <img src={c.card_image_url} alt={c.player}/>
-                    : <span style={{fontSize:'48px'}}>{sportEmoji[c.sport]||'🃏'}</span>
-                  }
+              <div key={c.id} className="card-tile" style={{animationDelay:`${i*.03}s`}}>
+                <div className="card-img" style={{background:c.card_image_url?'#000':cardBg(c.sport),cursor:c.card_image_url?'zoom-in':'pointer'}}>
+  {c.card_image_url
+    ? <img src={c.card_image_url} alt={c.player} onClick={e=>{e.stopPropagation();setLightboxImage(c.card_image_url)}}/>
+    : <span style={{fontSize:'48px'}}>{sportEmoji[c.sport]||'🃏'}</span>
+  }
                   {c.status === 'trade' && (
                     <div className="card-status status-trade">
                       <FontAwesomeIcon icon={faTag} style={{marginRight:'3px'}}/>For Trade
@@ -418,26 +418,34 @@ export default function PublicVault() {
                   )}
                 </div>
                 <div className="card-body">
-                  <div className="card-player">{c.player}</div>
-                  <div className="card-set">
-                    {[c.year, c.brand!=='Unknown'?c.brand:'', c.set_name!=='Unknown'?c.set_name:''].filter(Boolean).join(' ')}
-                    {c.cardnum?` · ${c.cardnum}`:''}
-                  </div>
-                  <div className="card-attrs">
-                    {(c.attrs||[]).map((a:string) => (
-                      <span key={a} className="attr-tag">
-                        {a === 'numbered' && c.print_run ? c.print_run : attrLabel(a)}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+  <div className="card-player">{c.player}</div>
+  <div className="card-set">
+    {[c.year, c.brand!=='Unknown'?c.brand:'', c.set_name!=='Unknown'?c.set_name:''].filter(Boolean).join(' ')}
+    {c.cardnum?` · ${c.cardnum}`:''}
+  </div>
+  <div className="card-attrs">
+    {(c.attrs||[]).map((a:string) => (
+      <span key={a} className="attr-tag">
+        {a === 'numbered' && c.print_run ? c.print_run : attrLabel(a)}
+      </span>
+    ))}
+  </div>
+  <button
+    onClick={() => setSelectedCard(c)}
+    style={{marginTop:'8px',width:'100%',padding:'6px 0',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:'#fff',fontSize:'11px',fontWeight:600,color:'#555',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s'}}
+    onMouseOver={e=>{e.currentTarget.style.borderColor='#1B6FF0';e.currentTarget.style.color='#1B6FF0'}}
+    onMouseOut={e=>{e.currentTarget.style.borderColor='#EFEFEF';e.currentTarget.style.color='#555'}}
+  >
+    View card details
+  </button>
+</div>
               </div>
             ))}
           </div>
         ) : (
           <div className="cards-list">
             {filtered.map((c,i) => (
-              <div key={c.id} className="list-tile" style={{animationDelay:`${i*.025}s`}} onClick={() => setSelectedCard(c)}>
+              <div key={c.id} className="list-tile" style={{animationDelay:`${i*.025}s`}}>
                 <div className="list-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
                   {c.card_image_url
                     ? <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
@@ -481,18 +489,28 @@ export default function PublicVault() {
                     <div style={{fontSize:'13px',fontWeight:700}}>{c.grader} {c.grade}</div>
                   </div>
                 )}
-                {c.value > 0 && (
-                  <div className="list-right">
-                    <div className="list-val-lbl">Value</div>
-                    <div className="list-val">${c.value}</div>
-                  </div>
-                )}
+                <div style={{padding:'0 14px',flexShrink:0}}>
+  <button
+    onClick={() => setSelectedCard(c)}
+    style={{padding:'6px 12px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:'#fff',fontSize:'11px',fontWeight:600,color:'#555',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s',whiteSpace:'nowrap'}}
+    onMouseOver={e=>{e.currentTarget.style.borderColor='#1B6FF0';e.currentTarget.style.color='#1B6FF0'}}
+    onMouseOut={e=>{e.currentTarget.style.borderColor='#EFEFEF';e.currentTarget.style.color='#555'}}
+  >
+    View details
+  </button>
+</div>
               </div>
             ))}
           </div>
         )}
       </div>
-
+{/* LIGHTBOX */}
+{lightboxImage && (
+  <div className="lightbox-overlay" onClick={() => setLightboxImage(null)}>
+    <button className="lightbox-close" onClick={() => setLightboxImage(null)}>✕</button>
+    <img src={lightboxImage} className="lightbox-img" alt="Card enlarged view"/>
+  </div>
+)}
       {/* CARD DETAIL MODAL */}
       {selectedCard && (
         <div className="card-modal-overlay" onClick={() => setSelectedCard(null)}>
@@ -523,14 +541,14 @@ export default function PublicVault() {
                 )}
                 <div className="card-modal-img" style={{background:(cardImageTab==='front'?selectedCard.card_image_url:selectedCard.card_image_back_url)?'#000':cardBg(selectedCard.sport)}}>
                   {cardImageTab === 'front' ? (
-                    selectedCard.card_image_url
-                      ? <img src={selectedCard.card_image_url} alt={selectedCard.player}/>
-                      : <span style={{fontSize:'64px'}}>{sportEmoji[selectedCard.sport]||'🃏'}</span>
-                  ) : (
-                    selectedCard.card_image_back_url
-                      ? <img src={selectedCard.card_image_back_url} alt={`${selectedCard.player} back`}/>
-                      : <span style={{fontSize:'64px'}}>{sportEmoji[selectedCard.sport]||'🃏'}</span>
-                  )}
+  selectedCard.card_image_url
+    ? <img src={selectedCard.card_image_url} alt={selectedCard.player} onClick={()=>setLightboxImage(selectedCard.card_image_url)}/>
+    : <span style={{fontSize:'64px'}}>{sportEmoji[selectedCard.sport]||'🃏'}</span>
+) : (
+  selectedCard.card_image_back_url
+    ? <img src={selectedCard.card_image_back_url} alt={`${selectedCard.player} back`} onClick={()=>setLightboxImage(selectedCard.card_image_back_url)}/>
+    : <span style={{fontSize:'64px'}}>{sportEmoji[selectedCard.sport]||'🃏'}</span>
+)}
                 </div>
 
                 {/* Status badges */}
