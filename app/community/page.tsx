@@ -277,7 +277,7 @@ export default function Community() {
     <FontAwesomeIcon icon={faTrophy} style={{color:'#E8820C'}}/>
     Achievements
   </div>
-  <div style={{fontSize:'10px',color:'#9A9A9A',paddingLeft:'18px'}}>Add cards to level up</div>
+  <div style={{fontSize:'12px',color:'#555',paddingLeft:'18px'}}>Add cards to level up</div>
 </div>
 
               {/* Tier row */}
@@ -319,7 +319,7 @@ export default function Community() {
                   <div style={{height:'5px',background:'#EFEFEF',borderRadius:'100px',overflow:'hidden'}}>
                     <div style={{width:`${tierPct}%`,height:'100%',background:currentTier.color,borderRadius:'100px',transition:'width .6s ease'}}/>
                   </div>
-                  <div style={{fontSize:'10px',color:'#9A9A9A',marginTop:'4px'}}>{userCardCount} card{userCardCount!==1?'s':''} in your vault</div>
+                  <div style={{fontSize:'12px',color:'#555',marginTop:'4px'}}>{userCardCount} card{userCardCount!==1?'s':''} in your vault</div>
                 </div>
               )}
 
@@ -457,31 +457,21 @@ export default function Community() {
 
                   {/* Header */}
                   <div className="profile-header">
-                    <div className="profile-avatar" style={{background:getCollectorBadge(p.cardCount||0).bg,border:`2px solid ${TIERS.find(t => p.cardCount!==undefined && p.cardCount>=t.min && (t.max===Infinity||p.cardCount<=t.max))?.border||'#E0E0E0'}`}}>
-                      <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{color:getCollectorBadge(p.cardCount||0).color,fontSize:'20px'}}/>
-                    </div>
-                    <div className="profile-info">
-                      <div className="profile-name">{p.display_name || p.username}</div>
-                      <div className="profile-username">@{p.username}</div>
-                      <div style={{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px',padding:'2px 8px',borderRadius:'100px',background:getCollectorBadge(p.cardCount||0).bg,fontSize:'10px',fontWeight:700,color:getCollectorBadge(p.cardCount||0).color}}>
-                        <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{fontSize:'9px'}}/>
-                        {getCollectorBadge(p.cardCount||0).label}
-                      </div>
-                    </div>
+  <div className="profile-avatar" style={{background:getCollectorBadge(p.cardCount||0).bg,border:`2px solid ${TIERS.find(t => p.cardCount!==undefined && p.cardCount>=t.min && (t.max===Infinity||p.cardCount<=t.max))?.border||'#E0E0E0'}`}}>
+    <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{color:getCollectorBadge(p.cardCount||0).color,fontSize:'20px'}}/>
+  </div>
+  <div className="profile-info">
+    <div className="profile-name">{p.display_name || p.username}</div>
+    <div className="profile-username">@{p.username}</div>
+    <div style={{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px',padding:'2px 8px',borderRadius:'100px',background:getCollectorBadge(p.cardCount||0).bg,fontSize:'10px',fontWeight:700,color:getCollectorBadge(p.cardCount||0).color}}>
+      <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{fontSize:'9px'}}/>
+      {getCollectorBadge(p.cardCount||0).label}
+    </div>
+  </div>
+</div>
 
-                    {/* Sport icons */}
-                    {(p.sports||[]).length > 0 && (
-                      <div style={{display:'flex',gap:'4px',flexWrap:'wrap',justifyContent:'flex-end',flexShrink:0}}>
-                        {SPORTS_LIST.filter(s => (p.sports||[]).some(ps => ps.startsWith(s.v))).map(s => (
-                          <div key={s.v} title={s.v} style={{width:'22px',height:'22px',borderRadius:'50%',background:s.bg,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid ${s.color}22`}}>
-                            <FontAwesomeIcon icon={s.icon} style={{color:s.color,fontSize:'10px'}}/>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                 <div className="profile-stats">
+                 {/* Stats */}
+<div className="profile-stats">
   <div className="profile-stat">
     <div className="profile-stat-val">{p.cardCount||0}</div>
     <div className="profile-stat-lbl">Cards</div>
@@ -492,11 +482,23 @@ export default function Community() {
   </div>
 </div>
 
+{/* Sport icons — below stats */}
+{(p.sports||[]).length > 0 && (
+  <div style={{display:'flex',gap:'6px',flexWrap:'wrap',paddingTop:'4px'}}>
+    {SPORTS_LIST.filter(s => (p.sports||[]).some(ps => ps.startsWith(s.v))).map(s => (
+      <div key={s.v} title={s.v} style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'3px 8px',borderRadius:'100px',background:s.bg,border:`1px solid ${s.color}33`}}>
+        <FontAwesomeIcon icon={s.icon} style={{color:s.color,fontSize:'9px'}}/>
+        <span style={{fontSize:'10px',fontWeight:600,color:s.color}}>{s.v}</span>
+      </div>
+    ))}
+  </div>
+)}
+
                   {/* Actions */}
                   <div className="profile-actions">
-                    <Link href={`/vault/${p.username}`} className="btn btn-outline btn-sm" style={{flex:1,justifyContent:'center'}}>
-                      <FontAwesomeIcon icon={faArrowRight}/>View Vault
-                    </Link>
+                    <Link href={`/vault/${p.username}`} className="btn btn-primary btn-sm" style={{flex:1,justifyContent:'center'}}>
+  <FontAwesomeIcon icon={faArrowRight}/>View Vault
+</Link>
                     {user && user.id !== p.id && (
                       <button
                         className={`btn btn-sm ${following.has(p.id)?'btn-outline':'btn-primary'}`}
