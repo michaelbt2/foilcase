@@ -13,12 +13,12 @@ import {
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
-  Hockey:'🏒', Soccer:'⚽', Gaming:'🎮'
+  Hockey:'🏒', Pokemon:'🎮', Lorcana:'🏰', Magic:'🧙'
 }
 
 const sportIcons: Record<string,any> = {
   Football: faFootball, Baseball: faBaseball, Basketball: faBasketball,
-  Hockey: faHockeyPuck, Soccer: faFutbol, Gaming: faGamepad,
+  Hockey: faHockeyPuck, Pokemon: faGamepad, Lorcana: faGamepad, Magic: faGamepad,
 }
 
 const sportColors: Record<string,{bg:string,color:string,border:string}> = {
@@ -26,8 +26,9 @@ const sportColors: Record<string,{bg:string,color:string,border:string}> = {
   Baseball:   { bg:'#E6F9F0', color:'#00A861', border:'#A8DFC4' },
   Basketball: { bg:'#FEF3E2', color:'#E8820C', border:'#F5C880' },
   Hockey:     { bg:'#F2ECFB', color:'#7B4FCA', border:'#D4BAF0' },
-  Soccer:     { bg:'#E0F7FA', color:'#0097A7', border:'#A5E8F0' },
-  Gaming:     { bg:'#FDECEA', color:'#D93025', border:'#FFBBB7' },
+  Pokemon:    { bg:'#FDECEA', color:'#D93025', border:'#FFBBB7' },
+  Lorcana:    { bg:'#F0ECFB', color:'#6B3FA0', border:'#C9B8F0' },
+  Magic:      { bg:'#E8F5E9', color:'#2E7D32', border:'#A5D6A7' },
 }
 
 function truncate(str: string, n: number) {
@@ -96,18 +97,24 @@ export default function Browse() {
     }
   }
 
-const SPORTS = ['all','Football','Baseball','Basketball','Hockey','Soccer','Gaming']
+const SPORTS = ['all','Football','Baseball','Basketball','Hockey','Pokemon','Lorcana','Magic']
   const filteredDeals = data?.deals?.filter((d: any) =>
     activeSport === 'all' || d.sport === activeSport
   ) || []
-const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
-  activeSport === 'all' || d.sport === activeSport ||
-  (activeSport === 'Gaming' && (d.sport === 'Gaming' || d.sport === 'Gaming / TCG')) ||
-  (activeSport === 'Soccer' && d.sport === 'Soccer')
+const filteredSold = data?.recentSold?.filter((d: any) =>
+  activeSport === 'all' ||
+  d.sport === activeSport ||
+  (activeSport === 'Pokemon' && (d.sport === 'Gaming' || d.sport === 'Gaming / TCG' || d.sport === 'Pokemon')) ||
+  (activeSport === 'Lorcana' && d.sport === 'Lorcana') ||
+  (activeSport === 'Magic' && d.sport === 'Magic')
 ) || []
-  const filteredSold = data?.recentSold?.filter((d: any) =>
-  activeSport === 'all' || d.sport === activeSport || 
-  (activeSport === 'Gaming' && (d.sport === 'Gaming' || d.sport === 'Gaming / TCG'))
+
+const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
+  activeSport === 'all' ||
+  d.sport === activeSport ||
+  (activeSport === 'Pokemon' && (d.sport === 'Gaming' || d.sport === 'Gaming / TCG' || d.sport === 'Pokemon')) ||
+  (activeSport === 'Lorcana' && d.sport === 'Lorcana') ||
+  (activeSport === 'Magic' && d.sport === 'Magic')
 ) || []
 
   // Aggregate sport summary
@@ -212,13 +219,6 @@ const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
     {/* LIVE STATS — inside hero */}
     {!loading && data && (
       <div style={{display:'flex',gap:'12px',flexWrap:'wrap',justifyContent:'center',marginTop:'24px'}}>
-        <div style={{display:'flex',alignItems:'center',gap:'8px',background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.12)',borderRadius:'8px',padding:'10px 16px'}}>
-          <FontAwesomeIcon icon={faBolt} style={{color:'#F5A623',fontSize:'14px'}}/>
-          <div>
-            <div style={{fontSize:'14px',fontWeight:800,color:'#fff'}}>{data.recentSold?.length || 0} listings</div>
-            <div style={{fontSize:'10px',color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.06em'}}>Active now</div>
-          </div>
-        </div>
         {Object.entries(sportSummaryMap).slice(0,4).map(([sport, info]) => (
           <div key={sport} style={{display:'flex',alignItems:'center',gap:'8px',background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.12)',borderRadius:'8px',padding:'10px 16px'}}>
             <FontAwesomeIcon icon={sportIcons[sport]||faTag} style={{color:sportColors[sport]?.color||'#9A9A9A',fontSize:'14px'}}/>
@@ -250,9 +250,9 @@ const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
 </div>
 
 {/* SPORT PILLS — below hero, above content */}
-<div style={{background:'#fff',borderBottom:'1px solid #EFEFEF',padding:'14px 24px'}}>
-  <div style={{maxWidth:'1200px',margin:'0 auto',display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
-    <span style={{fontSize:'11px',fontWeight:700,color:'#9A9A9A',textTransform:'uppercase',letterSpacing:'.08em',marginRight:'4px'}}>Filter:</span>
+<div style={{background:'#fff',borderBottom:'1px solid #EFEFEF',padding:'14px 0'}}>
+  <div style={{maxWidth:'1200px',margin:'0 auto',padding:'0 24px',display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
+    <span style={{fontSize:'13px',fontWeight:700,color:'#555',letterSpacing:'.04em',marginRight:'4px'}}>Filter:</span>
     {SPORTS.map(s => (
       <button
         key={s}
@@ -267,9 +267,9 @@ const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
         }}
       >
         {s === 'all'
-          ? <><FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'11px'}}/>All Sports</>
-          : <><FontAwesomeIcon icon={sportIcons[s]} style={{fontSize:'11px'}}/>  {s}</>
-        }
+  ? <><FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'11px'}}/>All Cards</>
+  : <><FontAwesomeIcon icon={sportIcons[s]} style={{fontSize:'11px'}}/>  {s}</>
+}
       </button>
     ))}
   </div>
@@ -299,10 +299,10 @@ const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
       <div>
         <div className="section-title">
           <FontAwesomeIcon icon={faBolt} style={{color:'#D93025'}}/>
-          Ending Soon
+          Ending soon
           <span style={{fontSize:'12px',fontWeight:600,color:'#fff',background:'#D93025',padding:'2px 8px',borderRadius:'100px',marginLeft:'4px'}}>LIVE</span>
         </div>
-        <div className="section-sub">Graded card auctions ending within 2 hours</div>
+        <div className="section-sub" style={{color:'#555'}}>Graded card auctions ending soon</div>
       </div>
     </div>
     <div className="sold-feed">
@@ -364,7 +364,7 @@ const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
   <FontAwesomeIcon icon={faChartLine} style={{color:'#00A861'}}/>
   On the market now
 </div>
-<div className="section-sub">Active listings across popular players</div>
+<div className="section-sub" style={{color:'#555'}}>Active listings across popular players</div>
               </div>
             </div>
 

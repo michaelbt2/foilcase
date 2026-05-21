@@ -35,12 +35,11 @@ const FEED_QUERIES = [
   { q: '"Ronald Acuna" prizm', sport: 'Baseball' },
   { q: '"Connor McDavid"', sport: 'Hockey' },
   { q: '"Nathan MacKinnon"', sport: 'Hockey' },
-  { q: 'Charizard PSA', sport: 'Gaming' },
-  { q: 'Pikachu card PSA', sport: 'Gaming' },
-// Soccer — 2 queries
-{ q: '"Lionel Messi" card', sport: 'Soccer' },
-{ q: '"Kylian Mbappe" card', sport: 'Soccer' },
-
+  { q: 'Charizard PSA', sport: 'Pokemon' },
+  { q: 'Pikachu card PSA', sport: 'Pokemon' },
+  { q: 'Lorcana card holo', sport: 'Lorcana' },
+  { q: 'Magic the Gathering Black Lotus', sport: 'Magic' },
+  { q: 'Magic the Gathering PSA graded', sport: 'Magic' },
 ]
 
 // Auction queries for ending-soon section
@@ -49,8 +48,9 @@ const AUCTION_QUERIES = [
   { q: 'PSA basketball card prizm', sport: 'Basketball' },
   { q: 'PSA baseball card rookie', sport: 'Baseball' },
   { q: 'PSA hockey card rookie', sport: 'Hockey' },
-{ q: 'Messi soccer card graded', sport: 'Soccer' },
-  { q: 'PSA Charizard pokemon card', sport: 'Gaming' },
+  { q: 'PSA Charizard pokemon card', sport: 'Pokemon' },
+  { q: 'Lorcana card graded', sport: 'Lorcana' },
+  { q: 'Magic the Gathering PSA graded', sport: 'Magic' },
 ]
 
 function isNotCard(title: string) {
