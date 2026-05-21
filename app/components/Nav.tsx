@@ -72,7 +72,7 @@ export default function Nav() {
           </Link>
           <ul className="nav-links">
             <li><Link href="/community" className={path==='/community'?'active':''}>Community</Link></li>
-            <li><Link href="/browse" className={path==='/browse'?'active':''}>Market</Link></li>
+            <li><Link href="/market" className={path==='/market'?'active':''}>Market</Link></li>
             <li><Link href="/search" className={path==='/search'?'active':''}>Search</Link></li>
           </ul>
           <NavActions />
