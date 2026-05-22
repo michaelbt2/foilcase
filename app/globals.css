@@ -245,11 +245,13 @@ small {
   transform: translateY(-2px);
 }
 
-.card-flat {
-  background: var(--white);
-  border: 1px solid var(--gray-2);
-  border-radius: var(--radius-lg);
-}
+/* Card radius scale:
+   --radius-sm:  6px  — list items, small elements
+   --radius-md:  8px  — standard cards, list tiles
+   --radius-lg:  12px — feature cards, modals
+   --radius-xl:  16px — large feature cards
+   --radius-2xl: 20px — CTA banners, hero cards
+*/
 
 /* --- Badges / Tags --- */
 .badge {
