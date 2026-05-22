@@ -74,7 +74,50 @@ export default function Community() {
     if (user) { loadFollowing(); loadUserCardCount() }
   }, [user])
   useEffect(() => { filterProfiles() }, [searchVal, profiles, activeTab, activeTier, activeSport])
+const searchCards = async (q: string) => {
+  if (!q.trim()) return
+  setCardSearching(true)
+  setCardSearchSubmitted(true)
 
+  try {
+    // First get all public profile IDs
+    const { data: publicProfiles } = await supabase
+      .from('profiles')
+      .select('id, username, display_name')
+      .eq('is_public', true)
+
+    if (!publicProfiles || publicProfiles.length === 0) {
+      setCardResults([])
+      setCardSearching(false)
+      return
+    }
+
+    const publicIds = publicProfiles.map(p => p.id)
+
+    // Then search cards from those profiles
+    const { data, error } = await supabase
+      .from('cards')
+      .select('id, player, year, brand, set_name, sport, cardnum, attrs, grader, grade, status, card_image_url, print_run, user_id')
+      .ilike('player', `%${q.trim()}%`)
+      .in('user_id', publicIds)
+      .neq('status', 'sold')
+      .limit(40)
+
+    console.log('Card results:', data, 'Error:', error)
+
+    // Attach profile info to each card
+    const enriched = (data || []).map(card => ({
+      ...card,
+      profiles: publicProfiles.find(p => p.id === card.user_id)
+    }))
+
+    setCardResults(enriched)
+  } catch (e) {
+    console.error('Search error:', e)
+  } finally {
+    setCardSearching(false)
+  }
+}
   const loadProfiles = async () => {
     setLoading(true)
     const { data: profileData } = await supabase
@@ -186,7 +229,11 @@ export default function Community() {
     : 100
 
   const hasActiveFilters = activeTier !== 'all' || activeSport !== 'all'
-
+const [searchMode, setSearchMode] = useState<'collectors'|'cards'>('collectors')
+const [cardSearchVal, setCardSearchVal] = useState('')
+const [cardResults, setCardResults] = useState<any[]>([])
+const [cardSearching, setCardSearching] = useState(false)
+const [cardSearchSubmitted, setCardSearchSubmitted] = useState(false)
   return (
     <>
       <style>{`
@@ -250,21 +297,125 @@ export default function Community() {
         <div className="community-hero-inner">
           <h1 className="community-hero-title">Discover <em>collectors</em></h1>
           <p className="community-hero-sub">Browse public vaults, follow collectors, and find cards for trade</p>
-          <div className="search-bar">
-            <FontAwesomeIcon icon={faMagnifyingGlass} style={{color:'#9A9A9A',flexShrink:0}}/>
-            <input
-              type="text"
-              placeholder="Search collectors by name or username..."
-              value={searchVal}
-              onChange={e => setSearchVal(e.target.value)}
-            />
-            <button className="search-bar-btn">Search</button>
-          </div>
+          <div style={{display:'flex',gap:'8px',justifyContent:'center',marginBottom:'16px'}}>
+  <button
+    onClick={() => setSearchMode('collectors')}
+    style={{padding:'6px 16px',borderRadius:'100px',border:'1.5px solid',borderColor:searchMode==='collectors'?'#fff':'rgba(255,255,255,.3)',background:searchMode==='collectors'?'#fff':'transparent',color:searchMode==='collectors'?'#0D0D0D':'rgba(255,255,255,.7)',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s'}}
+  >
+    Search Collectors
+  </button>
+  <button
+    onClick={() => setSearchMode('cards')}
+    style={{padding:'6px 16px',borderRadius:'100px',border:'1.5px solid',borderColor:searchMode==='cards'?'#fff':'rgba(255,255,255,.3)',background:searchMode==='cards'?'#fff':'transparent',color:searchMode==='cards'?'#0D0D0D':'rgba(255,255,255,.7)',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s'}}
+  >
+    Search by Player
+  </button>
+</div>
+<div className="search-bar">
+  <FontAwesomeIcon icon={faMagnifyingGlass} style={{color:'#9A9A9A',flexShrink:0}}/>
+  {searchMode === 'collectors' ? (
+    <input
+      type="text"
+      placeholder="Search collectors by name or username..."
+      value={searchVal}
+      onChange={e => setSearchVal(e.target.value)}
+    />
+  ) : (
+    <input
+      type="text"
+      placeholder="Search by player name across all public vaults..."
+      value={cardSearchVal}
+      onChange={e => setCardSearchVal(e.target.value)}
+      onKeyDown={e => { if (e.key === 'Enter') searchCards(cardSearchVal) }}
+    />
+  )}
+  <button className="search-bar-btn" onClick={() => searchMode === 'collectors' ? null : searchCards(cardSearchVal)}>Search</button>
+</div>
         </div>
       </div>
 
-      {/* MAIN LAYOUT */}
-      <div className="community-layout">
+      {/* CARD SEARCH RESULTS */}
+{searchMode === 'cards' && cardSearchSubmitted && (
+  <div style={{maxWidth:'1200px',margin:'0 auto',padding:'28px 24px'}}>
+    <div style={{fontSize:'13px',color:'#9A9A9A',marginBottom:'16px'}}>
+      {cardSearching ? 'Searching...' : (
+        <><strong style={{color:'#0D0D0D'}}>{cardResults.length}</strong> card{cardResults.length!==1?'s':''} found across public vaults for "<strong>{cardSearchVal}</strong>"</>
+      )}
+    </div>
+    {cardSearching ? (
+      <div style={{display:'flex',justifyContent:'center',padding:'40px'}}>
+        <div style={{width:'36px',height:'36px',border:'3px solid #EFEFEF',borderTopColor:'#1B6FF0',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+      </div>
+    ) : cardResults.length === 0 ? (
+      <div style={{background:'#fff',border:'1.5px dashed #D8D8D8',borderRadius:'8px',padding:'48px 24px',textAlign:'center'}}>
+        <div style={{fontSize:'32px',marginBottom:'12px'}}>🔍</div>
+        <div style={{fontSize:'16px',fontWeight:700,marginBottom:'8px'}}>No cards found</div>
+        <div style={{fontSize:'14px',color:'#9A9A9A'}}>No public vaults have cards matching "{cardSearchVal}"</div>
+      </div>
+    ) : (
+      <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+        {cardResults.map((c: any) => {
+          const profile = c.profiles
+          const sportColors: Record<string,{bg:string,color:string}> = {
+            Football:{bg:'#EBF2FF',color:'#1B6FF0'},
+            Baseball:{bg:'#E6F9F0',color:'#00A861'},
+            Basketball:{bg:'#FEF3E2',color:'#E8820C'},
+            Hockey:{bg:'#F2ECFB',color:'#7B4FCA'},
+            Soccer:{bg:'#E0F7FA',color:'#0097A7'},
+            Gaming:{bg:'#FDECEA',color:'#D93025'},
+            'Gaming / TCG':{bg:'#FDECEA',color:'#D93025'},
+          }
+          const sc = sportColors[c.sport] || {bg:'#F7F7F7',color:'#555'}
+          return (
+            <div key={c.id} style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:'8px',padding:'14px 16px',display:'flex',alignItems:'center',gap:'14px',boxShadow:'0 1px 3px rgba(0,0,0,.06)'}}>
+              {/* Card image */}
+              <div style={{width:'48px',height:'67px',borderRadius:'5px',overflow:'hidden',flexShrink:0,background:'#F7F7F7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'24px'}}>
+                {c.card_image_url
+                  ? <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                  : '🃏'
+                }
+              </div>
+
+              {/* Card info */}
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:'14px',fontWeight:700,color:'#0D0D0D',marginBottom:'3px'}}>{c.player}</div>
+                <div style={{fontSize:'12px',color:'#9A9A9A',marginBottom:'5px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                  {[c.year, c.brand!=='Unknown'?c.brand:'', c.set_name!=='Unknown'?c.set_name:''].filter(Boolean).join(' ')}
+                  {c.cardnum?` · ${c.cardnum}`:''}
+                </div>
+                <div style={{display:'flex',gap:'5px',flexWrap:'wrap'}}>
+                  <span style={{fontSize:'10px',fontWeight:700,padding:'2px 7px',borderRadius:'100px',background:sc.bg,color:sc.color}}>{c.sport}</span>
+                  {c.grader && c.grader !== 'Raw' && (
+                    <span style={{fontSize:'10px',fontWeight:700,padding:'2px 7px',borderRadius:'100px',background:'#EEF2FF',color:'#002FA7'}}>{c.grader} {c.grade}</span>
+                  )}
+                  {(c.attrs||[]).slice(0,3).map((a:string) => (
+                    <span key={a} style={{fontSize:'10px',fontWeight:600,padding:'2px 7px',borderRadius:'100px',background:'#F0F0F0',color:'#444'}}>{a==='rc'?'RC':a==='auto'?'Auto':a==='numbered'&&c.print_run?c.print_run:a}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Collector info */}
+              <div style={{flexShrink:0,textAlign:'right'}}>
+                <div style={{fontSize:'11px',color:'#9A9A9A',marginBottom:'4px'}}>In vault of</div>
+                <div style={{fontSize:'13px',fontWeight:700,color:'#0D0D0D',marginBottom:'6px'}}>@{profile?.username}</div>
+                <a
+                  href={`/vault/${profile?.username}`}
+                  style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'5px 12px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',textDecoration:'none',fontSize:'11px',fontWeight:600,fontFamily:'Plus Jakarta Sans,sans-serif'}}
+                >
+                  View Vault
+                </a>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )}
+  </div>
+)}
+
+{/* MAIN LAYOUT — show when in collector mode OR when in card mode but no search submitted yet */}
+{(searchMode === 'collectors' || (searchMode === 'cards' && !cardSearchSubmitted)) && (
+<div className="community-layout">
 
         {/* SIDEBAR */}
         <aside className="sidebar">
@@ -273,12 +424,12 @@ export default function Community() {
           <div className="sidebar-card">
             <div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:'8px',padding:'16px',marginBottom:'12px',boxShadow:'0 1px 3px rgba(0,0,0,.06)'}}>
               <div style={{marginBottom:'12px'}}>
-  <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.1em',color:'#9A9A9A',display:'flex',alignItems:'center',gap:'6px',marginBottom:'2px'}}>
-    <FontAwesomeIcon icon={faTrophy} style={{color:'#E8820C'}}/>
-    Achievements
-  </div>
-  <div style={{fontSize:'12px',color:'#555',paddingLeft:'18px'}}>Add cards to level up</div>
-</div>
+                <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.1em',color:'#9A9A9A',display:'flex',alignItems:'center',gap:'6px',marginBottom:'2px'}}>
+                  <FontAwesomeIcon icon={faTrophy} style={{color:'#E8820C'}}/>
+                  Achievements
+                </div>
+                <div style={{fontSize:'12px',color:'#555',paddingLeft:'18px'}}>Add cards to level up</div>
+              </div>
 
               {/* Tier row */}
               <div style={{display:'flex',flexDirection:'column',gap:'6px',marginBottom: user ? '12px' : '0'}}>
@@ -294,12 +445,12 @@ export default function Community() {
                       position:'relative',
                     }}>
                       <div style={{width:'24px',height:'24px',borderRadius:'50%',background:achieved&&user?tier.bg:'#F0F0F0',display:'flex',alignItems:'center',justifyContent:'center',border:`1.5px solid ${achieved&&user?tier.border:'#C8C8C8'}`,flexShrink:0}}>
-  <FontAwesomeIcon icon={tier.icon} style={{color:achieved&&user?tier.color:'#666',fontSize:'11px'}}/>
-</div>
-<div style={{flex:1}}>
-  <div style={{fontSize:'12px',fontWeight:700,color:achieved&&user?tier.color:'#444'}}>{tier.label}</div>
-  <div style={{fontSize:'10px',color:'#666'}}>{tier.max===Infinity?`${tier.min}+ cards`:`${tier.min}–${tier.max}`}</div>
-</div>
+                        <FontAwesomeIcon icon={tier.icon} style={{color:achieved&&user?tier.color:'#666',fontSize:'11px'}}/>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:'12px',fontWeight:700,color:achieved&&user?tier.color:'#444'}}>{tier.label}</div>
+                        <div style={{fontSize:'10px',color:'#666'}}>{tier.max===Infinity?`${tier.min}+ cards`:`${tier.min}–${tier.max}`}</div>
+                      </div>
                       {isCurrent && user && (
                         <div style={{fontSize:'9px',fontWeight:700,background:tier.color,color:'#fff',padding:'2px 6px',borderRadius:'100px',flexShrink:0}}>YOU</div>
                       )}
@@ -457,48 +608,48 @@ export default function Community() {
 
                   {/* Header */}
                   <div className="profile-header">
-  <div className="profile-avatar" style={{background:getCollectorBadge(p.cardCount||0).bg,border:`2px solid ${TIERS.find(t => p.cardCount!==undefined && p.cardCount>=t.min && (t.max===Infinity||p.cardCount<=t.max))?.border||'#E0E0E0'}`}}>
-    <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{color:getCollectorBadge(p.cardCount||0).color,fontSize:'20px'}}/>
-  </div>
-  <div className="profile-info">
-    <div className="profile-name">{p.display_name || p.username}</div>
-    <div className="profile-username">@{p.username}</div>
-    <div style={{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px',padding:'2px 8px',borderRadius:'100px',background:getCollectorBadge(p.cardCount||0).bg,fontSize:'10px',fontWeight:700,color:getCollectorBadge(p.cardCount||0).color}}>
-      <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{fontSize:'9px'}}/>
-      {getCollectorBadge(p.cardCount||0).label}
-    </div>
-  </div>
-</div>
+                    <div className="profile-avatar" style={{background:getCollectorBadge(p.cardCount||0).bg,border:`2px solid ${TIERS.find(t => p.cardCount!==undefined && p.cardCount>=t.min && (t.max===Infinity||p.cardCount<=t.max))?.border||'#E0E0E0'}`}}>
+                      <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{color:getCollectorBadge(p.cardCount||0).color,fontSize:'20px'}}/>
+                    </div>
+                    <div className="profile-info">
+                      <div className="profile-name">{p.display_name || p.username}</div>
+                      <div className="profile-username">@{p.username}</div>
+                      <div style={{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px',padding:'2px 8px',borderRadius:'100px',background:getCollectorBadge(p.cardCount||0).bg,fontSize:'10px',fontWeight:700,color:getCollectorBadge(p.cardCount||0).color}}>
+                        <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{fontSize:'9px'}}/>
+                        {getCollectorBadge(p.cardCount||0).label}
+                      </div>
+                    </div>
+                  </div>
 
-                 {/* Stats */}
-<div className="profile-stats">
-  <div className="profile-stat">
-    <div className="profile-stat-val">{p.cardCount||0}</div>
-    <div className="profile-stat-lbl">Cards</div>
-  </div>
-  <div className="profile-stat">
-    <div className="profile-stat-val">{p.followerCount||0}</div>
-    <div className="profile-stat-lbl">Followers</div>
-  </div>
-</div>
+                  {/* Stats */}
+                  <div className="profile-stats">
+                    <div className="profile-stat">
+                      <div className="profile-stat-val">{p.cardCount||0}</div>
+                      <div className="profile-stat-lbl">Cards</div>
+                    </div>
+                    <div className="profile-stat">
+                      <div className="profile-stat-val">{p.followerCount||0}</div>
+                      <div className="profile-stat-lbl">Followers</div>
+                    </div>
+                  </div>
 
-{/* Sport icons — below stats */}
-{(p.sports||[]).length > 0 && (
-  <div style={{display:'flex',gap:'6px',flexWrap:'wrap',paddingTop:'4px'}}>
-    {SPORTS_LIST.filter(s => (p.sports||[]).some(ps => ps.startsWith(s.v))).map(s => (
-      <div key={s.v} title={s.v} style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'3px 8px',borderRadius:'100px',background:s.bg,border:`1px solid ${s.color}33`}}>
-        <FontAwesomeIcon icon={s.icon} style={{color:s.color,fontSize:'9px'}}/>
-        <span style={{fontSize:'10px',fontWeight:600,color:s.color}}>{s.v}</span>
-      </div>
-    ))}
-  </div>
-)}
+                  {/* Sport icons — below stats */}
+                  {(p.sports||[]).length > 0 && (
+                    <div style={{display:'flex',gap:'6px',flexWrap:'wrap',paddingTop:'4px'}}>
+                      {SPORTS_LIST.filter(s => (p.sports||[]).some(ps => ps.startsWith(s.v))).map(s => (
+                        <div key={s.v} title={s.v} style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'3px 8px',borderRadius:'100px',background:s.bg,border:`1px solid ${s.color}33`}}>
+                          <FontAwesomeIcon icon={s.icon} style={{color:s.color,fontSize:'9px'}}/>
+                          <span style={{fontSize:'10px',fontWeight:600,color:s.color}}>{s.v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Actions */}
                   <div className="profile-actions">
                     <Link href={`/vault/${p.username}`} className="btn btn-primary btn-sm" style={{flex:1,justifyContent:'center'}}>
-  <FontAwesomeIcon icon={faArrowRight}/>View Vault
-</Link>
+                      <FontAwesomeIcon icon={faArrowRight}/>View Vault
+                    </Link>
                     {user && user.id !== p.id && (
                       <button
                         className={`btn btn-sm ${following.has(p.id)?'btn-outline':'btn-primary'}`}
@@ -522,6 +673,7 @@ export default function Community() {
           )}
         </main>
       </div>
+    )}
     </>
   )
 }
