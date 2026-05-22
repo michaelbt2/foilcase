@@ -71,10 +71,11 @@ export default function Nav() {
 </div>foilcase
           </Link>
           <ul className="nav-links">
-            <li><Link href="/community" className={path==='/community'?'active':''}>Community</Link></li>
-            <li><Link href="/market" className={path==='/market'?'active':''}>Market</Link></li>
-            <li><Link href="/search" className={path==='/search'?'active':''}>Search</Link></li>
-          </ul>
+  <li><Link href="/start-here" className={path==='/start-here'?'active':''}>Start Here</Link></li>
+  <li><Link href="/community" className={path==='/community'?'active':''}>Community</Link></li>
+  <li><Link href="/market" className={path==='/market'?'active':''}>Market</Link></li>
+  <li><Link href="/search" className={path==='/search'?'active':''}>Search</Link></li>
+</ul>
           <NavActions />
         </div>
       </nav>
