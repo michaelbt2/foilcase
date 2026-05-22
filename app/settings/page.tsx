@@ -68,7 +68,7 @@ useEffect(() => {
     const timer = setTimeout(() => checkUsername(val), 600)
     return () => clearTimeout(timer)
   }
-
+const [activeSection, setActiveSection] = useState('profile')
   const saveProfile = async () => {
     if (!user) return
     if (!username) { showToast('⚠️ Username is required'); return }
@@ -184,23 +184,27 @@ useEffect(() => {
 
         {/* Settings nav */}
         <aside className="settings-nav">
-          <div className="settings-nav-item active">
-            <FontAwesomeIcon icon={faUser} style={{width:'14px'}}/>Profile
-          </div>
-          <div className="settings-nav-item">
-            <FontAwesomeIcon icon={faLock} style={{width:'14px'}}/>Privacy
-          </div>
-          <div className="settings-nav-item">
-            <FontAwesomeIcon icon={faShield} style={{width:'14px'}}/>Account
-          </div>
-        </aside>
+  {[
+    { id:'profile', icon:faUser, label:'Profile' },
+    { id:'privacy', icon:faLock, label:'Privacy' },
+  ].map(item => (
+    <div
+      key={item.id}
+      className={`settings-nav-item${activeSection===item.id?' active':''}`}
+      onClick={() => setActiveSection(item.id)}
+    >
+      <FontAwesomeIcon icon={item.icon} style={{width:'14px'}}/>
+      {item.label}
+    </div>
+  ))}
+</aside>
 
         {/* Settings content */}
         <div>
 
           {/* Profile section */}
-          <div className="settings-card">
-            <div className="settings-card-title">Public Profile</div>
+<div className="settings-card" id="profile">
+  <div className="settings-card-title">Public Profile</div>
             <div className="settings-card-desc">This is how other collectors will see you on FoilCase. Choose a unique username to get your own vault URL.</div>
 
             <div className="form-group">
@@ -261,8 +265,8 @@ useEffect(() => {
           </div>
 
           {/* Privacy section */}
-          <div className="settings-card">
-            <div className="settings-card-title">Vault Privacy</div>
+<div className="settings-card" id="privacy">
+  <div className="settings-card-title">Vault Privacy</div>
             <div className="settings-card-desc">Control who can see your card collection. You can change this at any time.</div>
 
             <div className="toggle-row">
