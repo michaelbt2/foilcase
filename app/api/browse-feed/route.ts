@@ -96,15 +96,15 @@ export async function GET(request: NextRequest) {
       Promise.all(
         FEED_QUERIES.map(async ({ q, sport }) => {
           const [activeRes, soldRes] = await Promise.all([
-            fetch(
-              `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212&limit=20`,
-              { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
-            ).then(r => r.json()),
-            fetch(
-              `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212,buyingOptions:{FIXED_PRICE},itemEndDate:[${new Date(Date.now() - 30 * 86400000).toISOString()}..${new Date().toISOString()}]&limit=20`,
-              { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
-            ).then(r => r.json()),
-          ])
+  fetch(
+    `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212&limit=50`,
+    { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
+  ).then(r => r.json()),
+  fetch(
+    `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212,buyingOptions:{FIXED_PRICE},itemEndDate:[${new Date(Date.now() - 30 * 86400000).toISOString()}..${new Date().toISOString()}]&limit=20`,
+    { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
+  ).then(r => r.json()),
+])
 
           const active = (activeRes.itemSummaries || []).filter((i: any) => !isNotCard(i.title))
           const sold   = (soldRes.itemSummaries  || []).filter((i: any) => !isNotCard(i.title))
@@ -191,7 +191,7 @@ export async function GET(request: NextRequest) {
       .flat()
       .filter((i: any) => i.endTime)
       .sort((a: any, b: any) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
-      .slice(0, 8)
+      .slice(0, 15)
 
     const allDeals = results
       .flatMap(r => r.deals)
@@ -199,14 +199,14 @@ export async function GET(request: NextRequest) {
       .slice(0, 12)
 
     const allRecentSold: any[] = []
-    const maxPerQuery = 2
+    const maxPerQuery = 3
     results.forEach(r => {
       allRecentSold.push(...r.recentSold.slice(0, maxPerQuery))
     })
     const usedIds = new Set(allRecentSold.map(i => i.id))
     results.forEach(r => {
       r.recentSold.slice(maxPerQuery).forEach((i: any) => {
-        if (!usedIds.has(i.id) && allRecentSold.length < 30) {
+        if (!usedIds.has(i.id) && allRecentSold.length < 50) {
           allRecentSold.push(i)
           usedIds.add(i.id)
         }
