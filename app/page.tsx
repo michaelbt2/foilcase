@@ -177,50 +177,50 @@ export default function Home() {
               {/* Card stack */}
               <div style={{position:'relative',height:'220px',marginBottom:'16px',display:'flex',alignItems:'center',justifyContent:'center'}}>
 
-                {/* Back card - Ohtani */}
-                <div style={{
-                  position:'absolute',
-                  width:'130px',
-                  height:'182px',
-                  borderRadius:'10px',
-                  overflow:'hidden',
-                  boxShadow:'0 8px 24px rgba(0,0,0,.15)',
-                  transform:'rotate(-6deg) translateX(-60px) translateY(8px)',
-                  border:'2px solid #fff',
-                  zIndex:1,
-                }}>
-                  <img src="/images/so.jpg" alt="Shohei Ohtani" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                </div>
+                {/* Back card - Jordan */}
+<div style={{
+  position:'absolute',
+  width:'130px',
+  height:'182px',
+  borderRadius:'10px',
+  overflow:'hidden',
+  boxShadow:'0 8px 24px rgba(0,0,0,.15)',
+  transform:'rotate(-6deg) translateX(-60px) translateY(8px)',
+  border:'2px solid #fff',
+  zIndex:1,
+}}>
+  <img src="/images/mj.jpg" alt="Michael Jordan" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+</div>
 
-                {/* Middle card - Jordan */}
-                <div style={{
-                  position:'absolute',
-                  width:'130px',
-                  height:'182px',
-                  borderRadius:'10px',
-                  overflow:'hidden',
-                  boxShadow:'0 8px 24px rgba(0,0,0,.15)',
-                  transform:'rotate(4deg) translateX(60px) translateY(4px)',
-                  border:'2px solid #fff',
-                  zIndex:2,
-                }}>
-                  <img src="/images/mj.jpg" alt="Michael Jordan" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                </div>
+{/* Front card - Crosby */}
+<div style={{
+  position:'absolute',
+  width:'140px',
+  height:'196px',
+  borderRadius:'10px',
+  overflow:'hidden',
+  boxShadow:'0 16px 40px rgba(0,0,0,.2)',
+  transform:'rotate(-1deg)',
+  border:'2px solid #fff',
+  zIndex:3,
+}}>
+  <img src="/images/sc.jpg" alt="Sidney Crosby" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+</div>
 
-                {/* Front card - Crosby */}
-                <div style={{
-                  position:'absolute',
-                  width:'140px',
-                  height:'196px',
-                  borderRadius:'10px',
-                  overflow:'hidden',
-                  boxShadow:'0 16px 40px rgba(0,0,0,.2)',
-                  transform:'rotate(-1deg)',
-                  border:'2px solid #fff',
-                  zIndex:3,
-                }}>
-                  <img src="/images/sc.jpg" alt="Sidney Crosby" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                </div>
+{/* Right card - Charizard */}
+<div style={{
+  position:'absolute',
+  width:'130px',
+  height:'182px',
+  borderRadius:'10px',
+  overflow:'hidden',
+  boxShadow:'0 8px 24px rgba(0,0,0,.15)',
+  transform:'rotate(6deg) translateX(60px) translateY(8px)',
+  border:'2px solid #fff',
+  zIndex:2,
+}}>
+  <img src="/images/ch.png" alt="Charizard" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+</div>
               </div>
 
               {/* Collection value */}
@@ -230,7 +230,7 @@ export default function Home() {
                   <div style={{fontSize:'10px',fontWeight:700,color:'#00A861',background:'#E6F9F0',padding:'2px 8px',borderRadius:'100px'}}>↑ +$1,240 this month</div>
                 </div>
                 <div style={{fontSize:'28px',fontWeight:800,letterSpacing:'-1px',color:'#0D0D0D',lineHeight:1}}>$12,840</div>
-                <div style={{fontSize:'11px',color:'#9A9A9A',marginTop:'3px'}}>across 47 cards · 3 sports</div>
+                <div style={{fontSize:'11px',color:'#9A9A9A',marginTop:'3px'}}>across 47 cards · sports & TCG</div>
               </div>
 
               {/* Community preview */}
