@@ -2,6 +2,7 @@
 import Nav from '../components/Nav'
 import Link from 'next/link'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import Footer from '../components/Footer'
 import {
   faLayerGroup, faChartLine, faUsers, faRocket,
   faHeart, faStar, faTrophy, faArrowRight,
@@ -214,50 +215,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer style={{borderTop:'1px solid #EFEFEF',padding:'48px 24px 32px',background:'#fff'}}>
-        <div style={{maxWidth:'1160px',margin:'0 auto'}}>
-          <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:'48px',marginBottom:'40px'}}>
-            <div>
-              <a href="/" style={{display:'inline-flex',alignItems:'center',gap:'4px',textDecoration:'none',fontWeight:800,fontSize:'16px',color:'#0D0D0D',marginBottom:'12px'}}>
-                <svg width="14" height="20" viewBox="0 0 902 1260" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 756H618.841V465.934H248.906V285.499H902V0H0V756Z" fill="#1B6FF0"/>
-                  <path d="M333 933H0L333 1260V933Z" fill="#1B6FF0"/>
-                </svg>
-                foilcase
-              </a>
-              <div style={{fontSize:'14px',color:'#9A9A9A',lineHeight:1.65,marginTop:'12px',maxWidth:'240px'}}>The modern trading card vault built for collectors everywhere.</div>
-            </div>
-            {[
-              {title:'Product', links:[{l:'Market',h:'/browse'},{l:'Search',h:'/search'},{l:'My Vault',h:'/collection'},{l:'Community',h:'/community'}]},
-              {title:'Sports', links:[{l:'Baseball',h:'/search?q=baseball'},{l:'Basketball',h:'/search?q=basketball'},{l:'Football',h:'/search?q=football'},{l:'Hockey',h:'/search?q=hockey'},{l:'Gaming / TCG',h:'/search?q=pokemon'}]},
-              {title:'Company', links:[{l:'About Us',h:'/about'},{l:'Community',h:'/community'},{l:'Contact',h:'#'},{l:'Privacy Policy',h:'#'},{l:'Terms of Service',h:'#'}]},
-            ].map(col => (
-              <div key={col.title}>
-                <div style={{fontSize:'12px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.1em',color:'#9A9A9A',marginBottom:'16px'}}>{col.title}</div>
-                <ul style={{listStyle:'none',display:'flex',flexDirection:'column',gap:'10px'}}>
-                  {col.links.map(link => (
-                    <li key={link.l}>
-                      <a href={link.h} style={{fontSize:'14px',color:'#555',textDecoration:'none'}}
-                        onMouseOver={e=>(e.currentTarget.style.color='#0D0D0D')}
-                        onMouseOut={e=>(e.currentTarget.style.color='#555')}
-                      >{link.l}</a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:'24px',borderTop:'1px solid #EFEFEF',fontSize:'13px',color:'#9A9A9A',flexWrap:'wrap',gap:'12px'}}>
-            <div>© 2026 foilcase. All rights reserved.</div>
-            <div style={{display:'flex',gap:'16px'}}>
-              {[{l:'Privacy',h:'#'},{l:'Terms',h:'#'},{l:'Contact',h:'#'}].map(link => (
-                <a key={link.l} href={link.h} style={{color:'#9A9A9A',textDecoration:'none'}}>{link.l}</a>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </>
   )
 }

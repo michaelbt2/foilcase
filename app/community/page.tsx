@@ -6,6 +6,7 @@ import Nav from '../components/Nav'
 import Link from 'next/link'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { analytics } from '../lib/analytics'
+import Footer from '../components/Footer'
 import {
   faMagnifyingGlass, faLayerGroup, faChartLine, faMedal,
   faFire, faStar, faUsers, faUserPlus, faGlobe, faArrowRight,
@@ -709,6 +710,7 @@ const [cardSearchSubmitted, setCardSearchSubmitted] = useState(false)
         </main>
       </div>
     )}
+    <Footer />
     </>
   )
 }

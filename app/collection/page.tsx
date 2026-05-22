@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs'
 import { supabase } from '../lib/supabase'
 import Nav from '../components/Nav'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import Footer from '../components/Footer'
 import {
   faMagnifyingGlass, faPlus, faPen, faTrash, faTag, faFolder, faFolderOpen,
   faLayerGroup, faBoxOpen, faMedal, faChartLine, faGrip, faBars, faXmark,
@@ -484,7 +485,7 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
         .breadcrumb a{color:#9A9A9A;text-decoration:none}
         .breadcrumb a:hover{color:#1B6FF0}
         .app-layout{max-width:1240px;margin:0 auto;padding:24px;display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start}
-        .sidebar{display:flex;flex-direction:column;gap:12px;position:sticky;top:78px;max-height:calc(100vh - 98px);overflow-y:auto}
+        .sidebar{display:flex;flex-direction:column;gap:12px;position:sticky;top:78px}
         .sidebar-card{background:#fff;border:1px solid #EFEFEF;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
         .sidebar-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9A9A9A;margin-bottom:10px}
         .folder-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:all .12s;border:1px solid transparent}
@@ -1469,6 +1470,7 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
       )}
 
       {toast && <div className="toast">{toast}</div>}
+      <Footer />
     </>
   )
 }

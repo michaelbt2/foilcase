@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Nav from './components/Nav'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import Footer from './components/Footer'
 import {
   faMagnifyingGlass,
   faChevronRight,
@@ -391,37 +392,7 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer>
-        <div className="footer-inner">
-          <div className="footer-grid">
-            <div>
-              <Link className="btn-ghost" href="/" style={{display:'inline-flex',alignItems:'center',gap:'8px',textDecoration:'none',fontWeight:800,fontSize:'16px',color:'#0D0D0D',marginBottom:'12px'}}>
-                <div style={{width:'26px',height:'26px',background:'#1B6FF0',borderRadius:'6px',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'13px'}}>
-                  <FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'11px'}}/>
-                </div>
-                FoilCase
-              </Link>
-              <div className="footer-brand-desc">The definitive online database and collection tracker for trading card enthusiasts worldwide.</div>
-            </div>
-            {[
-              {title:'Product',links:['Browse Cards','Search Database','My Vault','Wishlists','Set Checklists','Pricing']},
-              {title:'Sports',links:['Baseball','Basketball','Football','Hockey','Soccer','Gaming / TCG']},
-{title:'Company',links:['About Us','Blog','Community Forums','Contact','Privacy Policy','Terms of Service']},            ].map(col => (
-              <div key={col.title}>
-                <div className="footer-col-title">{col.title}</div>
-                <ul className="footer-links">
-{col.links.map(l => <li key={l}><a href={l==='About Us'?'/about':l==='Community Forums'?'/community':'#'}>{l}</a></li>)}                </ul>
-              </div>
-            ))}
-          </div>
-          <div className="footer-bottom">
-            <div>© 2026 FoilCase, Inc. All rights reserved.</div>
-            <div style={{display:'flex',gap:'16px'}}>
-              {['Privacy','Terms','Contact'].map(l => <a key={l} href="#" style={{color:'#9A9A9A',textDecoration:'none'}}>{l}</a>)}
-            </div>
-          </div>
-        </div>
-      </footer>
+<Footer />
     </>
   )
 }

@@ -12,6 +12,7 @@ import {
   faFutbol, faGamepad, faTag, faArrowUpRightFromSquare,faStar, faTrophy, faCrown,
 } from '@fortawesome/free-solid-svg-icons'
 import { analytics } from '../../lib/analytics'
+import Footer from '../../components/Footer'
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
@@ -618,6 +619,7 @@ const [lightboxImage, setLightboxImage] = useState<string|null>(null)
           </div>
         </div>
       )}
+      <Footer />
     </>
   )
 }
