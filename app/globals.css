@@ -282,6 +282,17 @@ small {
   border: 1px solid var(--gray-2);
 }
 
+.badge-grade {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.badge-grade-PSA { background: #002FA7; color: #fff; }
+.badge-grade-BGS { background: #C41E3A; color: #fff; }
+.badge-grade-SGC { background: #1A6B2A; color: #fff; }
+
 /* --- Form elements --- */
 .input {
   width: 100%;
