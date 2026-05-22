@@ -54,6 +54,7 @@ interface Profile {
   followerCount?: number
   lastCardAdded?: string
   sports?: string[]
+  forSaleCount?: number
 }
 
 export default function Community() {
@@ -119,39 +120,67 @@ const searchCards = async (q: string) => {
   }
 }
   const loadProfiles = async () => {
-    setLoading(true)
-    const { data: profileData } = await supabase
-      .from('profiles').select('*').eq('is_public', true)
-      .order('created_at', { ascending: false })
+  setLoading(true)
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('is_public', true)
+    .order('created_at', { ascending: false })
 
-    if (!profileData) { setLoading(false); return }
+  if (!profileData || profileData.length === 0) { setLoading(false); return }
 
-    const enriched = await Promise.all(profileData.map(async (p) => {
-      const { data: cards } = await supabase
-        .from('cards')
-        .select('value, qty, created_at, sport')
-        .eq('user_id', p.id)
-        .neq('status', 'sold')
-        .order('created_at', { ascending: false })
+  const profileIds = profileData.map(p => p.id)
 
-      const { count: followerCount } = await supabase
-        .from('followers').select('*', { count: 'exact', head: true })
-        .eq('following_id', p.id)
+  // Bulk fetch all cards for all public profiles in one query
+  const { data: allCards } = await supabase
+    .from('cards')
+    .select('user_id, value, qty, created_at, sport, status')
+    .in('user_id', profileIds)
+    .neq('status', 'sold')
+    .order('created_at', { ascending: false })
 
-      const cardCount  = cards?.reduce((s,c) => s+(c.qty||1), 0) || 0
-      const totalValue = cards?.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0) || 0
-      const lastCardAdded = cards?.[0]?.created_at || null
+  // Bulk fetch all follower counts in one query
+  const { data: allFollowers } = await supabase
+    .from('followers')
+    .select('following_id')
+    .in('following_id', profileIds)
 
-      // Collect unique sports
-      const sports = [...new Set((cards||[]).map(c => c.sport).filter(Boolean))] as string[]
+  // Group cards by user_id
+  const cardsByUser: Record<string, any[]> = {}
+  ;(allCards || []).forEach(c => {
+    if (!cardsByUser[c.user_id]) cardsByUser[c.user_id] = []
+    cardsByUser[c.user_id].push(c)
+  })
 
-      return { ...p, cardCount, totalValue, followerCount: followerCount || 0, lastCardAdded, sports }
-    }))
+  // Count followers by user_id
+  const followersByUser: Record<string, number> = {}
+  ;(allFollowers || []).forEach(f => {
+    followersByUser[f.following_id] = (followersByUser[f.following_id] || 0) + 1
+  })
 
-    setProfiles(enriched)
-    setLoading(false)
-  }
+  // Enrich profiles using grouped data
+  const enriched = profileData.map(p => {
+    const cards = cardsByUser[p.id] || []
+    const cardCount    = cards.reduce((s,c) => s+(c.qty||1), 0)
+    const totalValue   = cards.reduce((s,c) => s+(c.value||0)*(c.qty||1), 0)
+    const lastCardAdded = cards[0]?.created_at || null
+    const sports = [...new Set(cards.map(c => c.sport).filter(Boolean))] as string[]
+    const forSaleCount = cards.filter(c => c.status === 'sale').length
 
+    return {
+      ...p,
+      cardCount,
+      totalValue,
+      followerCount: followersByUser[p.id] || 0,
+      lastCardAdded,
+      sports,
+      forSaleCount,
+    }
+  })
+
+  setProfiles(enriched)
+  setLoading(false)
+}
   const loadFollowing = async () => {
     if (!user) return
     const { data } = await supabase.from('followers').select('following_id').eq('follower_id', user.id)
@@ -623,15 +652,19 @@ const [cardSearchSubmitted, setCardSearchSubmitted] = useState(false)
 
                   {/* Stats */}
                   <div className="profile-stats">
-                    <div className="profile-stat">
-                      <div className="profile-stat-val">{p.cardCount||0}</div>
-                      <div className="profile-stat-lbl">Cards</div>
-                    </div>
-                    <div className="profile-stat">
-                      <div className="profile-stat-val">{p.followerCount||0}</div>
-                      <div className="profile-stat-lbl">Followers</div>
-                    </div>
-                  </div>
+  <div className="profile-stat">
+    <div className="profile-stat-val">{p.cardCount||0}</div>
+    <div className="profile-stat-lbl">Cards</div>
+  </div>
+  <div className="profile-stat">
+    <div className="profile-stat-val">{p.followerCount||0}</div>
+    <div className="profile-stat-lbl">Followers</div>
+  </div>
+  <div className="profile-stat">
+    <div className="profile-stat-val" style={{color:(p.forSaleCount||0)>0?'#00A861':'#0D0D0D'}}>{p.forSaleCount||0}</div>
+    <div className="profile-stat-lbl">For Sale</div>
+  </div>
+</div>
 
                   {/* Sport icons — below stats */}
                   {(p.sports||[]).length > 0 && (
