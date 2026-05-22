@@ -11,6 +11,7 @@ import {
   faFootball, faBaseball, faBasketball, faHockeyPuck,
   faFutbol, faGamepad, faTag, faArrowUpRightFromSquare,faStar, faTrophy, faCrown,
 } from '@fortawesome/free-solid-svg-icons'
+import { analytics } from '../../lib/analytics'
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
@@ -90,19 +91,21 @@ export default function PublicVault() {
   useEffect(() => { if (selectedCard) setCardImageTab('front') }, [selectedCard?.id])
 
   const loadVault = async () => {
-    setLoading(true)
-    const { data: profileData } = await supabase
-      .from('profiles').select('*').eq('username', username).single()
+  setLoading(true)
+  const { data: profileData } = await supabase
+    .from('profiles').select('*').eq('username', username).single()
 
-    if (!profileData) { setNotFound(true); setLoading(false); return }
-    if (!profileData.is_public) { setIsPrivate(true); setLoading(false); return }
-    setProfile(profileData)
+  if (!profileData) { setNotFound(true); setLoading(false); return }
+  if (!profileData.is_public) { setIsPrivate(true); setLoading(false); return }
+  setProfile(profileData)
 
-    const { data: cardsData } = await supabase
-      .from('cards').select('*').eq('user_id', profileData.id)
-      .neq('status', 'sold').order('created_at', { ascending: false })
+  const { data: cardsData } = await supabase
+    .from('cards').select('*').eq('user_id', profileData.id)
+    .neq('status', 'sold').order('created_at', { ascending: false })
 
-    setCards(cardsData || [])
+  setCards(cardsData || [])
+  analytics.vaultVisited({ username: profileData.username, cardCount: cardsData?.length || 0 })
+
 
     const { count } = await supabase
       .from('followers').select('*', { count: 'exact', head: true })
@@ -316,7 +319,7 @@ const [lightboxImage, setLightboxImage] = useState<string|null>(null)
             )}
             <button
               className="btn btn-outline"
-              onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!') }}
+              onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); analytics.vaultShared() }}
             >
               Share Vault
             </button>

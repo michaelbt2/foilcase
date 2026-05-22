@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
+import AmplitudeProvider from './components/AmplitudeProvider'
 
 export const metadata: Metadata = {
   title: 'FoilCase — The Collector\'s Vault',
@@ -19,7 +20,10 @@ export default function RootLayout({
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
         </head>
-        <body>{children}</body>
+        <body>
+          <AmplitudeProvider/>
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   )

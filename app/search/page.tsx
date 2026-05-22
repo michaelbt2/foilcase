@@ -26,6 +26,7 @@ import {
   faLayerGroup,
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
+import { analytics } from '../lib/analytics'
 
 
 const RECENT_SEARCHES = ['Patrick Mahomes','2024 Prizm Football','Charizard PSA 10','Shohei Ohtani RC','LeBron James']
@@ -107,6 +108,7 @@ function SearchContent() {
     try {
       const { error } = await supabase.from('cards').insert(card)
       if (error) { showToast('❌ Error: ' + error.message); return }
+      analytics.cardAddedFromSearch({ player: c.player, sport: c.sport })
       showToast(`✅ ${c.player} added to your vault!`)
     } catch (e: any) {
       showToast('❌ Something went wrong. Please try again.')
@@ -130,6 +132,9 @@ function SearchContent() {
       query: q.trim().toLowerCase(),
       user_id: user?.id || null,
     }).then(() => {})
+
+    // Track search
+analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
 
     try {
       const sportParam = sport !== 'all' ? `&sport=${encodeURIComponent(sport)}` : ''
@@ -518,9 +523,9 @@ function SearchContent() {
                         </div>
                       </div>
                       <div className="card-actions">
-                        <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-view">
-                          <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{marginRight:'4px'}}/>eBay
-                        </a>
+                        <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-view" onClick={() => analytics.cardViewedOnEbay({player:c.player, sport:c.sport, price:c.price})}>
+  <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{marginRight:'4px'}}/>eBay
+</a>
                         <button className="act-btn act-add" onClick={()=>addToVault(c)}>
                           <FontAwesomeIcon icon={faPlus} style={{marginRight:'4px'}}/>Vault
                         </button>

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import Nav from '../components/Nav'
 import Link from 'next/link'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { analytics } from '../lib/analytics'
 import {
   faMagnifyingGlass, faLayerGroup, faChartLine, faMedal,
   faFire, faStar, faUsers, faUserPlus, faGlobe, faArrowRight,
@@ -111,7 +112,7 @@ const searchCards = async (q: string) => {
       ...card,
       profiles: publicProfiles.find(p => p.id === card.user_id)
     }))
-
+analytics.playerSearchPerformed({ query: q.trim(), resultCount: enriched.length })
     setCardResults(enriched)
   } catch (e) {
     console.error('Search error:', e)
@@ -240,6 +241,7 @@ const searchCards = async (q: string) => {
       await supabase.from('followers').insert({ follower_id: user.id, following_id: profileId })
       setFollowing(prev => new Set([...prev, profileId]))
       setProfiles(prev => prev.map(p => p.id === profileId ? {...p, followerCount:(p.followerCount||0)+1} : p))
+      analytics.collectorFollowed({ followedUsername: profiles.find(p => p.id === profileId)?.username || '' })
     }
     setFollowLoading(null)
   }

@@ -10,6 +10,7 @@ import {
   faBasketball, faHockeyPuck, faGamepad, faFutbol,
   faArrowTrendUp, faTag, faLayerGroup
 } from '@fortawesome/free-solid-svg-icons'
+import { analytics } from '../lib/analytics'
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
@@ -256,7 +257,7 @@ const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
     {SPORTS.map(s => (
       <button
         key={s}
-        onClick={() => setActiveSport(s)}
+        onClick={() => { setActiveSport(s); analytics.marketSportFiltered({ sport: s }) }}
         style={{
           display:'inline-flex',alignItems:'center',gap:'6px',
           padding:'6px 14px',borderRadius:'100px',fontSize:'13px',fontWeight:600,
@@ -314,10 +315,11 @@ const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
         return (
           <a
             key={item.id + i}
-            href={item.itemWebUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="sold-item"
+  href={item.itemWebUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="sold-item"
+  onClick={() => analytics.auctionClicked({ sport: item.sport, grade: item.grade || 'Unknown' })}
             style={{textDecoration:'none',animationDelay:`${i*.03}s`,borderColor:urgent?'#FFBBB7':'#EFEFEF'}}
           >
             <div className="sold-img">
