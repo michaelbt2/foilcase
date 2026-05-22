@@ -8,6 +8,7 @@ import {
   faUser, faLock, faGlobe, faCheck, faXmark, faLayerGroup,
   faPen, faShield,
 } from '@fortawesome/free-solid-svg-icons'
+import Footer from '../components/Footer'
 
 export default function Settings() {
   const { user, isLoaded } = useUser()
@@ -324,6 +325,7 @@ const [activeSection, setActiveSection] = useState('profile')
       {toast && (
         <div className="toast">{toast}</div>
       )}
+      <Footer />
     </>
   )
 }
