@@ -49,6 +49,30 @@ const articles = [
     readTime: '12 min',
     date: 'May 2026',
   },
+  {
+    slug: 'charizard-card-value-guide',
+    title: 'Charizard Card Value Guide — What is it Worth in 2026?',
+    description: 'A complete guide to Charizard card values across all sets and editions — from Base Set 1st Edition to modern special illustration rares.',
+    category: 'TCG',
+    readTime: '9 min',
+    date: 'May 2026',
+  },
+  {
+    slug: 'patrick-mahomes-rookie-card-guide',
+    title: 'Patrick Mahomes Rookie Card — Complete Collector\'s Guide',
+    description: 'Everything collectors need to know about Patrick Mahomes rookie cards — values, parallels, grading, and what to buy.',
+    category: 'Sports Cards',
+    readTime: '10 min',
+    date: 'May 2026',
+  },
+  {
+    slug: 'panini-prizm-collectors-guide',
+    title: 'Panini Prizm — Complete Collector\'s Guide',
+    description: 'Everything you need to know about Panini Prizm — the most popular modern trading card set across football, basketball, and baseball.',
+    category: 'Sports Cards',
+    readTime: '11 min',
+    date: 'May 2026',
+  },
 ]
 
 const categories = [

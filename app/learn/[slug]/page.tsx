@@ -6,6 +6,9 @@ import PSAVsBGSVsSGC from '../articles/psa-vs-bgs-vs-sgc-grading-comparison'
 import WhatIsARookieCard from '../articles/what-is-a-rookie-card'
 import HowToOrganizeCards from '../articles/how-to-organize-trading-card-collection'
 import HowToSellCardsOnEbay from '../articles/how-to-sell-trading-cards-on-ebay'
+import CharizardCardValueGuide from '../articles/charizard-card-value-guide'
+import PatrickMahomesRookieCardGuide from '../articles/patrick-mahomes-rookie-card-guide'
+import PaniniPrizmCollectorsGuide from '../articles/panini-prizm-collectors-guide'
 
 const articles: Record<string, any> = {
   'how-to-value-your-trading-card-collection': {
@@ -52,6 +55,33 @@ const articles: Record<string, any> = {
     date: 'May 2026',
     slug: 'how-to-sell-trading-cards-on-ebay',
     component: HowToSellCardsOnEbay,
+  },
+  'charizard-card-value-guide': {
+    title: 'Charizard Card Value Guide — What is it Worth in 2026?',
+    description: 'A complete guide to Charizard card values across all sets and editions — from Base Set 1st Edition to modern special illustration rares.',
+    category: 'TCG',
+    readTime: '9 min',
+    date: 'May 2026',
+    slug: 'charizard-card-value-guide',
+    component: CharizardCardValueGuide,
+  },
+  'patrick-mahomes-rookie-card-guide': {
+    title: 'Patrick Mahomes Rookie Card — Complete Collector\'s Guide',
+    description: 'Everything collectors need to know about Patrick Mahomes rookie cards — values, parallels, grading, and what to buy.',
+    category: 'Sports Cards',
+    readTime: '10 min',
+    date: 'May 2026',
+    slug: 'patrick-mahomes-rookie-card-guide',
+    component: PatrickMahomesRookieCardGuide,
+  },
+  'panini-prizm-collectors-guide': {
+    title: 'Panini Prizm — Complete Collector\'s Guide',
+    description: 'Everything you need to know about Panini Prizm — the most popular modern trading card set across football, basketball, and baseball.',
+    category: 'Sports Cards',
+    readTime: '11 min',
+    date: 'May 2026',
+    slug: 'panini-prizm-collectors-guide',
+    component: PaniniPrizmCollectorsGuide,
   },
 }
 
