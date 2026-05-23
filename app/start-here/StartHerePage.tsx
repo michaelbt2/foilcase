@@ -124,7 +124,7 @@ export default function StartHere() {
           </p>
           <div style={{display:'flex',gap:'12px',justifyContent:'center',flexWrap:'wrap'}}>
             <Link href="/collection" className="btn btn-primary" style={{padding:'12px 24px',fontSize:'15px'}}>
-              <FontAwesomeIcon icon={faRocket}/>Start your vault free
+              <FontAwesomeIcon icon={faRocket}/>Create your free vault
             </Link>
             <button
               onClick={() => scrollTo('your-vault')}
@@ -183,7 +183,7 @@ export default function StartHere() {
             </div>
             <div style={{marginTop:'24px',display:'flex',gap:'10px'}}>
               <Link href="/collection" className="btn btn-primary">
-                <FontAwesomeIcon icon={faArrowRight}/>Create my free vault
+                <FontAwesomeIcon icon={faRocket}/>Create your free vault
               </Link>
             </div>
           </div>
