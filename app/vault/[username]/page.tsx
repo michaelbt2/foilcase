@@ -9,7 +9,7 @@ import {
   faLayerGroup, faChartLine, faMedal, faBoxOpen, faGlobe,
   faLock, faUserPlus, faUserMinus, faGrip, faBars,
   faFootball, faBaseball, faBasketball, faHockeyPuck,
-  faFutbol, faGamepad, faTag, faArrowUpRightFromSquare,faStar, faTrophy, faCrown,
+  faFutbol, faGamepad, faTag, faArrowUpRightFromSquare,faStar, faTrophy, faCrown,faShareNodes 
 } from '@fortawesome/free-solid-svg-icons'
 import { analytics } from '../../lib/analytics'
 import Footer from '../../components/Footer'
@@ -268,53 +268,54 @@ const [lightboxImage, setLightboxImage] = useState<string|null>(null)
 
       <Nav />
 
-      {/* VAULT HERO */}
-      <div className="vault-hero">
-        <div className="vault-hero-inner">
-          <div className="vault-avatar" style={{background:getCollectorBadge(cards.length).bg,border:`3px solid ${TIERS.find(t => cards.length>=t.min && (t.max===Infinity||cards.length<=t.max))?.border||'#E0E0E0'}`}}>
-  <FontAwesomeIcon icon={getCollectorBadge(cards.length).icon} style={{color:getCollectorBadge(cards.length).color,fontSize:'28px'}}/>
-</div>
-          <div className="vault-info">
-            <div className="vault-display-name">{profile.display_name || profile.username}</div>
-            <div className="vault-username">@{profile.username}</div>
-            {profile.bio && <div className="vault-bio">{profile.bio}</div>}
-            <div className="vault-meta">
-              <div className="vault-meta-item">
-                <FontAwesomeIcon icon={faLayerGroup} style={{color:'#1B6FF0'}}/>
-                {cards.length} cards
-              </div>
-              <div className="vault-meta-item">
-                <FontAwesomeIcon icon={faGlobe} style={{color:'#9A9A9A'}}/>
-                Public vault
-              </div>
-              <div className="vault-meta-item">
-                <FontAwesomeIcon icon={faUserPlus} style={{color:'#9A9A9A'}}/>
-                {followerCount} follower{followerCount !== 1 ? 's' : ''}
-              </div>
-            </div>
-          </div>
-          <div className="vault-actions">
-            {isOwner ? (
-              <a href="/settings" className="btn btn-outline">Edit Profile</a>
-            ) : (
-              <button
-                className={`btn ${isFollowing ? 'btn-outline' : 'btn-primary'}`}
-                onClick={toggleFollow}
-                disabled={followLoading}
-              >
-                <FontAwesomeIcon icon={isFollowing ? faUserMinus : faUserPlus}/>
-                {followLoading ? '...' : isFollowing ? 'Unfollow' : 'Follow'}
-              </button>
-            )}
-            <button
-              className="btn btn-outline"
-              onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); analytics.vaultShared() }}
-            >
-              Share Vault
-            </button>
+     {/* VAULT HERO */}
+<div className="vault-hero">
+  <div className="vault-hero-inner">
+    <div className="vault-avatar" style={{background:getCollectorBadge(cards.length).bg,border:`3px solid ${TIERS.find(t => cards.length>=t.min && (t.max===Infinity||cards.length<=t.max))?.border||'#E0E0E0'}`}}>
+      <FontAwesomeIcon icon={getCollectorBadge(cards.length).icon} style={{color:getCollectorBadge(cards.length).color,fontSize:'28px'}}/>
+    </div>
+    <div className="vault-info">
+      <div className="vault-display-name">{profile.display_name || profile.username}</div>
+      <div className="vault-username">@{profile.username}</div>
+      {profile.bio && <div className="vault-bio">{profile.bio}</div>}
+      <div style={{display:'flex',alignItems:'center',gap:'12px',flexWrap:'wrap',marginTop:'8px'}}>
+        <div className="vault-meta">
+          
+          <div className="vault-meta-item">
+            <FontAwesomeIcon icon={faUserPlus} style={{color:'#9A9A9A'}}/>
+            {followerCount} follower{followerCount !== 1 ? 's' : ''}
           </div>
         </div>
+        <div style={{display:'flex',gap:'8px'}}>
+          {isOwner ? (
+  <a href="/settings" className="btn btn-outline btn-sm">
+    Edit Profile
+  </a>
+) : (
+  <button
+    className={`btn btn-sm ${isFollowing ? 'btn-outline' : 'btn-primary'}`}
+    onClick={toggleFollow}
+    disabled={followLoading}
+  >
+    <FontAwesomeIcon icon={isFollowing ? faUserMinus : faUserPlus}/>
+    {followLoading ? '...' : isFollowing ? 'Unfollow' : 'Follow'}
+  </button>
+)}
+<button
+  className="btn btn-sm"
+  style={{background:'transparent',color:'#0D0D0D',fontWeight:600,border:'1.5px solid #D8D8D8'}}
+  onMouseOver={e=>{e.currentTarget.style.background='#F7F7F7';e.currentTarget.style.borderColor='#0D0D0D'}}
+  onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='#D8D8D8'}}
+  onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); analytics.vaultShared() }}
+>
+  <FontAwesomeIcon icon={faShareNodes}/>
+  Share Vault
+</button>
+        </div>
       </div>
+    </div>
+  </div>
+</div>
 
       {/* VAULT STATS */}
       <div className="vault-stats">
@@ -397,6 +398,14 @@ const [lightboxImage, setLightboxImage] = useState<string|null>(null)
     ? <img src={c.card_image_url} alt={c.player} onClick={e=>{e.stopPropagation();setLightboxImage(c.card_image_url)}}/>
     : <span style={{fontSize:'48px'}}>{sportEmoji[c.sport]||'🃏'}</span>
   }
+  {c.card_image_back_url && (
+    <button
+      onClick={e=>{e.stopPropagation();setLightboxImage(c.card_image_back_url)}}
+      style={{position:'absolute',bottom:'8px',right:'8px',background:'rgba(0,0,0,.6)',color:'#fff',border:'none',borderRadius:'4px',fontSize:'9px',fontWeight:700,padding:'3px 6px',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',letterSpacing:'.04em'}}
+    >
+      BACK
+    </button>
+  )}
                   {c.status === 'trade' && (
                     <div className="card-status status-trade">
                       <FontAwesomeIcon icon={faTag} style={{marginRight:'3px'}}/>For Trade
@@ -438,12 +447,24 @@ const [lightboxImage, setLightboxImage] = useState<string|null>(null)
           <div className="cards-list">
             {filtered.map((c,i) => (
               <div key={c.id} className="list-tile" style={{animationDelay:`${i*.025}s`}}>
-                <div className="list-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
-                  {c.card_image_url
-                    ? <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                    : <span>{sportEmoji[c.sport]||'🃏'}</span>
-                  }
-                </div>
+                <div
+  className="list-img"
+  style={{background:c.card_image_url?'#000':cardBg(c.sport),cursor:c.card_image_url?'zoom-in':'default',position:'relative'}}
+  onClick={()=>{ if(c.card_image_url) setLightboxImage(c.card_image_url) }}
+>
+  {c.card_image_url
+    ? <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+    : <span>{sportEmoji[c.sport]||'🃏'}</span>
+  }
+  {c.card_image_back_url && (
+    <button
+      onClick={e=>{e.stopPropagation();setLightboxImage(c.card_image_back_url)}}
+      style={{position:'absolute',bottom:'3px',right:'3px',background:'rgba(0,0,0,.6)',color:'#fff',border:'none',borderRadius:'3px',fontSize:'8px',fontWeight:700,padding:'2px 4px',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',letterSpacing:'.04em'}}
+    >
+      BACK
+    </button>
+  )}
+</div>
                 <div className="list-main">
                   <div className="list-player">{c.player}</div>
                   <div className="list-set">
