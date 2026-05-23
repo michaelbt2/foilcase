@@ -636,11 +636,12 @@ const [cardSearchSubmitted, setCardSearchSubmitted] = useState(false)
                     </div>
                     <div className="profile-info">
                       <div className="profile-name">{p.display_name || p.username}</div>
-                      <div className="profile-username">@{p.username}</div>
-                      <div style={{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px',padding:'2px 8px',borderRadius:'100px',background:getCollectorBadge(p.cardCount||0).bg,fontSize:'10px',fontWeight:700,color:getCollectorBadge(p.cardCount||0).color}}>
-                        <FontAwesomeIcon icon={getCollectorBadge(p.cardCount||0).icon} style={{fontSize:'9px'}}/>
-                        {getCollectorBadge(p.cardCount||0).label}
-                      </div>
+{p.bio && (
+  <div style={{fontSize:'13px',color:'#0D0D0D',lineHeight:1.4,marginTop:'4px',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical' as const,overflow:'hidden'}}>
+    {p.bio}
+  </div>
+)}
+                      
                     </div>
                   </div>
 
