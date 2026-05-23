@@ -289,7 +289,7 @@ const [lightboxImage, setLightboxImage] = useState<string|null>(null)
         <div style={{display:'flex',gap:'8px'}}>
           {isOwner ? (
   <a href="/settings" className="btn btn-outline btn-sm">
-    Edit Profile
+    Edit profile
   </a>
 ) : (
   <button
@@ -309,7 +309,7 @@ const [lightboxImage, setLightboxImage] = useState<string|null>(null)
   onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); analytics.vaultShared() }}
 >
   <FontAwesomeIcon icon={faShareNodes}/>
-  Share Vault
+  Share vault
 </button>
         </div>
       </div>

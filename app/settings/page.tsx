@@ -206,7 +206,7 @@ const [activeSection, setActiveSection] = useState('profile')
           {/* Profile section */}
 <div className="settings-card" id="profile">
   <div className="settings-card-title">Public Profile</div>
-            <div className="settings-card-desc">This is how other collectors will see you on FoilCase. Choose a unique username to get your own vault URL.</div>
+            <div className="settings-card-desc">This is how other collectors will see you on Foilcase. Choose a unique username to get your own vault URL.</div>
 
             <div className="form-group">
               <label className="form-label">Username <span style={{color:'#D93025'}}>*</span></label>

@@ -4,7 +4,7 @@ import './globals.css'
 import AmplitudeProvider from './components/AmplitudeProvider'
 
 export const metadata: Metadata = {
-  title: 'FoilCase — The Collector\'s Vault',
+  title: 'Foilcase — The Collector\'s Vault',
   description: 'Track your trading card collection, discover every set, and trade with confidence.',
 }
 
