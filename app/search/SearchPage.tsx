@@ -74,14 +74,26 @@ function SearchContent() {
   const [toast, setToast]             = useState<string|null>(null)
   const [page, setPage]               = useState(1)
   const [trending, setTrending]       = useState<string[]>(TRENDING_FALLBACK)
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
 
-  const addToVault = async (c: any) => {
-    if (!user) {
-      showToast('⚠️ Please sign in to add cards to your vault')
-      return
+  const loadRecentSearches = async () => {
+    if (!user) return
+    const { data } = await supabase
+      .from('searches')
+      .select('query')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(8)
+    if (data) {
+      const unique = [...new Set(data.map((d: any) => d.query))] as string[]
+      setRecentSearches(unique.slice(0, 5))
     }
+  }
+
+  const addToVault = async (c: any) => {
+    if (!user) { showToast('⚠️ Please sign in to add cards to your vault'); return }
     const card = {
       user_id: user.id,
       player: c.player,
@@ -100,11 +112,7 @@ function SearchContent() {
       value: c.price || 0,
       attrs: c.attrs || [],
       notes: '',
-      img: c.sport === 'Football' ? '🏈'
-          : c.sport === 'Baseball' ? '⚾'
-          : c.sport === 'Basketball' ? '🏀'
-          : c.sport === 'Hockey' ? '🏒'
-          : c.sport === 'Gaming' ? '🎮' : '🃏',
+      img: c.sport === 'Football' ? '🏈' : c.sport === 'Baseball' ? '⚾' : c.sport === 'Basketball' ? '🏀' : c.sport === 'Hockey' ? '🏒' : c.sport === 'Gaming' ? '🎮' : '🃏',
     }
     try {
       const { error } = await supabase.from('cards').insert(card)
@@ -128,14 +136,12 @@ function SearchContent() {
     setLiveResults([])
     setPage(1)
 
-    // Log search query — fire and forget, don't block results
     supabase.from('searches').insert({
       query: q.trim().toLowerCase(),
       user_id: user?.id || null,
-    }).then(() => {})
+    }).then(() => { loadRecentSearches() })
 
-    // Track search
-analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
+    analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
 
     try {
       const sportParam = sport !== 'all' ? `&sport=${encodeURIComponent(sport)}` : ''
@@ -154,6 +160,8 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
     const q = searchParams.get('q')
     if (q) { setQuery(q); runSearch(q) }
   }, [])
+
+  useEffect(() => { if (user) loadRecentSearches() }, [user])
 
   useEffect(() => { setPage(1) }, [sport, grading, priceMin, priceMax, yearMin, yearMax, activeAttrs, sortBy])
 
@@ -193,124 +201,151 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
   const clearFilters = () => { setSport('all'); setGrading('all'); setPriceMin(''); setPriceMax(''); setYearMin(''); setYearMax(''); setActiveAttrs([]) }
   const fmtPrice = (p: number) => p ? `$${p.toFixed(2)}` : '—'
 
+  const sportPills = [
+    { v:'all', l:'All Cards', icon:faLayerGroup },
+    { v:'Football', l:'Football', icon:faFootball },
+    { v:'Basketball', l:'Basketball', icon:faBasketball },
+    { v:'Baseball', l:'Baseball', icon:faBaseball },
+    { v:'Hockey', l:'Hockey', icon:faHockeyPuck },
+    { v:'Gaming', l:'Pokémon & TCG', icon:faGamepad },
+  ]
+
+  const soldResults = filtered.filter((c: any) => c.soldData && c.soldData.soldCount > 0)
+  const avgSold = soldResults.length > 0 ? soldResults.reduce((s: number, c: any) => s + c.soldData.avgPrice, 0) / soldResults.length : 0
+  const lowSold = soldResults.length > 0 ? Math.min(...soldResults.map((c: any) => c.soldData.lowPrice)) : 0
+  const highSold = soldResults.length > 0 ? Math.max(...soldResults.map((c: any) => c.soldData.highPrice)) : 0
+
+  const dropdownItems = query.length > 1
+    ? recentSearches.filter(r => r.toLowerCase().includes(query.toLowerCase()))
+    : recentSearches
+
   return (
     <>
-<style>{`
-  .search-hero{background:#0D0D0D;padding:48px 24px 40px;position:relative;overflow:hidden}
-  .search-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 800px 400px at 50% 100%,rgba(27,111,240,.2),transparent)}
-  .search-hero-inner{max-width:720px;margin:0 auto;position:relative;z-index:1}
-  .search-hero-title{font-size:clamp(28px,5vw,44px);font-weight:800;color:#fff;letter-spacing:-1px;line-height:1.1;margin-bottom:8px;text-align:center}
-  .search-hero-title em{font-style:italic;color:#7EB6FF}
-  .search-hero-sub{font-size:15px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:28px}
-  .search-bar-wrap{position:relative}
-  .search-bar{display:flex;align-items:center;gap:10px;background:#fff;border-radius:8px;padding:8px 8px 8px 20px;box-shadow:0 8px 32px rgba(0,0,0,.3);transition:box-shadow .2s}
-  .search-bar:focus-within{box-shadow:0 8px 32px rgba(0,0,0,.3),0 0 0 3px rgba(27,111,240,.4)}
-  .search-bar input{flex:1;border:none;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;color:#0D0D0D;background:transparent}
-  .search-bar input::placeholder{color:#9A9A9A}
-  .search-bar-btn{background:#1B6FF0;color:#fff;border:none;border-radius:6px;padding:10px 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap}
-  .search-bar-btn:hover{background:#0A4DBF}
-  .search-clear{background:transparent;border:none;cursor:pointer;color:#9A9A9A;font-size:18px;padding:4px;display:flex;align-items:center;justify-content:center}
-  .search-clear:hover{color:#0D0D0D}
-  .search-dropdown{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#fff;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:100;overflow:hidden;animation:dropIn .15s ease}
-  @keyframes dropIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
-  .dropdown-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9A9A9A;padding:10px 16px 4px}
-  .dropdown-item{display:flex;align-items:center;gap:12px;padding:9px 16px;cursor:pointer;transition:background .12s}
-  .dropdown-item:hover{background:#F7F7F7}
-  .dropdown-item-img{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;background:#EFEFEF;display:flex;align-items:center;justify-content:center;font-size:18px}
-  .dropdown-item-name{font-size:13px;font-weight:600;color:#0D0D0D;flex:1}
-  .main-layout{max-width:1200px;margin:0 auto;padding:24px;display:grid;grid-template-columns:240px 1fr;gap:20px;align-items:start}
-  .sidebar{display:flex;flex-direction:column;gap:12px;position:sticky;top:78px}
-  .filter-card{background:#fff;border:1px solid #EFEFEF;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-  .filter-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9A9A9A;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-  .filter-clear{font-size:11px;font-weight:600;color:#1B6FF0;cursor:pointer;text-transform:none;letter-spacing:0}
-  .filter-clear:hover{text-decoration:underline}
-  .filter-group-label{font-size:11px;font-weight:700;color:#9A9A9A;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;margin-top:12px}
-  .fchips{display:flex;flex-wrap:wrap;gap:5px}
-  .fchip{padding:5px 10px;background:#F7F7F7;border:1px solid #EFEFEF;border-radius:100px;font-size:12px;font-weight:600;color:#555;cursor:pointer;transition:all .12s;font-family:'Plus Jakarta Sans',sans-serif;border:none}
-  .fchip:hover{background:#EFEFEF;color:#0D0D0D}
-  .fchip.on{background:#0D0D0D;color:#fff}
-  .price-range{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
-  .range-input{width:100%;padding:7px 10px;border:1.5px solid #EFEFEF;border-radius:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:#0D0D0D;background:#fff;outline:none;transition:border-color .15s}
-  .range-input:focus{border-color:#1B6FF0}
-  .range-input::placeholder{color:#9A9A9A}
-  .trending-item{display:flex;align-items:center;gap:12px;padding:8px 10px;background:#fff;border:1px solid #EFEFEF;border-radius:8px;cursor:pointer;transition:all .15s;margin-bottom:6px}
-  .trending-item:hover{border-color:#D8D8D8;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-  .trending-rank{font-size:13px;font-weight:800;color:#D8D8D8;width:20px;flex-shrink:0}
-  .trending-name{font-size:13px;font-weight:600;flex:1}
-  .results-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-  .results-count{font-size:14px;font-weight:700;color:#0D0D0D;flex:1}
-  .results-count span{color:#9A9A9A;font-weight:400}
-  .sort-select{padding:7px 12px;border:1.5px solid #EFEFEF;border-radius:100px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;color:#0D0D0D;background:#fff;cursor:pointer;outline:none}
-  .view-toggle{display:flex;gap:2px;background:#F7F7F7;border-radius:8px;padding:3px}
-  .vbtn{padding:5px 8px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:#9A9A9A;font-size:15px;transition:all .12s}
-  .vbtn.on{background:#fff;color:#0D0D0D;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-  .af-pill{display:flex;align-items:center;gap:4px;padding:3px 10px;background:#EBF2FF;border:1px solid #C5D8FF;border-radius:100px;font-size:11px;font-weight:600;color:#1B6FF0;cursor:pointer;transition:all .15s}
-  .af-pill:hover{background:#FDECEA;color:#D93025;border-color:#FFBBB7}
-  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
-  .card-tile{background:#fff;border:1px solid #EFEFEF;border-radius:8px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;flex-direction:column;animation:fadeUp .3s ease both}
-  .card-tile:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.10);border-color:#D8D8D8}
-  .card-img{height:250px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden;background:#F7F7F7}
-  .card-img img{width:100%;height:100%;object-fit:cover}
-  .card-img span{font-size:48px}
-  .grade-chip{position:absolute;bottom:8px;left:8px;font-size:9px;font-weight:800;padding:3px 7px;border-radius:4px;background:#002FA7;color:#fff}
-  .card-body{padding:11px 13px 8px;flex:1;display:flex;flex-direction:column}
-  .card-player{font-size:13px;font-weight:700;color:#0D0D0D;line-height:1.2;margin-bottom:2px}
-  .card-set{font-size:11px;color:#9A9A9A;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .card-attrs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
-  .attr-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px}
-  .tag-rc{background:#E6F9F0;color:#00A861}
-  .tag-auto{background:#FEF3E2;color:#E8820C}
-  .tag-numbered{background:#F2ECFB;color:#7B4FCA}
-  .tag-chrome{background:#EBF2FF;color:#1B6FF0}
-  .tag-other{background:#F7F7F7;color:#555}
-  .card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:8px;border-top:1px solid #EFEFEF}
-  .card-price{font-size:15px;font-weight:800;color:#0D0D0D;letter-spacing:-.3px}
-  .card-condition{font-size:10px;color:#9A9A9A}
-  .card-actions{display:flex;gap:4px;padding:0 13px 11px;opacity:0;transition:opacity .15s}
-  .card-tile:hover .card-actions{opacity:1}
-  .act-btn{flex:1;padding:5px 0;border-radius:6px;font-size:10px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;text-align:center;display:flex;align-items:center;justify-content:center;text-decoration:none}
-  .act-view{background:#EBF2FF;color:#1B6FF0}
-  .act-view:hover{background:#1B6FF0;color:#fff}
-  .act-add{background:#EBF2FF;color:#1B6FF0}
-  .act-add:hover{background:#1B6FF0;color:#fff}
-  .act-want{background:#F7F7F7;color:#555}
-  .act-want:hover{background:#F2ECFB;color:#7B4FCA}
-  .cards-list{display:flex;flex-direction:column;gap:10px}
-  .list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:8px;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);animation:fadeUp .3s ease both}
-  .list-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#D8D8D8;transform:translateY(-1px)}
-  .list-img{width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;margin:12px 0 12px 16px;border-radius:6px;overflow:hidden;background:#EFEFEF}
-  .list-img img{width:100%;height:100%;object-fit:cover}
-  .list-main{flex:1;padding:12px 16px;min-width:0}
-  .list-player{font-size:16px;font-weight:800;color:#0D0D0D;letter-spacing:-.3px;line-height:1.2;margin-bottom:3px}
-  .list-set{font-size:12px;color:#9A9A9A;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .list-tags{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
-  .list-pill{font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.03em;white-space:nowrap}
-  .pill-parallel{background:#F0F0F0;color:#444}
-  .pill-year{background:#EBF2FF;color:#1B6FF0}
-  .pill-condition{background:#F7F7F7;color:#555;border:1px solid #EFEFEF}
-  .pill-grade{background:#002FA7;color:#fff}
-  .pill-rc{background:#E6F9F0;color:#00A861}
-  .pill-auto{background:#FEF3E2;color:#E8820C}
-  .pill-numbered{background:#F2ECFB;color:#7B4FCA}
-  .pill-chrome{background:#EBF2FF;color:#1B6FF0}
-  .pill-sealed{background:#FFF8E0;color:#92700A}
-  .list-right{display:flex;padding:0 20px 0 8px;flex-shrink:0;flex-direction:column;align-items:flex-end;gap:4px}
-  .list-price{font-size:20px;font-weight:800;color:#0D0D0D;letter-spacing:-.5px}
-  .list-price-lbl{font-size:10px;color:#9A9A9A;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
-  .list-actions{display:flex;gap:6px;padding:0 14px;opacity:0;transition:opacity .15s;flex-shrink:0}
-  .list-tile:hover .list-actions{opacity:1}
-  .disc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:14px}
-  .disc-card{background:#fff;border:1px solid #EFEFEF;border-radius:8px;padding:14px;cursor:pointer;transition:all .18s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-  .disc-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.09)}
-  .disc-title{font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-  .pagination-btn{padding:8px 18px;border-radius:100px;border:1.5px solid #EFEFEF;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;color:#0D0D0D}
-  .pagination-btn:hover:not(:disabled){border-color:#1B6FF0;color:#1B6FF0}
-  .pagination-btn:disabled{color:#D8D8D8;cursor:not-allowed}
-  .pagination-page{width:36px;height:36px;border-radius:100px;border:1.5px solid #EFEFEF;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;color:#0D0D0D;display:inline-flex;align-items:center;justify-content:center}
-  .pagination-page:hover{border-color:#1B6FF0;color:#1B6FF0}
-  .pagination-page.on{background:#1B6FF0;color:#fff;border-color:#1B6FF0}
-  @media(max-width:860px){.main-layout{grid-template-columns:1fr}.sidebar{position:static}.cards-grid{grid-template-columns:repeat(2,1fr)}}
-`}</style>
+      <style>{`
+        .search-hero{background:#0D0D0D;padding:48px 24px 40px;position:relative;overflow:hidden}
+        .search-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 800px 400px at 50% 100%,rgba(27,111,240,.2),transparent)}
+        .search-hero-inner{max-width:720px;margin:0 auto;position:relative;z-index:1}
+        .search-hero-title{font-size:clamp(28px,5vw,44px);font-weight:800;color:#fff;letter-spacing:-1px;line-height:1.1;margin-bottom:8px;text-align:center}
+        .search-hero-title em{font-style:italic;color:#7EB6FF}
+        .search-hero-sub{font-size:15px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:28px}
+        .search-bar-wrap{position:relative}
+        .search-bar{display:flex;align-items:center;gap:10px;background:#fff;border-radius:8px;padding:8px 8px 8px 20px;box-shadow:0 8px 32px rgba(0,0,0,.3);transition:box-shadow .2s}
+        .search-bar:focus-within{box-shadow:0 8px 32px rgba(0,0,0,.3),0 0 0 3px rgba(27,111,240,.4)}
+        .search-bar input{flex:1;border:none;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;color:#0D0D0D;background:transparent}
+        .search-bar input::placeholder{color:#9A9A9A}
+        .search-bar-btn{background:#1B6FF0;color:#fff;border:none;border-radius:6px;padding:10px 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap}
+        .search-bar-btn:hover{background:#0A4DBF}
+        .search-clear{background:transparent;border:none;cursor:pointer;color:#9A9A9A;font-size:18px;padding:4px;display:flex;align-items:center;justify-content:center}
+        .search-clear:hover{color:#0D0D0D}
+        .search-dropdown{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#fff;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:100;overflow:hidden;animation:dropIn .15s ease}
+        @keyframes dropIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+        .dropdown-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9A9A9A;padding:10px 16px 4px}
+        .dropdown-item{display:flex;align-items:center;gap:12px;padding:9px 16px;cursor:pointer;transition:background .12s}
+        .dropdown-item:hover{background:#F7F7F7}
+        .dropdown-item-img{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;background:#EFEFEF;display:flex;align-items:center;justify-content:center;font-size:18px}
+        .dropdown-item-name{font-size:13px;font-weight:600;color:#0D0D0D;flex:1}
+        .sport-pills-bar{background:#fff;border-bottom:1px solid #EFEFEF;padding:12px 0}
+        .sport-pills-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+        .sport-pill-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #EFEFEF;background:#fff;color:#555;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif}
+        .sport-pill-btn:hover{border-color:#D8D8D8;color:#0D0D0D}
+        .sport-pill-btn.on{background:#0D0D0D;color:#fff;border-color:#0D0D0D}
+        .main-layout{max-width:1200px;margin:0 auto;padding:24px;display:grid;grid-template-columns:240px 1fr;gap:20px;align-items:start}
+        .sidebar{display:flex;flex-direction:column;gap:12px;position:sticky;top:78px}
+        .filter-card{background:#fff;border:1px solid #EFEFEF;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+        .filter-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9A9A9A;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+        .filter-clear{font-size:11px;font-weight:600;color:#1B6FF0;cursor:pointer;text-transform:none;letter-spacing:0}
+        .filter-clear:hover{text-decoration:underline}
+        .filter-group-label{font-size:11px;font-weight:700;color:#9A9A9A;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;margin-top:12px}
+        .fchips{display:flex;flex-wrap:wrap;gap:5px}
+        .fchip{padding:5px 10px;background:#F7F7F7;border:1px solid #EFEFEF;border-radius:100px;font-size:12px;font-weight:600;color:#555;cursor:pointer;transition:all .12s;font-family:'Plus Jakarta Sans',sans-serif;border:none}
+        .fchip:hover{background:#EFEFEF;color:#0D0D0D}
+        .fchip.on{background:#0D0D0D;color:#fff}
+        .price-range{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+        .range-input{width:100%;padding:7px 10px;border:1.5px solid #EFEFEF;border-radius:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:#0D0D0D;background:#fff;outline:none;transition:border-color .15s}
+        .range-input:focus{border-color:#1B6FF0}
+        .range-input::placeholder{color:#9A9A9A}
+        .trending-item{display:flex;align-items:center;gap:12px;padding:8px 10px;background:#fff;border:1px solid #EFEFEF;border-radius:8px;cursor:pointer;transition:all .15s;margin-bottom:6px}
+        .trending-item:hover{border-color:#D8D8D8;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+        .trending-rank{font-size:13px;font-weight:800;color:#D8D8D8;width:20px;flex-shrink:0}
+        .trending-name{font-size:13px;font-weight:600;flex:1}
+        .results-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+        .results-count{font-size:14px;font-weight:700;color:#0D0D0D;flex:1}
+        .results-count span{color:#9A9A9A;font-weight:400}
+        .sort-select{padding:7px 12px;border:1.5px solid #EFEFEF;border-radius:100px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;color:#0D0D0D;background:#fff;cursor:pointer;outline:none}
+        .view-toggle{display:flex;gap:2px;background:#F7F7F7;border-radius:8px;padding:3px}
+        .vbtn{padding:5px 8px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:#9A9A9A;font-size:15px;transition:all .12s}
+        .vbtn.on{background:#fff;color:#0D0D0D;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+        .af-pill{display:flex;align-items:center;gap:4px;padding:3px 10px;background:#EBF2FF;border:1px solid #C5D8FF;border-radius:100px;font-size:11px;font-weight:600;color:#1B6FF0;cursor:pointer;transition:all .15s}
+        .af-pill:hover{background:#FDECEA;color:#D93025;border-color:#FFBBB7}
+        .sold-summary{background:#F7F7F7;border:1px solid #EFEFEF;border-radius:8px;padding:16px;margin-bottom:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+        .sold-stat{text-align:center}
+        .sold-stat-val{font-size:20px;font-weight:800;color:#0D0D0D;letter-spacing:-.3px}
+        .sold-stat-lbl{font-size:10px;color:#9A9A9A;text-transform:uppercase;letter-spacing:.06em;margin-top:2px;font-weight:600}
+        .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+        .card-tile{background:#fff;border:1px solid #EFEFEF;border-radius:8px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;flex-direction:column;animation:fadeUp .3s ease both}
+        .card-tile:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.10);border-color:#D8D8D8}
+        .card-img{height:250px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden;background:#F7F7F7}
+        .card-img img{width:100%;height:100%;object-fit:cover}
+        .card-img span{font-size:48px}
+        .grade-chip{position:absolute;bottom:8px;left:8px;font-size:9px;font-weight:800;padding:3px 7px;border-radius:4px;background:#002FA7;color:#fff}
+        .card-body{padding:11px 13px 8px;flex:1;display:flex;flex-direction:column}
+        .card-player{font-size:13px;font-weight:700;color:#0D0D0D;line-height:1.2;margin-bottom:2px}
+        .card-set{font-size:11px;color:#9A9A9A;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .card-attrs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+        .attr-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px}
+        .tag-rc{background:#E6F9F0;color:#00A861}
+        .tag-auto{background:#FEF3E2;color:#E8820C}
+        .tag-numbered{background:#F2ECFB;color:#7B4FCA}
+        .tag-chrome{background:#EBF2FF;color:#1B6FF0}
+        .tag-other{background:#F7F7F7;color:#555}
+        .card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:8px;border-top:1px solid #EFEFEF}
+        .card-price{font-size:15px;font-weight:800;color:#0D0D0D;letter-spacing:-.3px}
+        .card-condition{font-size:10px;color:#9A9A9A}
+        .card-actions{display:flex;gap:4px;padding:0 13px 11px;opacity:0;transition:opacity .15s}
+        .card-tile:hover .card-actions{opacity:1}
+        .act-btn{flex:1;padding:5px 0;border-radius:6px;font-size:10px;font-weight:700;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .12s;text-align:center;display:flex;align-items:center;justify-content:center;text-decoration:none}
+        .act-view{background:#EBF2FF;color:#1B6FF0}
+        .act-view:hover{background:#1B6FF0;color:#fff}
+        .act-add{background:#EBF2FF;color:#1B6FF0}
+        .act-add:hover{background:#1B6FF0;color:#fff}
+        .act-want{background:#F7F7F7;color:#555}
+        .act-want:hover{background:#F2ECFB;color:#7B4FCA}
+        .cards-list{display:flex;flex-direction:column;gap:10px}
+        .list-tile{background:#fff;border:1px solid #EFEFEF;border-radius:8px;overflow:hidden;display:flex;align-items:center;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);animation:fadeUp .3s ease both}
+        .list-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#D8D8D8;transform:translateY(-1px)}
+        .list-img{width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;margin:12px 0 12px 16px;border-radius:6px;overflow:hidden;background:#EFEFEF}
+        .list-img img{width:100%;height:100%;object-fit:cover}
+        .list-main{flex:1;padding:12px 16px;min-width:0}
+        .list-player{font-size:16px;font-weight:800;color:#0D0D0D;letter-spacing:-.3px;line-height:1.2;margin-bottom:3px}
+        .list-set{font-size:12px;color:#9A9A9A;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .list-tags{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+        .list-pill{font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.03em;white-space:nowrap}
+        .pill-parallel{background:#F0F0F0;color:#444}
+        .pill-year{background:#EBF2FF;color:#1B6FF0}
+        .pill-condition{background:#F7F7F7;color:#555;border:1px solid #EFEFEF}
+        .pill-grade{background:#002FA7;color:#fff}
+        .pill-rc{background:#E6F9F0;color:#00A861}
+        .pill-auto{background:#FEF3E2;color:#E8820C}
+        .pill-numbered{background:#F2ECFB;color:#7B4FCA}
+        .pill-chrome{background:#EBF2FF;color:#1B6FF0}
+        .pill-sealed{background:#FFF8E0;color:#92700A}
+        .list-right{display:flex;padding:0 20px 0 8px;flex-shrink:0;flex-direction:column;align-items:flex-end;gap:4px}
+        .list-price{font-size:20px;font-weight:800;color:#0D0D0D;letter-spacing:-.5px}
+        .list-price-lbl{font-size:10px;color:#9A9A9A;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+        .list-actions{display:flex;gap:6px;padding:0 14px;opacity:0;transition:opacity .15s;flex-shrink:0}
+        .list-tile:hover .list-actions{opacity:1}
+        .disc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:14px}
+        .disc-card{background:#fff;border:1px solid #EFEFEF;border-radius:8px;padding:14px;cursor:pointer;transition:all .18s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+        .disc-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.09)}
+        .disc-title{font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+        .pagination-btn{padding:8px 18px;border-radius:100px;border:1.5px solid #EFEFEF;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;color:#0D0D0D}
+        .pagination-btn:hover:not(:disabled){border-color:#1B6FF0;color:#1B6FF0}
+        .pagination-btn:disabled{color:#D8D8D8;cursor:not-allowed}
+        .pagination-page{width:36px;height:36px;border-radius:100px;border:1.5px solid #EFEFEF;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s;color:#0D0D0D;display:inline-flex;align-items:center;justify-content:center}
+        .pagination-page:hover{border-color:#1B6FF0;color:#1B6FF0}
+        .pagination-page.on{background:#1B6FF0;color:#fff;border-color:#1B6FF0}
+        @media(max-width:860px){.main-layout{grid-template-columns:1fr}.sidebar{position:static}.cards-grid{grid-template-columns:repeat(2,1fr)}}
+      `}</style>
 
       <Nav />
 
@@ -326,8 +361,10 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
                 type="text"
                 placeholder="Player name, set, year, brand..."
                 value={query}
-                onChange={e => { setQuery(e.target.value); setShowDropdown(e.target.value.length > 1) }}
+                onChange={e => { setQuery(e.target.value); setShowDropdown(e.target.value.length > 0 || recentSearches.length > 0) }}
                 onKeyDown={e => { if (e.key === 'Enter') runSearch(query) }}
+                onFocus={() => { if (recentSearches.length > 0) setShowDropdown(true) }}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
                 autoComplete="off"
               />
               {query && (
@@ -340,20 +377,49 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
               </button>
             </div>
 
-            {showDropdown && (
+            {showDropdown && (dropdownItems.length > 0 || recentSearches.length > 0) && (
               <div className="search-dropdown">
-                <div className="dropdown-label">Recent searches</div>
-                {RECENT_SEARCHES.filter(r => r.toLowerCase().includes(query.toLowerCase())).slice(0,4).map(r => (
-                  <div key={r} className="dropdown-item" onClick={() => runSearch(r)}>
-                    <div className="dropdown-item-img">🕐</div>
-                    <div className="dropdown-item-name">{r}</div>
-                  </div>
-                ))}
+                {recentSearches.length > 0 && (
+                  <>
+                    <div className="dropdown-label">{query ? 'Recent matches' : 'Recent searches'}</div>
+                    {(query ? dropdownItems : recentSearches).slice(0,5).map(r => (
+                      <div key={r} className="dropdown-item" onClick={() => runSearch(r)}>
+                        <div className="dropdown-item-img">🕐</div>
+                        <div className="dropdown-item-name">{r}</div>
+                      </div>
+                    ))}
+                  </>
+                )}
+                {!query && trending.length > 0 && (
+                  <>
+                    <div className="dropdown-label">Trending</div>
+                    {trending.slice(0,3).map(t => (
+                      <div key={t} className="dropdown-item" onClick={() => runSearch(t)}>
+                        <div className="dropdown-item-img">🔥</div>
+                        <div className="dropdown-item-name">{t}</div>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             )}
           </div>
+        </div>
+      </div>
 
-         
+      {/* SPORT PILLS BAR — always visible */}
+      <div className="sport-pills-bar">
+        <div className="sport-pills-inner">
+          {sportPills.map(s => (
+            <button
+              key={s.v}
+              className={`sport-pill-btn${sport===s.v?' on':''}`}
+              onClick={() => { setSport(s.v); if (submitted) setPage(1) }}
+            >
+              <FontAwesomeIcon icon={s.icon} style={{fontSize:'11px'}}/>
+              {s.l}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -406,6 +472,25 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
 
           {/* RESULTS */}
           <main>
+
+            {/* SOLD COMPS SUMMARY */}
+            {!searching && soldResults.length > 0 && (
+              <div className="sold-summary">
+                <div className="sold-stat">
+                  <div className="sold-stat-val" style={{color:'#00A861'}}>${avgSold.toFixed(0)}</div>
+                  <div className="sold-stat-lbl">Avg Sold Price</div>
+                </div>
+                <div className="sold-stat">
+                  <div className="sold-stat-val">${lowSold.toFixed(0)}–${highSold.toFixed(0)}</div>
+                  <div className="sold-stat-lbl">Price Range</div>
+                </div>
+                <div className="sold-stat">
+                  <div className="sold-stat-val">{soldResults.reduce((s: number, c: any) => s + c.soldData.soldCount, 0)}</div>
+                  <div className="sold-stat-lbl">Recent Sales</div>
+                </div>
+              </div>
+            )}
+
             <div className="results-header">
               <div className="results-count">
                 {searching
@@ -461,9 +546,16 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
             ) : filtered.length === 0 ? (
               <div className="empty-state">
                 <div style={{fontSize:'40px',marginBottom:'16px'}}>🔍</div>
-                <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>No cards found</div>
-                <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'20px'}}>Try adjusting your filters or search for something else.</div>
-                <button className="btn btn-primary" onClick={clearFilters}>Clear filters</button>
+                <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>No results for "{query}"</div>
+                <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'20px'}}>Try a different search or browse trending cards below.</div>
+                <div style={{display:'flex',gap:'8px',flexWrap:'wrap',justifyContent:'center',marginBottom:'20px'}}>
+                  {trending.slice(0,4).map(t => (
+                    <button key={t} onClick={() => runSearch(t)} style={{padding:'6px 14px',borderRadius:'100px',border:'1.5px solid #EFEFEF',background:'#fff',fontSize:'13px',fontWeight:600,color:'#555',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s'}}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                {hasActiveFilters && <button className="btn btn-primary" onClick={clearFilters}>Clear filters</button>}
               </div>
             ) : viewMode === 'grid' ? (
               <>
@@ -511,8 +603,8 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
                       </div>
                       <div className="card-actions">
                         <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-view" onClick={() => analytics.cardViewedOnEbay({player:c.player, sport:c.sport, price:c.price})}>
-  <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{marginRight:'4px'}}/>eBay
-</a>
+                          <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{marginRight:'4px'}}/>eBay
+                        </a>
                         <button className="act-btn act-add" onClick={()=>addToVault(c)}>
                           <FontAwesomeIcon icon={faPlus} style={{marginRight:'4px'}}/>Vault
                         </button>
@@ -524,7 +616,6 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
                   ))}
                 </div>
 
-                {/* PAGINATION */}
                 {totalPages > 1 && (
                   <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginTop:'24px',paddingTop:'24px',borderTop:'1px solid #EFEFEF',flexWrap:'wrap'}}>
                     <button className="pagination-btn" disabled={page===1} onClick={()=>{setPage(p=>p-1);window.scrollTo({top:0,behavior:'smooth'})}}>← Prev</button>
@@ -568,7 +659,6 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
                           {(c.attrs||[]).map((a: string) => (
                             <span key={a} className={`list-pill pill-${a==='rc'?'rc':a==='auto'?'auto':a==='numbered'?'numbered':a==='chrome'?'chrome':'condition'}`}>{attrLabel(a)}</span>
                           ))}
-                          {c.sport && c.sport !== 'Unknown' && <span className="list-pill pill-condition">{sportEmoji[c.sport]} {c.sport}</span>}
                         </div>
                       </div>
                       <div className="list-right">
@@ -578,24 +668,18 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
                               <div className="list-price-lbl">Avg Sold</div>
                               <div className="list-price" style={{color:'#00A861',fontSize:'17px'}}>{fmtPrice(c.soldData.avgPrice)}</div>
                               <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.soldData.soldCount} sales · {fmtPrice(c.soldData.lowPrice)}–{fmtPrice(c.soldData.highPrice)}</div>
-                              {c.soldData.lastSold && (
-                                <div style={{fontSize:'10px',color:'#00A861',fontWeight:600}}>↑ {new Date(c.soldData.lastSold).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
-                              )}
                             </div>
                             <div style={{textAlign:'right'}}>
                               <div className="list-price-lbl">Listed From</div>
                               <div style={{fontSize:'14px',fontWeight:800,color:'#1B6FF0'}}>{fmtPrice(c.price)}</div>
-                              {c.listingCount > 1 && <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.listingCount} listings</div>}
                             </div>
                           </>
                         ) : (
                           <>
                             <div className="list-price-lbl">Market Price</div>
                             <div className="list-price">{fmtPrice(c.price)}</div>
-                            {c.listingCount > 1 && <div style={{fontSize:'10px',color:'#9A9A9A'}}>{c.listingCount} listings</div>}
                           </>
                         )}
-                        {c.printRun && <div style={{fontSize:'11px',color:'#7B4FCA',fontWeight:700,marginTop:'2px'}}>/{c.printRun}</div>}
                       </div>
                       <div className="list-actions">
                         <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'5px'}}>
@@ -609,7 +693,6 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
                   ))}
                 </div>
 
-                {/* PAGINATION */}
                 {totalPages > 1 && (
                   <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginTop:'24px',paddingTop:'24px',borderTop:'1px solid #EFEFEF',flexWrap:'wrap'}}>
                     <button className="pagination-btn" disabled={page===1} onClick={()=>{setPage(p=>p-1);window.scrollTo({top:0,behavior:'smooth'})}}>← Prev</button>
@@ -641,6 +724,28 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
               ))}
             </div>
           </div>
+
+          {/* Recent Searches — only for logged in users */}
+          {user && recentSearches.length > 0 && (
+            <div style={{marginBottom:'32px'}}>
+              <div className="disc-title">
+                <FontAwesomeIcon icon={faCircleCheck} style={{color:'#1B6FF0'}}/>Your Recent Searches
+              </div>
+              <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                {recentSearches.map(r => (
+                  <button
+                    key={r}
+                    onClick={() => runSearch(r)}
+                    style={{padding:'7px 16px',borderRadius:'100px',border:'1.5px solid #EFEFEF',background:'#fff',fontSize:'13px',fontWeight:600,color:'#555',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s'}}
+                    onMouseOver={e=>{e.currentTarget.style.borderColor='#1B6FF0';e.currentTarget.style.color='#1B6FF0'}}
+                    onMouseOut={e=>{e.currentTarget.style.borderColor='#EFEFEF';e.currentTarget.style.color='#555'}}
+                  >
+                    🕐 {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Popular Players by Sport */}
           <div>
@@ -680,12 +785,10 @@ analytics.searchPerformed({ query: q.trim(), resultCount: 0, sport })
       )}
 
       <Footer />
-
       {toast && <div className="toast">{toast}</div>}
     </>
   )
 }
-
 export default function Search() {
   return (
     <Suspense fallback={
