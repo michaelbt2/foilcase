@@ -17,6 +17,38 @@ const articles = [
     readTime: '8 min',
     date: 'May 2026',
   },
+  {
+    slug: 'psa-vs-bgs-vs-sgc-grading-comparison',
+    title: 'PSA vs BGS vs SGC — Which Grading Company is Best?',
+    description: 'A complete comparison of the three major card grading companies to help you choose the right one for your cards.',
+    category: 'Grading',
+    readTime: '10 min',
+    date: 'May 2026',
+  },
+  {
+    slug: 'what-is-a-rookie-card',
+    title: 'What is a Rookie Card? Complete Guide for Collectors',
+    description: 'Everything you need to know about rookie cards — what makes them official, why they\'re valuable, and how to identify them.',
+    category: 'Getting Started',
+    readTime: '7 min',
+    date: 'May 2026',
+  },
+  {
+    slug: 'how-to-organize-trading-card-collection',
+    title: 'How to Organize Your Trading Card Collection',
+    description: 'A step-by-step guide to organizing, storing, and tracking your trading card collection — from beginner to advanced.',
+    category: 'Getting Started',
+    readTime: '9 min',
+    date: 'May 2026',
+  },
+  {
+    slug: 'how-to-sell-trading-cards-on-ebay',
+    title: 'How to Sell Trading Cards on eBay — Complete Guide',
+    description: 'Everything you need to know to sell trading cards on eBay — from researching prices to packaging and shipping.',
+    category: 'Selling & Trading',
+    readTime: '12 min',
+    date: 'May 2026',
+  },
 ]
 
 const categories = [
