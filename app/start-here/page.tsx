@@ -120,7 +120,7 @@ export default function StartHere() {
             Your trading card collection,<br/><em>finally organized</em>
           </h1>
           <p className="sh-hero-sub">
-            foilcase is the modern home for your card collection — track every card, understand its value, and connect with collectors who share your passion.
+            Foilcase is the modern home for your card collection — track every card, understand its value, and connect with collectors who share your passion.
           </p>
           <div style={{display:'flex',gap:'12px',justifyContent:'center',flexWrap:'wrap'}}>
             <Link href="/collection" className="btn btn-primary" style={{padding:'12px 24px',fontSize:'15px'}}>
