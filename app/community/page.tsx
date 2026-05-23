@@ -216,18 +216,20 @@ analytics.playerSearchPerformed({ query: q.trim(), resultCount: enriched.length 
     if (activeSport !== 'all') {
       result = result.filter(p => (p.sports||[]).some(s => s.startsWith(activeSport)))
     }
-    if (activeTab === 'most-followed') {
-      result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
-    } else if (activeTab === 'newest') {
-      result = result.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    } else if (activeTab === 'active') {
-      const cutoff = Date.now() - 7 * 86400000
-      result = result
-        .filter(p => p.lastCardAdded && new Date(p.lastCardAdded).getTime() > cutoff)
-        .sort((a,b) => new Date(b.lastCardAdded||0).getTime() - new Date(a.lastCardAdded||0).getTime())
-    } else {
-      result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
-    }
+if (activeTab === 'most-followed') {
+  result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
+} else if (activeTab === 'newest') {
+  result = result.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+} else if (activeTab === 'active') {
+  const cutoff = Date.now() - 7 * 86400000
+  result = result
+    .filter(p => p.lastCardAdded && new Date(p.lastCardAdded).getTime() > cutoff)
+    .sort((a,b) => new Date(b.lastCardAdded||0).getTime() - new Date(a.lastCardAdded||0).getTime())
+} else if (activeTab === 'following') {
+  result = result.filter(p => following.has(p.id))
+} else {
+  result = result.sort((a,b) => (b.followerCount||0) - (a.followerCount||0))
+}
     setFiltered(result)
   }
 
@@ -248,11 +250,12 @@ analytics.playerSearchPerformed({ query: q.trim(), resultCount: enriched.length 
   }
 
   const tabs = [
-    {id:'featured', label:'Featured', icon:faStar},
-    {id:'most-followed', label:'Most Followed', icon:faUsers},
-    {id:'newest', label:'Newest', icon:faFire},
-    {id:'active', label:'Active this week', icon:faBolt},
-  ]
+  {id:'featured', label:'Featured', icon:faStar},
+  {id:'most-followed', label:'Most Followed', icon:faUsers},
+  {id:'newest', label:'Newest', icon:faFire},
+  {id:'active', label:'Active this week', icon:faBolt},
+  {id:'following', label:'Following', icon:faUserPlus},
+]
 
   const currentTier = TIERS.find(t => userCardCount >= t.min && (t.max === Infinity || userCardCount <= t.max)) || TIERS[0]
   const nextTier = user ? TIERS[TIERS.indexOf(currentTier) + 1] : null
@@ -316,19 +319,19 @@ const [cardSearchSubmitted, setCardSearchSubmitted] = useState(false)
       <div className="community-hero">
         <div className="community-hero-inner">
           <h1 className="community-hero-title">Discover <em>collectors</em></h1>
-          <p className="community-hero-sub">Browse public vaults, follow collectors, and find cards for trade</p>
+          <p className="community-hero-sub">Browse public vaults, follow collectors, and find cards for sell</p>
           <div style={{display:'flex',gap:'8px',justifyContent:'center',marginBottom:'16px'}}>
   <button
     onClick={() => setSearchMode('collectors')}
     style={{padding:'6px 16px',borderRadius:'100px',border:'1.5px solid',borderColor:searchMode==='collectors'?'#fff':'rgba(255,255,255,.3)',background:searchMode==='collectors'?'#fff':'transparent',color:searchMode==='collectors'?'#0D0D0D':'rgba(255,255,255,.7)',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s'}}
   >
-    Search Collectors
+    Search collectors
   </button>
   <button
     onClick={() => setSearchMode('cards')}
     style={{padding:'6px 16px',borderRadius:'100px',border:'1.5px solid',borderColor:searchMode==='cards'?'#fff':'rgba(255,255,255,.3)',background:searchMode==='cards'?'#fff':'transparent',color:searchMode==='cards'?'#0D0D0D':'rgba(255,255,255,.7)',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s'}}
   >
-    Search by Player
+    Search by player
   </button>
 </div>
 <div className="search-bar">
@@ -611,15 +614,15 @@ const [cardSearchSubmitted, setCardSearchSubmitted] = useState(false)
           ) : filtered.length === 0 ? (
             <div className="empty-state">
               <div style={{fontSize:'40px',marginBottom:'16px'}}>👥</div>
-              <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>
-                {searchVal ? 'No collectors found' : 'No public vaults yet'}
-              </div>
-              <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>
-                {searchVal ? `No collectors matching "${searchVal}"` : 'Be the first to make your vault public!'}
-              </div>
-              {!searchVal && (
-                <Link href="/settings" className="btn btn-primary">Make my vault public</Link>
-              )}
+        <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>
+  {activeTab==='following' ? 'Not following anyone yet' : searchVal ? 'No collectors found' : 'No public vaults yet'}
+</div>
+<div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>
+  {activeTab==='following' ? 'Follow collectors to find them here.' : searchVal ? `No collectors matching "${searchVal}"` : 'Be the first to make your vault public!'}
+</div>
+{!searchVal && activeTab !== 'following' && (
+  <Link href="/settings" className="btn btn-primary">Make my vault public</Link>
+)}
             </div>
           ) : (
             <div className="profiles-grid">
@@ -653,21 +656,20 @@ const [cardSearchSubmitted, setCardSearchSubmitted] = useState(false)
   </div>
   <div className="profile-stat">
     <div className="profile-stat-val" style={{color:(p.forSaleCount||0)>0?'#00A861':'#0D0D0D'}}>{p.forSaleCount||0}</div>
-    <div className="profile-stat-lbl">For Sale</div>
+    <div className="profile-stat-lbl">Listed</div>
   </div>
 </div>
 
-                  {/* Sport icons — below stats */}
-                  {(p.sports||[]).length > 0 && (
-                    <div style={{display:'flex',gap:'6px',flexWrap:'wrap',paddingTop:'4px'}}>
-                      {SPORTS_LIST.filter(s => (p.sports||[]).some(ps => ps.startsWith(s.v))).map(s => (
-                        <div key={s.v} title={s.v} style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'3px 8px',borderRadius:'100px',background:s.bg,border:`1px solid ${s.color}33`}}>
-                          <FontAwesomeIcon icon={s.icon} style={{color:s.color,fontSize:'9px'}}/>
-                          <span style={{fontSize:'10px',fontWeight:600,color:s.color}}>{s.v}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {/* Sport icons — icon dots only */}
+{(p.sports||[]).length > 0 && (
+  <div style={{display:'flex',gap:'6px',flexWrap:'wrap',paddingTop:'4px'}}>
+    {SPORTS_LIST.filter(s => (p.sports||[]).some(ps => ps.startsWith(s.v))).map(s => (
+      <div key={s.v} title={s.v} style={{width:'24px',height:'24px',borderRadius:'50%',background:s.bg,border:`1px solid ${s.color}33`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+        <FontAwesomeIcon icon={s.icon} style={{color:s.color,fontSize:'10px'}}/>
+      </div>
+    ))}
+  </div>
+)}
 
                   {/* Actions */}
                   <div className="profile-actions">
