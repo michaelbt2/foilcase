@@ -29,7 +29,7 @@ const footerLinks = [
     links: [
       { label: 'About Us', href: '/about' },
       { label: 'Community', href: '/community' },
-      { label: 'Contact', href: '#' },
+      { label: 'Contact', href: 'hello@foilcase.com' },
       { label: 'Privacy Policy', href: '/privacy' },
       { label: 'Terms of Service', href: '/terms' },
     ],

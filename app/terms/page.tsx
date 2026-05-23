@@ -166,7 +166,7 @@ export default function TermsOfService() {
           <h2>13. Contact Us</h2>
           <p>If you have any questions about these Terms of Service, please contact us at:</p>
           <ul>
-            <li>Email: <a href="mailto:legal@foilcase.com">legal@foilcase.com</a></li>
+            <li>Email: <a href="mailto:hello@foilcase.com">hello@foilcase.com</a></li>
             <li>Website: <a href="https://foilcase.com">foilcase.com</a></li>
           </ul>
         </div>
@@ -174,7 +174,7 @@ export default function TermsOfService() {
         {/* Contact card */}
         <div className="terms-contact">
           <p>Have a question about these terms?</p>
-          <a href="mailto:legal@foilcase.com">legal@foilcase.com</a>
+          <a href="mailto:hello@foilcase.com">hello@foilcase.com</a>
         </div>
 
       </div>

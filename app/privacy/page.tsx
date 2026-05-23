@@ -149,7 +149,7 @@ export default function PrivacyPolicy() {
           <h2>10. Contact Us</h2>
           <p>If you have any questions about this Privacy Policy or our privacy practices, please contact us at:</p>
           <ul>
-            <li>Email: <a href="mailto:privacy@foilcase.com">privacy@foilcase.com</a></li>
+            <li>Email: <a href="mailto:hello@foilcase.com">hello@foilcase.com</a></li>
             <li>Website: <a href="https://foilcase.com">foilcase.com</a></li>
           </ul>
         </div>
@@ -157,7 +157,7 @@ export default function PrivacyPolicy() {
         {/* Contact card */}
         <div className="privacy-contact">
           <p>Have a question about your data or privacy?</p>
-          <a href="mailto:privacy@foilcase.com">privacy@foilcase.com</a>
+          <a href="mailto:hello@foilcase.com">hello@foilcase.com</a>
         </div>
 
       </div>
