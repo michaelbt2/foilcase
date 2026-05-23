@@ -30,6 +30,20 @@ const TIERS = [
   { label:'Legend', min:500, max:Infinity, icon:faCrown, color:'#F5A623', bg:'#FEF9EC', border:'#FDDBA0' },
 ]
 
+function BrowserMockup({ src, alt, url }: { src: string, alt: string, url: string }) {
+  return (
+    <div style={{borderRadius:'12px',overflow:'hidden',border:'1px solid #EFEFEF',boxShadow:'0 8px 40px rgba(0,0,0,.10)',transform:'perspective(1000px) rotateX(2deg)',transformOrigin:'top center'}}>
+      <div style={{background:'#E8E8E8',padding:'10px 14px',display:'flex',alignItems:'center',gap:'6px',borderBottom:'1px solid #D8D8D8'}}>
+        <div style={{width:'10px',height:'10px',borderRadius:'50%',background:'#FF5F57',flexShrink:0}}/>
+        <div style={{width:'10px',height:'10px',borderRadius:'50%',background:'#FFBD2E',flexShrink:0}}/>
+        <div style={{width:'10px',height:'10px',borderRadius:'50%',background:'#28C840',flexShrink:0}}/>
+        <div style={{flex:1,background:'#fff',borderRadius:'4px',padding:'3px 10px',fontSize:'11px',color:'#9A9A9A',marginLeft:'8px'}}>{url}</div>
+      </div>
+      <img src={src} alt={alt} style={{width:'100%',display:'block'}}/>
+    </div>
+  )
+}
+
 export default function StartHere() {
   const [active, setActive] = useState('your-vault')
 
@@ -169,10 +183,17 @@ export default function StartHere() {
             </div>
             <div style={{marginTop:'24px',display:'flex',gap:'10px'}}>
               <Link href="/collection" className="btn btn-primary">
-                <FontAwesomeIcon icon={faArrowRight}/>Open My Vault
+                <FontAwesomeIcon icon={faArrowRight}/>Create my free vault
               </Link>
             </div>
           </div>
+
+          {/* VAULT SCREENSHOT */}
+          <BrowserMockup
+            src="/images/vault-preview.png"
+            alt="Foilcase vault page"
+            url="foilcase.com/collection"
+          />
 
           <div className="sh-divider"/>
 
@@ -276,6 +297,13 @@ export default function StartHere() {
             </div>
           </div>
 
+          {/* COMMUNITY SCREENSHOT */}
+          <BrowserMockup
+            src="/images/community-preview.png"
+            alt="Foilcase community page"
+            url="foilcase.com/community"
+          />
+
           <div className="sh-divider"/>
 
           {/* SEARCH */}
@@ -337,7 +365,7 @@ export default function StartHere() {
             </div>
             <div style={{marginTop:'24px'}}>
               <Link href="/market" className="btn btn-primary">
-                <FontAwesomeIcon icon={faArrowRight}/>View Market
+                <FontAwesomeIcon icon={faArrowRight}/>View market
               </Link>
             </div>
           </div>

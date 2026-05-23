@@ -427,7 +427,7 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
               <div style={{width:'32px',height:'32px',background:'#1B6FF0',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 <FontAwesomeIcon icon={faLayerGroup} style={{color:'#fff',fontSize:'14px'}}/>
               </div>
-              <span style={{fontSize:'18px',fontWeight:800,letterSpacing:'-.4px',color:'#0D0D0D'}}>FoilCase</span>
+              <span style={{fontSize:'18px',fontWeight:800,letterSpacing:'-.4px',color:'#0D0D0D'}}>Foilcase</span>
             </div>
             <div style={{width:'64px',height:'64px',background:'#EBF2FF',borderRadius:'16px',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px'}}>
               <FontAwesomeIcon icon={faShield} style={{color:'#1B6FF0',fontSize:'28px'}}/>
@@ -1400,7 +1400,7 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
         <div className="overlay" onClick={e => e.stopPropagation()}>
           <div className="modal" style={{maxWidth:'440px'}} onClick={e => e.stopPropagation()}>
             <div className="modal-hdr">
-              <div className="modal-hdr-title">🎉 Welcome to FoilCase!</div>
+              <div className="modal-hdr-title">🎉 Welcome to Foilcase!</div>
             </div>
             <div className="modal-body">
               <p style={{fontSize:'14px',color:'#555',lineHeight:1.6,marginBottom:'20px'}}>

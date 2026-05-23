@@ -346,7 +346,7 @@ useEffect(() => {
                     </div>
                     <div className="card-back-face">
                       <div className="card-back-bg">
-                        <div className="back-logo">FoilCase</div>
+                        <div className="back-logo">Foilcase</div>
                         <div className="back-stats">
                           {[
                             ['Set','2024 Panini Prizm Football'],
