@@ -92,7 +92,7 @@ export default function Collection() {
   const [selectedScore, setSelectedScore]   = useState('')
   const [selectedStatus, setSelectedStatus] = useState('have')
   const [newFolderName, setNewFolderName]   = useState('')
-  const [expandedFilters, setExpandedFilters] = useState<string[]>(['sport','grading','status','date'])
+  const [expandedFilters, setExpandedFilters] = useState<string[]>(['sport'])
   const [selectedCard, setSelectedCard] = useState<Card|null>(null)
   useEffect(() => {
   if (selectedCard) setImageTab('front')
@@ -735,6 +735,52 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
               )}
             </div>
           </div>
+          {/* COLLECTOR ESSENTIALS */}
+<div className="sidebar-card">
+  <div className="sidebar-title">Collector Essentials</div>
+  <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+    {[
+      {
+        name:'Ultra Pro Penny Sleeves',
+        desc:'Standard size trading card sleeves',
+        img:'https://m.media-amazon.com/images/I/61MeeY1RyjL._AC_SX679_.jpg',
+        url:'https://www.amazon.com/Ultra-Pro-Sleeves-Standard-Trading/dp/B08B9GVG36?tag=foilcase-20',
+      },
+      {
+        name:'Ultra Pro Top Loaders 25ct',
+        desc:'Rigid holders for baseball, football & basketball cards',
+        img:'https://m.media-amazon.com/images/I/71onuytTxmL._AC_SX466_.jpg',
+        url:'https://www.amazon.com/Ultra-Pro-Baseball-Football-Basketball/dp/B004KHV24W?tag=foilcase-20',
+      },
+      {
+        name:'Ultra Pro Semi-Rigid Sleeves',
+        desc:'200ct tall sleeves with 1/2" lip',
+        img:'https://m.media-amazon.com/images/I/61PHbiG9eUL._AC_SX679_.jpg',
+        url:'https://www.amazon.com/Ultra-Pro-Rigid-Sleeves-200ct/dp/B000ETP9RG?tag=foilcase-20',
+      },
+    ].map(item => (
+      <a
+        key={item.name}
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 12px',background:'#F7F7F7',borderRadius:'6px',border:'1px solid #EFEFEF',textDecoration:'none',transition:'all .15s'}}
+        onMouseOver={e=>{e.currentTarget.style.borderColor='#1B6FF0';e.currentTarget.style.background='#EBF2FF'}}
+        onMouseOut={e=>{e.currentTarget.style.borderColor='#EFEFEF';e.currentTarget.style.background='#F7F7F7'}}
+      >
+        <img src={item.img} alt={item.name} style={{width:'40px',height:'40px',objectFit:'contain',borderRadius:'4px',flexShrink:0,background:'#fff'}}/>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:'12px',fontWeight:700,color:'#0D0D0D',lineHeight:1.3,marginBottom:'2px'}}>{item.name}</div>
+          <div style={{fontSize:'10px',color:'#9A9A9A',lineHeight:1.3,marginBottom:'3px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{item.desc}</div>
+          <div style={{fontSize:'10px',fontWeight:600,color:'#1B6FF0'}}>View on Amazon →</div>
+        </div>
+      </a>
+    ))}
+  </div>
+  <div style={{fontSize:'10px',color:'#9A9A9A',marginTop:'8px',lineHeight:1.5}}>
+    As an Amazon Associate we earn from qualifying purchases.
+  </div>
+</div>
         </aside>
 
         {/* MAIN */}
