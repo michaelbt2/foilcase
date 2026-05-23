@@ -29,7 +29,7 @@ const footerLinks = [
     links: [
       { label: 'About Us', href: '/about' },
       { label: 'Community', href: '/community' },
-      { label: 'Contact', href: 'hello@foilcase.com' },
+      { label: 'Contact', href: 'mailto:hello@foilcase.com' },
       { label: 'Privacy Policy', href: '/privacy' },
       { label: 'Terms of Service', href: '/terms' },
     ],
@@ -84,7 +84,7 @@ export default function Footer() {
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:'24px',borderTop:'1px solid #EFEFEF',fontSize:'13px',color:'#9A9A9A',flexWrap:'wrap',gap:'12px'}}>
           <div>© 2026 foilcase. All rights reserved.</div>
           <div style={{display:'flex',gap:'16px'}}>
-            {[{label:'Privacy',href:'/privacy'},{label:'Terms',href:'/terms'},{label:'Contact',href:'#'}].map(link => (
+            {[{label:'Privacy',href:'/privacy'},{label:'Terms',href:'/terms'},{label:'Contact',href:'mailto:hello@foilcase.com'}].map(link => (
               <Link
                 key={link.label}
                 href={link.href}
