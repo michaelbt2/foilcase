@@ -21,7 +21,7 @@ export default function Home() {
   const [searchVal, setSearchVal] = useState('')
   const [showResults, setShowResults] = useState(false)
   const router = useRouter()
-
+const [showBeta, setShowBeta] = useState(false)
   const handleSearch = () => {
     if (searchVal.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchVal.trim())}`)
@@ -123,10 +123,17 @@ export default function Home() {
       {/* HERO */}
       <div className="hero">
         <div>
-          <div className="hero-eyebrow">
-            <span style={{width:6,height:6,borderRadius:'50%',background:'#1B6FF0',display:'inline-block'}}></span>
-            Now in public beta
-          </div>
+          <div
+  className="hero-eyebrow"
+  onClick={() => setShowBeta(true)}
+  style={{cursor:'pointer',transition:'all .15s'}}
+  onMouseOver={e=>{e.currentTarget.style.background='#E0ECFF';e.currentTarget.style.borderColor='#1B6FF0'}}
+  onMouseOut={e=>{e.currentTarget.style.background='';e.currentTarget.style.borderColor=''}}
+>
+  <span style={{width:6,height:6,borderRadius:'50%',background:'#1B6FF0',display:'inline-block'}}></span>
+  Now in public beta
+  <span style={{fontSize:'11px',fontWeight:600,color:'#1B6FF0',marginLeft:'6px',textDecoration:'underline'}}>Learn more</span>
+</div>
           <h1>The trading card vault <em>built for collectors</em></h1>
           <p className="hero-sub">Track your collection, discover every set, and trade with confidence. The definitive database for sports, gaming, and non-sport cards.</p>
           <div className="hero-actions">
@@ -423,6 +430,97 @@ export default function Home() {
 
       {/* FOOTER */}
 <Footer />
+
+{/* BETA MODAL */}
+{showBeta && (
+  <div
+    style={{position:'fixed',inset:0,background:'rgba(0,0,0,.5)',zIndex:500,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',backdropFilter:'blur(4px)',animation:'fadeIn .2s ease'}}
+    onClick={() => setShowBeta(false)}
+  >
+    <div
+      style={{background:'#fff',borderRadius:'16px',width:'100%',maxWidth:'480px',overflow:'hidden',boxShadow:'0 24px 64px rgba(0,0,0,.2)',animation:'scaleIn .2s ease'}}
+      onClick={e => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div style={{background:'#0D0D0D',padding:'28px 28px 24px',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse 400px 200px at 50% 100%,rgba(27,111,240,.3),transparent)'}}/>
+        <div style={{position:'relative',zIndex:1}}>
+          <div style={{display:'inline-flex',alignItems:'center',gap:'6px',background:'rgba(27,111,240,.2)',color:'#7EB6FF',fontSize:'11px',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',padding:'4px 10px',borderRadius:'100px',marginBottom:'12px'}}>
+            <span style={{width:5,height:5,borderRadius:'50%',background:'#7EB6FF',display:'inline-block'}}/>
+            Public Beta
+          </div>
+          <div style={{fontSize:'33px',fontWeight:800,color:'#fff',letterSpacing:'-.5px',lineHeight:1.15,marginBottom:'8px'}}>
+            We're live and getting<br/>better every week
+          </div>
+          <div style={{fontSize:'16px',color:'rgba(255,255,255,.8)',lineHeight:1.6}}>
+            Foilcase is fully functional and free to use. As an early user you're helping shape what it becomes.
+          </div>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{padding:'24px 28px'}}>
+
+        {/* What's working */}
+        <div style={{marginBottom:'20px'}}>
+          <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#555',marginBottom:'10px'}}>What's working now</div>
+          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+            {[
+              'Card vault — add, organize, and track your entire collection',
+              'Live eBay pricing — real sold comps and active listings',
+              'Public vaults — share your collection with the community',
+              'Community — follow collectors, search by player across vaults',
+              'Market — live listings and auctions across all sports & TCG',
+            ].map(item => (
+              <div key={item} style={{display:'flex',alignItems:'flex-start',gap:'8px',fontSize:'14px',color:'#0D0D0D',fontWeight:500}}>
+                <span style={{color:'#00A861',fontWeight:700,flexShrink:0,marginTop:'1px'}}>✓</span>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Coming soon */}
+        <div style={{marginBottom:'24px'}}>
+          <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#9A9A9A',marginBottom:'10px'}}>Coming soon</div>
+          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+            {[
+              'Want List — track cards you\'re looking for',
+              'CSV import — bulk upload your existing collection',
+              'Collection insights — charts, trends, and analytics',
+              'More sports and TCG support',
+            ].map(item => (
+              <div key={item} style={{display:'flex',alignItems:'flex-start',gap:'8px',fontSize:'14px',color:'#0D0D0D',fontWeight:500}}>
+                <span style={{color:'#1B6FF0',fontWeight:700,flexShrink:0,marginTop:'1px'}}>→</span>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{display:'flex',gap:'10px'}}>
+          <Link
+            href="/collection"
+            className="btn btn-primary"
+            style={{flex:1,justifyContent:'center',padding:'10px'}}
+            onClick={() => setShowBeta(false)}
+          >
+            <FontAwesomeIcon icon={faRocket}/>Start your vault free
+          </Link>
+          <button
+            onClick={() => setShowBeta(false)}
+            style={{padding:'10px 16px',borderRadius:'100px',border:'1.5px solid #D8D8D8',background:'#fff',fontSize:'13px',fontWeight:600,color:'#555',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s'}}
+            onMouseOver={e=>{e.currentTarget.style.borderColor='#0D0D0D';e.currentTarget.style.color='#0D0D0D'}}
+            onMouseOut={e=>{e.currentTarget.style.borderColor='#D8D8D8';e.currentTarget.style.color='#555'}}
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </>
   )
 }
