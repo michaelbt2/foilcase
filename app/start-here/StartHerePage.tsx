@@ -408,7 +408,7 @@ export default function StartHere() {
               <p className="sh-cta-sub">Free to start. No credit card required. Your collection deserves a proper home.</p>
               <div className="sh-cta-actions">
                 <Link href="/collection" className="btn btn-white" style={{padding:'12px 24px',fontSize:'15px',background:'#fff',color:'#0D0D0D'}}>
-                  <FontAwesomeIcon icon={faRocket}/>Start your vault free
+                  <FontAwesomeIcon icon={faRocket}/>Create your free vault
                 </Link>
                 <Link href="/community" className="btn btn-dim" style={{padding:'12px 24px',fontSize:'15px'}}>
                   <FontAwesomeIcon icon={faUsers}/>Browse collectors

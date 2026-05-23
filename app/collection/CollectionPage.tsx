@@ -997,7 +997,7 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
               <label style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'8px',borderRadius:'6px',background:'#fff',border:'1.5px solid #EFEFEF',color:'#0D0D0D',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
                 <FontAwesomeIcon icon={faUpload} style={{color:'#1B6FF0'}}/>
                 {uploadLoading ? 'Uploading...' : 'Upload Front'}
-                <input type="file" accept="image/jpeg,image/png,image/webp" style={{display:'none'}} onChange={handleImageUpload} disabled={uploadLoading}/>
+                <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style={{display:'none'}} onChange={handleImageUpload} disabled={uploadLoading}/>
               </label>
               {form.card_image_url && (
                 <button onClick={() => setForm(p=>({...p,card_image_url:''}))} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'4px',padding:'6px',borderRadius:'6px',border:'1.5px solid #FFBBB7',background:'#FDECEA',color:'#D93025',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
@@ -1016,7 +1016,7 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
               <label style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'8px',borderRadius:'6px',background:'#fff',border:'1.5px solid #EFEFEF',color:'#0D0D0D',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
                 <FontAwesomeIcon icon={faUpload} style={{color:'#1B6FF0'}}/>
                 {uploadBackLoading ? 'Uploading...' : 'Upload Back'}
-                <input type="file" accept="image/jpeg,image/png,image/webp" style={{display:'none'}} onChange={handleBackImageUpload} disabled={uploadBackLoading}/>
+                <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style={{display:'none'}} onChange={handleBackImageUpload} disabled={uploadBackLoading}/>
               </label>
               {form.card_image_back_url && (
                 <button onClick={() => setForm(p=>({...p,card_image_back_url:''}))} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'4px',padding:'6px',borderRadius:'6px',border:'1.5px solid #FFBBB7',background:'#FDECEA',color:'#D93025',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}>
