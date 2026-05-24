@@ -1,12 +1,18 @@
-'use client'
-import Nav from '../components/Nav'
-import Link from 'next/link'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import Footer from '../components/Footer'
+"use client";
+import Nav from "../components/Nav";
+import Link from "next/link";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Footer from "../components/Footer";
 import {
-  faLayerGroup, faChartLine, faUsers, faRocket,
-  faHeart, faStar, faTrophy, faArrowRight,
-} from '@fortawesome/free-solid-svg-icons'
+  faLayerGroup,
+  faChartLine,
+  faUsers,
+  faRocket,
+  faHeart,
+  faStar,
+  faTrophy,
+  faArrowRight,
+} from "@fortawesome/free-solid-svg-icons";
 
 export default function About() {
   return (
@@ -64,81 +70,142 @@ export default function About() {
       <div className="about-hero">
         <div className="about-hero-inner">
           <div className="about-eyebrow">
-            <FontAwesomeIcon icon={faHeart}/>Our Story
+            <FontAwesomeIcon icon={faHeart} />
+            Our Story
           </div>
-          <h1 className="about-hero-title">Built by collectors, <em>for collectors</em></h1>
+          <h1 className="about-hero-title">
+            Built by collectors, <em>for collectors</em>
+          </h1>
           <p className="about-hero-sub">
-            Foilcase was founded to give every collector — young and old — a better way to track, value, and share the cards they love most.
+            Foilcase was founded to give every collector — young and old — a
+            better way to track, value, and share the cards they love most.
           </p>
         </div>
       </div>
 
       {/* MISSION */}
-      <section className="section" style={{background:'#fff'}}>
+      <section className="section" style={{ background: "#fff" }}>
         <div className="section-inner">
           <div className="mission-card">
             <div className="mission-icon">
-              <FontAwesomeIcon icon={faRocket} style={{color:'#1B6FF0',fontSize:'24px'}}/>
+              <FontAwesomeIcon
+                icon={faRocket}
+                style={{ color: "#1B6FF0", fontSize: "24px" }}
+              />
             </div>
             <div>
               <div className="mission-title">Our Mission</div>
               <p className="mission-text">
-                The trading card hobby has exploded in recent years — but the tools available to collectors haven't kept up. Spreadsheets, sticky notes, and memory aren't good enough for collections that matter.
+                The trading card hobby has exploded in recent years — but the
+                tools available to collectors haven't kept up. Spreadsheets,
+                sticky notes, and memory aren't good enough for collections that
+                matter.
               </p>
-              <p className="mission-text" style={{marginTop:'16px'}}>
-                Foilcase was built to change that. We give collectors a beautiful, simple place to catalog their most prized cards, track real market values, understand their profit and loss when cards are sold, and show off their collections to the community. Whether you collect Pokémon, sports cards, or anything in between — your collection deserves a proper home.
+              <p className="mission-text" style={{ marginTop: "16px" }}>
+                Foilcase was built to change that. We give collectors a
+                beautiful, simple place to catalog their most prized cards,
+                track real market values, understand their profit and loss when
+                cards are sold, and show off their collections to the community.
+                Whether you collect Pokémon, sports cards, or anything in
+                between — your collection deserves a proper home.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="divider"/>
+      <div className="divider" />
 
       {/* VALUES */}
-      <section className="section" style={{background:'#fff'}}>
+      <section className="section" style={{ background: "#fff" }}>
         <div className="section-inner">
-          <div style={{textAlign:'center',marginBottom:'8px'}}>
-            <div style={{fontSize:'12px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#1B6FF0',marginBottom:'12px'}}>What we believe</div>
-            <h2 style={{fontSize:'clamp(28px,4vw,38px)',fontWeight:800,letterSpacing:'-1px',marginBottom:'16px'}}>Built around what matters to collectors</h2>
-            <p style={{fontSize:'16px',color:'#555',maxWidth:'520px',margin:'0 auto',lineHeight:1.65}}>Every decision we make starts with one question — does this make collecting more enjoyable?</p>
+          <div style={{ textAlign: "center", marginBottom: "8px" }}>
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: 700,
+                letterSpacing: ".1em",
+                textTransform: "uppercase",
+                color: "#1B6FF0",
+                marginBottom: "12px",
+              }}
+            >
+              What we believe
+            </div>
+            <h2
+              style={{
+                fontSize: "clamp(28px,4vw,38px)",
+                fontWeight: 800,
+                letterSpacing: "-1px",
+                marginBottom: "16px",
+              }}
+            >
+              Built around what matters to collectors
+            </h2>
+            <p
+              style={{
+                fontSize: "16px",
+                color: "#555",
+                maxWidth: "520px",
+                margin: "0 auto",
+                lineHeight: 1.65,
+              }}
+            >
+              Every decision we make starts with one question — does this make
+              collecting more enjoyable?
+            </p>
           </div>
           <div className="values-grid">
             {[
               {
-                icon: faLayerGroup, color:'#1B6FF0', bg:'#EBF2FF',
-                title:'Your collection, organized',
-                text:'Every card you own in one place. Search, filter, sort, and browse your vault the way you want. No more spreadsheets or guesswork.'
+                icon: faLayerGroup,
+                color: "#1B6FF0",
+                bg: "#EBF2FF",
+                title: "Your collection, organized",
+                text: "Every card you own in one place. Search, filter, sort, and browse your vault the way you want. No more spreadsheets or guesswork.",
               },
               {
-                icon: faChartLine, color:'#00A861', bg:'#E6F9F0',
-                title:'Real market data',
-                text:'Live eBay pricing so you always know what your cards are worth. Track value over time and understand your collection\'s true market position.'
+                icon: faChartLine,
+                color: "#00A861",
+                bg: "#E6F9F0",
+                title: "Real market data",
+                text: "Live eBay pricing so you always know what your cards are worth. Track value over time and understand your collection's true market position.",
               },
               {
-                icon: faUsers, color:'#7B4FCA', bg:'#F2ECFB',
-                title:'Community first',
-                text:'Collecting is better together. Follow other collectors, discover new vaults, and connect with people who share your passion for the hobby.'
+                icon: faUsers,
+                color: "#7B4FCA",
+                bg: "#F2ECFB",
+                title: "Community first",
+                text: "Collecting is better together. Follow other collectors, discover new vaults, and connect with people who share your passion for the hobby.",
               },
               {
-                icon: faStar, color:'#F5A623', bg:'#FEF9EC',
-                title:'Achievements that mean something',
-                text:'Level up as your collection grows. From Collector to Legend — your tier reflects your dedication to the hobby and unlocks community recognition.'
+                icon: faStar,
+                color: "#F5A623",
+                bg: "#FEF9EC",
+                title: "Achievements that mean something",
+                text: "Level up as your collection grows. From Collector to Legend — your tier reflects your dedication to the hobby and unlocks community recognition.",
               },
               {
-                icon: faTrophy, color:'#E8820C', bg:'#FEF3E2',
-                title:'P&L that\'s actually useful',
-                text:'Know exactly what you paid, what it\'s worth today, and what you made when you sell. Make smarter decisions about buying and selling.'
+                icon: faTrophy,
+                color: "#E8820C",
+                bg: "#FEF3E2",
+                title: "P&L that's actually useful",
+                text: "Know exactly what you paid, what it's worth today, and what you made when you sell. Make smarter decisions about buying and selling.",
               },
               {
-                icon: faHeart, color:'#D93025', bg:'#FDECEA',
-                title:'Free to start',
-                text:'We believe every collector deserves access to great tools regardless of the size of their collection or their budget. Start your vault free today.'
+                icon: faHeart,
+                color: "#D93025",
+                bg: "#FDECEA",
+                title: "Free to start",
+                text: "We believe every collector deserves access to great tools regardless of the size of their collection or their budget. Start your vault free today.",
               },
-            ].map(v => (
+            ].map((v) => (
               <div key={v.title} className="value-card">
-                <div className="value-icon" style={{background:v.bg}}>
-                  <FontAwesomeIcon icon={v.icon} style={{color:v.color,fontSize:'18px'}}/>
+                <div className="value-icon" style={{ background: v.bg }}>
+                  <FontAwesomeIcon
+                    icon={v.icon}
+                    style={{ color: v.color, fontSize: "18px" }}
+                  />
                 </div>
                 <div className="value-title">{v.title}</div>
                 <div className="value-text">{v.text}</div>
@@ -148,46 +215,95 @@ export default function About() {
         </div>
       </section>
 
-      <div className="divider"/>
+      <div className="divider" />
 
       {/* WHO IT'S FOR */}
-      <section className="section" style={{background:'#F7F7F7'}}>
+      <section className="section" style={{ background: "#F7F7F7" }}>
         <div className="section-inner">
-          <div style={{textAlign:'center',marginBottom:'8px'}}>
-            <div style={{fontSize:'12px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#1B6FF0',marginBottom:'12px'}}>Who it's for</div>
-            <h2 style={{fontSize:'clamp(28px,4vw,38px)',fontWeight:800,letterSpacing:'-1px',marginBottom:'16px'}}>Every kind of collector</h2>
-            <p style={{fontSize:'16px',color:'#555',maxWidth:'520px',margin:'0 auto',lineHeight:1.65}}>From kids opening their first pack to seasoned investors managing high-value portfolios.</p>
+          <div style={{ textAlign: "center", marginBottom: "8px" }}>
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: 700,
+                letterSpacing: ".1em",
+                textTransform: "uppercase",
+                color: "#1B6FF0",
+                marginBottom: "12px",
+              }}
+            >
+              Who it's for
+            </div>
+            <h2
+              style={{
+                fontSize: "clamp(28px,4vw,38px)",
+                fontWeight: 800,
+                letterSpacing: "-1px",
+                marginBottom: "16px",
+              }}
+            >
+              Every kind of collector
+            </h2>
+            <p
+              style={{
+                fontSize: "16px",
+                color: "#555",
+                maxWidth: "520px",
+                margin: "0 auto",
+                lineHeight: 1.65,
+              }}
+            >
+              From kids opening their first pack to seasoned investors managing
+              high-value portfolios.
+            </p>
           </div>
           <div className="who-grid">
             {[
               {
-                emoji:'🏈', bg:'#EBF2FF', color:'#1B6FF0',
-                title:'Sports card collectors',
-                text:'Football, basketball, baseball, hockey, soccer — track every rookie card, auto, and numbered parallel across every sport you collect. Know what every card is worth today.'
+                emoji: "🏈",
+                bg: "#EBF2FF",
+                color: "#1B6FF0",
+                title: "Sports card collectors",
+                text: "Football, basketball, baseball, hockey, soccer — track every rookie card, auto, and numbered parallel across every sport you collect. Know what every card is worth today.",
               },
               {
-                emoji:'🎮', bg:'#FDECEA', color:'#D93025',
-                title:'TCG & Gaming collectors',
-                text:'Pokémon, Magic the Gathering, Lorcana, and beyond. Your TCG collection deserves the same care as any sports collection. Track every holo, PSA slab, and chase card.'
+                emoji: "🎮",
+                bg: "#FDECEA",
+                color: "#D93025",
+                title: "TCG & Gaming collectors",
+                text: "Pokémon, Magic the Gathering, Lorcana, and beyond. Your TCG collection deserves the same care as any sports collection. Track every holo, PSA slab, and chase card.",
               },
               {
-                emoji:'📈', bg:'#E6F9F0', color:'#00A861',
-                title:'Card investors',
-                text:'Buy low, sell high — and actually know if you did. Foilcase tracks your cost basis, current market value, and realized gains so your collection works like a portfolio.'
+                emoji: "📈",
+                bg: "#E6F9F0",
+                color: "#00A861",
+                title: "Card investors",
+                text: "Buy low, sell high — and actually know if you did. Foilcase tracks your cost basis, current market value, and realized gains so your collection works like a portfolio.",
               },
               {
-                emoji:'🧒', bg:'#FEF9EC', color:'#F5A623',
-                title:'New collectors',
-                text:'Just getting started? Foilcase is the perfect companion from day one. Build your vault, learn what your cards are worth, and connect with a community that loves the hobby as much as you do.'
+                emoji: "🧒",
+                bg: "#FEF9EC",
+                color: "#F5A623",
+                title: "New collectors",
+                text: "Just getting started? Foilcase is the perfect companion from day one. Build your vault, learn what your cards are worth, and connect with a community that loves the hobby as much as you do.",
               },
-            ].map(w => (
-              <div key={w.title} className="who-card" style={{background:'#fff',border:'1px solid #EFEFEF',boxShadow:'0 1px 3px rgba(0,0,0,.06)'}}>
-                <div className="who-icon" style={{background:w.bg}}>
+            ].map((w) => (
+              <div
+                key={w.title}
+                className="who-card"
+                style={{
+                  background: "#fff",
+                  border: "1px solid #EFEFEF",
+                  boxShadow: "0 1px 3px rgba(0,0,0,.06)",
+                }}
+              >
+                <div className="who-icon" style={{ background: w.bg }}>
                   <span>{w.emoji}</span>
                 </div>
                 <div>
                   <div className="who-title">{w.title}</div>
-                  <div className="who-text" style={{color:'#555'}}>{w.text}</div>
+                  <div className="who-text" style={{ color: "#555" }}>
+                    {w.text}
+                  </div>
                 </div>
               </div>
             ))}
@@ -195,20 +311,35 @@ export default function About() {
         </div>
       </section>
 
-      <div className="divider"/>
+      <div className="divider" />
 
       {/* CTA */}
-      <section className="section" style={{background:'#F7F7F7'}}>
+      <section className="section" style={{ background: "#F7F7F7" }}>
         <div className="section-inner">
           <div className="cta-section">
-            <h2 className="cta-title">Ready to build your <em>dream vault?</em></h2>
-            <p className="cta-sub">Join collectors tracking their most prized cards. Start free — no credit card required.</p>
+            <h2 className="cta-title">
+              Ready to build your <em>dream vault?</em>
+            </h2>
+            <p className="cta-sub">
+              Join collectors tracking their most prized cards. Start free — no
+              credit card required.
+            </p>
             <div className="cta-actions">
-              <Link className="btn btn-white" style={{padding:'12px 24px',fontSize:'15px'}} href="/collection">
-                <FontAwesomeIcon icon={faRocket}/>Start your vault free
+              <Link
+                className="btn btn-white"
+                style={{ padding: "12px 24px", fontSize: "15px" }}
+                href="/collection"
+              >
+                <FontAwesomeIcon icon={faRocket} />
+                Start your vault free
               </Link>
-              <Link className="btn btn-dim" style={{padding:'12px 24px',fontSize:'15px'}} href="/community">
-                <FontAwesomeIcon icon={faUsers}/>Browse collectors
+              <Link
+                className="btn btn-dim"
+                style={{ padding: "12px 24px", fontSize: "15px" }}
+                href="/community"
+              >
+                <FontAwesomeIcon icon={faUsers} />
+                Browse collectors
               </Link>
             </div>
           </div>
@@ -217,5 +348,5 @@ export default function About() {
 
       <Footer />
     </>
-  )
+  );
 }
