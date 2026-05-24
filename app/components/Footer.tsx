@@ -37,6 +37,7 @@ const footerLinks = [
       { label: 'DMCA Policy', href: '/dmca' },
 { label: 'Affiliate Disclosure', href: '/affiliate-disclosure' },
 { label: 'FAQ', href: '/faq' },
+{ label: 'Changelog', href: '/changelog' },
     ],
   },
 ]
