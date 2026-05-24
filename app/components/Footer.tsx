@@ -33,6 +33,9 @@ const footerLinks = [
       { label: 'Privacy Policy', href: '/privacy' },
       { label: 'Terms of Service', href: '/terms' },
       { label: 'Cookie Policy', href: '/cookies' },
+      { label: 'Acceptable Use', href: '/acceptable-use' },
+      { label: 'DMCA Policy', href: '/dmca' },
+{ label: 'Affiliate Disclosure', href: '/affiliate-disclosure' },
     ],
   },
 ]
