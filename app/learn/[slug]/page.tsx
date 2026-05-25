@@ -9,6 +9,9 @@ import HowToSellCardsOnEbay from '../articles/how-to-sell-trading-cards-on-ebay'
 import CharizardCardValueGuide from '../articles/charizard-card-value-guide'
 import PatrickMahomesRookieCardGuide from '../articles/patrick-mahomes-rookie-card-guide'
 import PaniniPrizmCollectorsGuide from '../articles/panini-prizm-collectors-guide'
+import WhatIsCardGrading from '../articles/what-is-card-grading'
+import HowToStoreCards from '../articles/how-to-store-trading-cards'
+import TradingCardInvestmentGuide from '../articles/trading-card-investment-guide'
 
 const articles: Record<string, any> = {
   'how-to-value-your-trading-card-collection': {
@@ -83,6 +86,33 @@ const articles: Record<string, any> = {
     slug: 'panini-prizm-collectors-guide',
     component: PaniniPrizmCollectorsGuide,
   },
+  'what-is-card-grading': {
+  title: 'What is Card Grading? Complete Beginner\'s Guide',
+  description: 'Everything you need to know about professional card grading — what it is, how it works, which company to choose, and whether it\'s worth it.',
+  category: 'Grading',
+  readTime: '10 min',
+  date: 'May 2026',
+  slug: 'what-is-card-grading',
+  component: WhatIsCardGrading,
+},
+'how-to-store-trading-cards': {
+  title: 'How to Store Trading Cards — Complete Guide',
+  description: 'The complete guide to storing trading cards properly — from penny sleeves to graded slabs, environmental conditions, and common mistakes to avoid.',
+  category: 'Getting Started',
+  readTime: '9 min',
+  date: 'May 2026',
+  slug: 'how-to-store-trading-cards',
+  component: HowToStoreCards,
+},
+'trading-card-investment-guide': {
+  title: 'Trading Card Investment Guide — Is it Worth It?',
+  description: 'A comprehensive guide to investing in trading cards — what makes a good investment, strategies, risks, and how to research the market.',
+  category: 'Valuing Cards',
+  readTime: '12 min',
+  date: 'May 2026',
+  slug: 'trading-card-investment-guide',
+  component: TradingCardInvestmentGuide,
+},
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
