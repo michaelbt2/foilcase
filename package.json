@@ -18,6 +18,7 @@
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
     "@next/mdx": "^16.2.6",
+    "@sentry/nextjs": "^10.53.1",
     "@supabase/supabase-js": "^2.105.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",

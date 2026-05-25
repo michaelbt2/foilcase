@@ -84,7 +84,6 @@ export default function ArticleLayout({ children, meta }: ArticleLayoutProps) {
         <div className="article-body">
           {children}
         </div>
-        <ArticleCTA />
       </div>
 
       <Footer />

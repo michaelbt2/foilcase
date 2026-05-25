@@ -1,5 +1,6 @@
 import ArticleCTA from '../components/ArticleCTA'
 import Link from 'next/link'
+import ArticleProducts from '../components/ArticleProducts'
 
 export default function PSAVsBGSVsSGC() {
   return (
@@ -226,7 +227,11 @@ export default function PSAVsBGSVsSGC() {
           </div>
         ))}
       </div>
-
+<ArticleProducts products={[
+  { name:'Cardboard Gold Card Saver I 200ct', desc:'Semi-rigid holders required for PSA and BGS submissions', img:'https://m.media-amazon.com/images/I/61+9PJNvZ6L._AC_SX466_.jpg', url:'https://www.amazon.com/Cardboard-Gold-Saver-1-200-Count/dp/B00THQ4O1Y?tag=foilcase-20' },
+  { name:'Ultra Pro Semi-Rigid Sleeves 200ct', desc:'Preferred by grading companies for card submissions', img:'https://m.media-amazon.com/images/I/81+U8xCvsjL._AC_SX679_.jpg', url:'https://www.amazon.com/Ultra-Pro-Rigid-Sleeves-200ct/dp/B000ETP9RG?tag=foilcase-20' },
+  { name:'6x4x1" Corrugated Shipping Boxes', desc:'Perfect size for shipping cards to grading companies', img:'https://m.media-amazon.com/images/I/610WxTD+eJL._AC_SX679_.jpg', url:'https://www.amazon.com/HORLIMER-Shipping-Corrugated-Cardboard-Literature/dp/B0CYCF7FGH?tag=foilcase-20' },
+]}/>
       <ArticleCTA />
     </>
   )

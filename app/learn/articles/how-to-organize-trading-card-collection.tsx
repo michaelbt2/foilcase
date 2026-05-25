@@ -1,5 +1,6 @@
 import ArticleCTA from '../components/ArticleCTA'
 import Link from 'next/link'
+import ArticleProducts from '../components/ArticleProducts'
 
 export default function HowToOrganizeCards() {
   return (
@@ -166,7 +167,11 @@ export default function HowToOrganizeCards() {
           </div>
         ))}
       </div>
-
+<ArticleProducts products={[
+  { name:'Vault 9 Pocket Zip Binder', desc:'Premium zip binder for safe card storage and transport', img:'https://m.media-amazon.com/images/I/81DWixeO-fL._AC_SX679_.jpg', url:'https://www.amazon.com/Vault-Binder-Trading-Loading-Pokemon/dp/B071V91LGC?tag=foilcase-20' },
+  { name:'Ultra Pro 9-Pocket Pages 100ct', desc:'Side-loading pages — holds 900 cards per pack', img:'https://m.media-amazon.com/images/I/81gbMDDtqEL._AC_SX679_.jpg', url:'https://www.amazon.com/Ultra-Pro-9-Pocket-Trading-Pages/dp/B00095M5DQ?tag=foilcase-20' },
+  { name:'BCW 800ct Storage Box', desc:'Sturdy cardboard box for bulk card storage', img:'https://m.media-amazon.com/images/I/61NmEl5iX-L._AC_SX679_PIbundle-10,TopRight,0,0_SH20_.jpg', url:'https://www.amazon.com/BCW-800-Card-Storage-Box/dp/B09JHGXCWH?tag=foilcase-20' },
+]}/>
       <ArticleCTA />
     </>
   )

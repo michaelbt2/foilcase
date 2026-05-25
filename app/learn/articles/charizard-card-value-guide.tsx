@@ -1,5 +1,6 @@
 import ArticleCTA from '../components/ArticleCTA'
 import Link from 'next/link'
+import ArticleProducts from '../components/ArticleProducts'
 
 export default function CharizardCardValueGuide() {
   return (
@@ -164,7 +165,11 @@ export default function CharizardCardValueGuide() {
           </div>
         ))}
       </div>
-
+<ArticleProducts products={[
+  { name:'ONE-Touch Magnetic Card Holder', desc:'Premium protection for your most valuable Charizard cards', img:'https://m.media-amazon.com/images/I/61Vzn+tVnVL._AC_SX466_.jpg', url:'https://www.amazon.com/Accessories-Ultra-Pro-One-Touch-Magnetic/dp/B07PJ1L5G5?tag=foilcase-20' },
+  { name:'Ultra Pro Penny Sleeves 100ct', desc:'Essential first protection for every Pokémon card', img:'https://m.media-amazon.com/images/I/61MeeY1RyjL._AC_SX679_.jpg', url:'https://www.amazon.com/Ultra-Pro-Sleeves-Standard-Trading/dp/B08B9GVG36?tag=foilcase-20' },
+  { name:'Cardboard Gold Card Saver I 200ct', desc:'Preferred by PSA for grading submissions', img:'https://m.media-amazon.com/images/I/61+9PJNvZ6L._AC_SX466_.jpg', url:'https://www.amazon.com/Cardboard-Gold-Saver-1-200-Count/dp/B00THQ4O1Y?tag=foilcase-20' },
+]}/>
       <ArticleCTA />
     </>
   )

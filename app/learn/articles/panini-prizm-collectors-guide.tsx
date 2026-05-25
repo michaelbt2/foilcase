@@ -1,5 +1,6 @@
 import ArticleCTA from '../components/ArticleCTA'
 import Link from 'next/link'
+import ArticleProducts from '../components/ArticleProducts'
 
 export default function PaniniPrizmCollectorsGuide() {
   return (
@@ -177,7 +178,11 @@ export default function PaniniPrizmCollectorsGuide() {
           </div>
         ))}
       </div>
-
+<ArticleProducts products={[
+  { name:'Ultra Pro Penny Sleeves 100ct', desc:'Essential protection for every Prizm card you own', img:'https://m.media-amazon.com/images/I/61MeeY1RyjL._AC_SX679_.jpg', url:'https://www.amazon.com/Ultra-Pro-Sleeves-Standard-Trading/dp/B08B9GVG36?tag=foilcase-20' },
+  { name:'Ultra Pro Top Loaders 25ct', desc:'Rigid protection for base and parallel Prizm cards', img:'https://m.media-amazon.com/images/I/71onuytTxmL._AC_SX466_.jpg', url:'https://www.amazon.com/Ultra-Pro-Baseball-Football-Basketball/dp/B004KHV24W?tag=foilcase-20' },
+  { name:'Vault 9 Pocket Zip Binder', desc:'Organize your entire Prizm collection in one binder', img:'https://m.media-amazon.com/images/I/81DWixeO-fL._AC_SX679_.jpg', url:'https://www.amazon.com/Vault-Binder-Trading-Loading-Pokemon/dp/B071V91LGC?tag=foilcase-20' },
+]}/>
       <ArticleCTA />
     </>
   )

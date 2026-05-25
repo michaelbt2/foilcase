@@ -1,5 +1,6 @@
 import ArticleCTA from '../components/ArticleCTA'
 import Link from 'next/link'
+import ArticleProducts from '../components/ArticleProducts'
 
 export default function WhatIsARookieCard() {
   return (
@@ -138,7 +139,11 @@ export default function WhatIsARookieCard() {
           </div>
         ))}
       </div>
-
+<ArticleProducts products={[
+  { name:'ONE-Touch Magnetic Card Holder', desc:'Premium protection for your most valuable rookie cards', img:'https://m.media-amazon.com/images/I/61Vzn+tVnVL._AC_SX466_.jpg', url:'https://www.amazon.com/Accessories-Ultra-Pro-One-Touch-Magnetic/dp/B07PJ1L5G5?tag=foilcase-20' },
+  { name:'Ultra Pro Top Loaders 25ct', desc:'Rigid protection for rookie cards in your collection', img:'https://m.media-amazon.com/images/I/71onuytTxmL._AC_SX466_.jpg', url:'https://www.amazon.com/Ultra-Pro-Baseball-Football-Basketball/dp/B004KHV24W?tag=foilcase-20' },
+  { name:'Ultra Pro Penny Sleeves 100ct', desc:'First line of defense for every card you own', img:'https://m.media-amazon.com/images/I/61MeeY1RyjL._AC_SX679_.jpg', url:'https://www.amazon.com/Ultra-Pro-Sleeves-Standard-Trading/dp/B08B9GVG36?tag=foilcase-20' },
+]}/>
       <ArticleCTA />
     </>
   )

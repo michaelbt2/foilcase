@@ -1,5 +1,6 @@
 import ArticleCTA from '../components/ArticleCTA'
 import Link from 'next/link'
+import ArticleProducts from '../components/ArticleProducts'
 
 export default function PatrickMahomesRookieCardGuide() {
   return (
@@ -158,7 +159,11 @@ export default function PatrickMahomesRookieCardGuide() {
           </div>
         ))}
       </div>
-
+<ArticleProducts products={[
+  { name:'ONE-Touch Magnetic Card Holder', desc:'Premium protection for your Mahomes rookie cards', img:'https://m.media-amazon.com/images/I/61Vzn+tVnVL._AC_SX466_.jpg', url:'https://www.amazon.com/Accessories-Ultra-Pro-One-Touch-Magnetic/dp/B07PJ1L5G5?tag=foilcase-20' },
+  { name:'Ultra Pro Top Loaders 25ct', desc:'Rigid protection for valuable sports cards', img:'https://m.media-amazon.com/images/I/71onuytTxmL._AC_SX466_.jpg', url:'https://www.amazon.com/Ultra-Pro-Baseball-Football-Basketball/dp/B004KHV24W?tag=foilcase-20' },
+  { name:'Cardboard Gold Card Saver I 200ct', desc:'Required for PSA and BGS grading submissions', img:'https://m.media-amazon.com/images/I/61+9PJNvZ6L._AC_SX466_.jpg', url:'https://www.amazon.com/Cardboard-Gold-Saver-1-200-Count/dp/B00THQ4O1Y?tag=foilcase-20' },
+]}/>
       <ArticleCTA />
     </>
   )

@@ -1,5 +1,6 @@
 import ArticleCTA from '../components/ArticleCTA'
 import Link from 'next/link'
+import ArticleProducts from '../components/ArticleProducts'
 
 export default function HowToSellCardsOnEbay() {
   return (
@@ -199,7 +200,11 @@ export default function HowToSellCardsOnEbay() {
           </div>
         ))}
       </div>
-
+<ArticleProducts products={[
+  { name:'Bubble Mailers — Padded Envelopes', desc:'Waterproof padded mailers for safely shipping cards', img:'https://m.media-amazon.com/images/I/71mMrT6JcdL._AC_SX466_.jpg', url:'https://www.amazon.com/packbabol-Envelopes-Adhesive-Waterproof-Packaging/dp/B0BXDB22ZS?tag=foilcase-20' },
+  { name:'6x4x1" Corrugated Shipping Boxes', desc:'Perfect size for shipping graded slabs and top loaders', img:'https://m.media-amazon.com/images/I/610WxTD+eJL._AC_SX679_.jpg', url:'https://www.amazon.com/HORLIMER-Shipping-Corrugated-Cardboard-Literature/dp/B0CYCF7FGH?tag=foilcase-20' },
+  { name:'Do Not Bend Self-Inking Stamp', desc:'Protect your card shipments from postal damage', img:'https://m.media-amazon.com/images/I/716dsQ8G5xL._AC_SX679_.jpg', url:'https://www.amazon.com/Bend-Self-Inking-Rubber-Stamp/dp/B003KUWOE2?tag=foilcase-20' },
+]}/>
       <ArticleCTA />
     </>
   )
