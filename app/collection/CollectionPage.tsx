@@ -12,7 +12,7 @@ import {
   faRotateLeft, faShield, faRightToBracket, faUserPlus, faFootball, faBaseball, faUpload,
   faBasketball, faHockeyPuck, faFutbol, faGamepad, faCheck, faFlagCheckered, faChevronLeft, faChevronRight,
   faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft, faGlobe,
-  faLock, faGear, faArrowUpRightFromSquare,
+  faLock, faGear, faArrowUpRightFromSquare,faStar,
 } from '@fortawesome/free-solid-svg-icons'
 
 const sportEmoji: Record<string,string> = {
@@ -94,9 +94,6 @@ export default function Collection() {
   const [newFolderName, setNewFolderName]   = useState('')
   const [expandedFilters, setExpandedFilters] = useState<string[]>(['sport'])
   const [selectedCard, setSelectedCard] = useState<Card|null>(null)
-  useEffect(() => {
-  if (selectedCard) setImageTab('front')
-}, [selectedCard?.id])
   const [uploadLoading, setUploadLoading] = useState(false)
   const [isPublic, setIsPublic]         = useState(false)
   const [vaultUsername, setVaultUsername] = useState('')
@@ -108,16 +105,25 @@ export default function Collection() {
   const [onboardingError, setOnboardingError]     = useState('')
   const [onboardingSaving, setOnboardingSaving]   = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const CARDS_PER_PAGE = 24
-const [form, setForm] = useState({
-  player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
-  folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'', ebay_listing_url:'', card_image_back_url:'', sold_price:''
-})
+  const [form, setForm] = useState({
+    player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'',
+    folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'', ebay_listing_url:'', card_image_back_url:'', sold_price:''
+  })
   const [formAttrs, setFormAttrs] = useState<string[]>([])
-const [imageTab, setImageTab] = useState<'front'|'back'>('front')
-const [uploadBackLoading, setUploadBackLoading] = useState(false)
+  const [imageTab, setImageTab] = useState<'front'|'back'>('front')
+  const [uploadBackLoading, setUploadBackLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<'vault'|'wants'>('vault')
+  const [wants, setWants] = useState<any[]>([])
+  const [wantsLoading, setWantsLoading] = useState(false)
+
+  const CARDS_PER_PAGE = 24
+
   const toggleFilterSection = (key: string) =>
     setExpandedFilters(prev => prev.includes(key) ? prev.filter(k=>k!==key) : [...prev,key])
+
+  useEffect(() => {
+    if (selectedCard) setImageTab('front')
+  }, [selectedCard?.id])
 
   useEffect(() => {
     if (isLoaded && user) loadData()
@@ -126,6 +132,10 @@ const [uploadBackLoading, setUploadBackLoading] = useState(false)
   useEffect(() => {
     setCurrentPage(1)
   }, [filters, searchVal, activeFolder, sortVal])
+
+  useEffect(() => {
+    if (activeTab === 'wants' && user) loadWants()
+  }, [activeTab, user])
 
   const loadData = async () => {
     if (!user) return
@@ -137,11 +147,9 @@ const [uploadBackLoading, setUploadBackLoading] = useState(false)
     ])
     setCards(cardsData || [])
     setFolders(foldersData || [])
-
     if (profileData) {
       setIsPublic(profileData.is_public || false)
       setVaultUsername(profileData.username || '')
-      // Show onboarding if profile exists but no username set
       if (!profileData.username) {
         const emailPrefix = user.emailAddresses?.[0]?.emailAddress?.split('@')[0] || ''
         const suggested = emailPrefix.toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,20)
@@ -149,7 +157,6 @@ const [uploadBackLoading, setUploadBackLoading] = useState(false)
         setShowOnboarding(true)
       }
     } else {
-      // First visit — auto-create profile
       const emailPrefix = user.emailAddresses?.[0]?.emailAddress?.split('@')[0] || ''
       const suggested = emailPrefix.toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,20)
       const displayName = user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : ''
@@ -163,8 +170,20 @@ const [uploadBackLoading, setUploadBackLoading] = useState(false)
       setSuggestedUsername(suggested)
       setShowOnboarding(true)
     }
-
     setLoading(false)
+  }
+
+  const loadWants = async () => {
+    if (!user) return
+    setWantsLoading(true)
+    const { data } = await supabase
+      .from('wants')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'wanted')
+      .order('created_at', { ascending: false })
+    setWants(data || [])
+    setWantsLoading(false)
   }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
@@ -223,25 +242,27 @@ const [uploadBackLoading, setUploadBackLoading] = useState(false)
       setUploadLoading(false)
     }
   }
-const handleBackImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0]
-  if (!file || !user) return
-  if (file.size > 5 * 1024 * 1024) { showToast('⚠️ Image must be under 5MB'); return }
-  setUploadBackLoading(true)
-  try {
-    const ext = file.name.split('.').pop()
-    const fileName = `${user.id}/back-${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('card-images').upload(fileName, file, { cacheControl: '3600', upsert: false })
-    if (error) { showToast('❌ Upload failed: ' + error.message); return }
-    const { data } = supabase.storage.from('card-images').getPublicUrl(fileName)
-    setForm(p => ({...p, card_image_back_url: data.publicUrl}))
-    showToast('✅ Back image uploaded!')
-  } catch (err) {
-    showToast('❌ Upload failed. Please try again.')
-  } finally {
-    setUploadBackLoading(false)
+
+  const handleBackImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    if (file.size > 5 * 1024 * 1024) { showToast('⚠️ Image must be under 5MB'); return }
+    setUploadBackLoading(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const fileName = `${user.id}/back-${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('card-images').upload(fileName, file, { cacheControl: '3600', upsert: false })
+      if (error) { showToast('❌ Upload failed: ' + error.message); return }
+      const { data } = supabase.storage.from('card-images').getPublicUrl(fileName)
+      setForm(p => ({...p, card_image_back_url: data.publicUrl}))
+      showToast('✅ Back image uploaded!')
+    } catch (err) {
+      showToast('❌ Upload failed. Please try again.')
+    } finally {
+      setUploadBackLoading(false)
+    }
   }
-}
+
   const filtered = cards.filter(c => {
     if (searchVal && !['player','set_name','year','brand','cardnum'].some(k => String(c[k as keyof Card]).toLowerCase().includes(searchVal.toLowerCase()))) return false
     if (filters.sport !== 'all' && !c.sport.startsWith(filters.sport)) return false
@@ -264,8 +285,8 @@ const handleBackImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => 
     return 0
   })
 
-  const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE)
-  const paginated = filtered.slice((currentPage - 1) * CARDS_PER_PAGE, currentPage * CARDS_PER_PAGE)
+  const totalPages  = Math.ceil(filtered.length / CARDS_PER_PAGE)
+  const paginated   = filtered.slice((currentPage - 1) * CARDS_PER_PAGE, currentPage * CARDS_PER_PAGE)
   const hasActiveFilters = filters.sport !== 'all' || filters.grading !== 'all' || filters.status !== 'all' || filters.date !== 'all'
   const activecards = cards.filter(c => c.status !== 'sold')
   const totalCards  = activecards.reduce((s,c) => s+(c.qty||1), 0)
@@ -279,7 +300,7 @@ const handleBackImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => 
 
   const openAdd = () => {
     setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'', ebay_listing_url:'', card_image_back_url:'', sold_price:'' })
-setImageTab('front')
+    setImageTab('front')
     setFormAttrs([])
     setSelectedGrader('Raw')
     setSelectedScore('')
@@ -292,7 +313,7 @@ setImageTab('front')
     if (!c) return
     setEditingId(id)
     setForm({ player:c.player, year:c.year, brand:c.brand, set_name:c.set_name, sport:c.sport, cardnum:c.cardnum, folder_id:c.folder_id||'', qty:String(c.qty||1), condition:c.condition, cost:String(c.cost||''), value:String(c.value||''), notes:c.notes||'', card_image_url:c.card_image_url||'', print_run:c.print_run||'', ebay_listing_url:c.ebay_listing_url||'', card_image_back_url:c.card_image_back_url||'', sold_price:String(c.sold_price||'') })
-setImageTab('front')
+    setImageTab('front')
     setFormAttrs(c.attrs||[])
     setSelectedGrader(c.grader||'Raw')
     setSelectedScore(c.grade||'')
@@ -322,12 +343,12 @@ setImageTab('front')
       qty:parseInt(form.qty)||1, condition:form.condition,
       cost:parseFloat(form.cost)||0, value:parseFloat(form.value)||0,
       attrs:formAttrs, notes:form.notes,
-img: sportEmoji[form.sport]||'🃏',
-card_image_url: form.card_image_url || null,
-card_image_back_url: form.card_image_back_url || null,
-print_run: form.print_run || null,
-ebay_listing_url: form.ebay_listing_url || null,
-sold_price: parseFloat(form.sold_price)||0,
+      img: sportEmoji[form.sport]||'🃏',
+      card_image_url: form.card_image_url || null,
+      card_image_back_url: form.card_image_back_url || null,
+      print_run: form.print_run || null,
+      ebay_listing_url: form.ebay_listing_url || null,
+      sold_price: parseFloat(form.sold_price)||0,
     }
     if (editingId) {
       const { error } = await supabase.from('cards').update(card).eq('id', editingId)
@@ -383,7 +404,7 @@ sold_price: parseFloat(form.sold_price)||0,
     : ['10','9','8','7','6','5','4','3','2','1','A']
 
   const statusMap: Record<string,string> = { have:'status-have', sale:'status-sale', trade:'status-trade', sold:'status-sold' }
-const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:'For Trade', sold:'Sold' }
+  const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:'For Trade', sold:'Sold' }
 
   const FilterCheckbox = ({ value, label, icon, filterKey, count }: { value:string, label:string, icon?:any, filterKey:keyof typeof filters, count?:number }) => {
     const isActive = filters[filterKey] === value
@@ -610,14 +631,34 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
             <a href="/">Home</a><span>›</span>
             <strong style={{color:'#0D0D0D'}}>My Vault</strong>
           </div>
-          <div style={{display:'flex',gap:'8px'}}>
-            <button className="btn btn-sm" style={{background:'#F7F7F7',color:'#0D0D0D',border:'1.5px solid #D8D8D8',display:'inline-flex',alignItems:'center',gap:'6px'}} onClick={() => setShowFolder(true)}>
-              <FontAwesomeIcon icon={faPlus} style={{color:'#9A9A9A'}}/>New Folder
-            </button>
-            <button className="btn btn-primary" onClick={openAdd}>
-              <FontAwesomeIcon icon={faPlus}/>Add Card
-            </button>
-          </div>
+          <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+  {/* Vault / Want List toggle */}
+  <div style={{display:'flex',gap:'4px',background:'#F7F7F7',borderRadius:'100px',padding:'3px'}}>
+    <button
+      onClick={() => setActiveTab('vault')}
+      style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'6px 14px',borderRadius:'100px',border:'none',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s',background:activeTab==='vault'?'#fff':'transparent',color:activeTab==='vault'?'#0D0D0D':'#9A9A9A',boxShadow:activeTab==='vault'?'0 1px 3px rgba(0,0,0,.1)':'none'}}
+    >
+      <FontAwesomeIcon icon={faLayerGroup} style={{fontSize:'11px'}}/>
+      My Vault
+      <span style={{fontSize:'11px',fontWeight:700,padding:'1px 6px',borderRadius:'100px',background:activeTab==='vault'?'#EBF2FF':'#EFEFEF',color:activeTab==='vault'?'#1B6FF0':'#9A9A9A'}}>{totalCards}</span>
+    </button>
+    <button
+      onClick={() => setActiveTab('wants')}
+      style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'6px 14px',borderRadius:'100px',border:'none',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s',background:activeTab==='wants'?'#fff':'transparent',color:activeTab==='wants'?'#0D0D0D':'#9A9A9A',boxShadow:activeTab==='wants'?'0 1px 3px rgba(0,0,0,.1)':'none'}}
+    >
+      <FontAwesomeIcon icon={faStar} style={{fontSize:'11px',color:activeTab==='wants'?'#F5A623':'#9A9A9A'}}/>
+      Want List
+      <span style={{fontSize:'11px',fontWeight:700,padding:'1px 6px',borderRadius:'100px',background:activeTab==='wants'?'#FEF3E2':'#EFEFEF',color:activeTab==='wants'?'#E8820C':'#9A9A9A'}}>{wants.length}</span>
+    </button>
+  </div>
+
+  <button className="btn btn-sm" style={{background:'#F7F7F7',color:'#0D0D0D',border:'1.5px solid #D8D8D8',display:'inline-flex',alignItems:'center',gap:'6px'}} onClick={() => setShowFolder(true)}>
+    <FontAwesomeIcon icon={faPlus} style={{color:'#9A9A9A'}}/>New Folder
+  </button>
+  <button className="btn btn-primary" onClick={openAdd}>
+    <FontAwesomeIcon icon={faPlus}/>Add Card
+  </button>
+</div>
         </div>
       </div>
 
@@ -813,179 +854,277 @@ const statusLbl: Record<string,string> = { have:'Owned', sale:'For Sale', trade:
               <div className="dash-delta" style={{color:'#9A9A9A'}}>{new Set(activecards.map(c=>c.brand).filter(Boolean)).size} brands</div>
             </div>
           </div>
-
-          {/* TOOLBAR */}
-          <div className="toolbar">
-            <div className="search-box">
-              <FontAwesomeIcon icon={faMagnifyingGlass} style={{color:'#9A9A9A',width:'14px'}}/>
-              <input type="text" placeholder="Search your vault..." value={searchVal} onChange={e=>setSearchVal(e.target.value)}/>
-            </div>
-            <select className="sort-select" value={sortVal} onChange={e=>setSortVal(e.target.value)}>
-              <option value="date-desc">Newest Added</option>
-              <option value="date-asc">Oldest Added</option>
-              <option value="value-desc">Highest Value</option>
-              <option value="value-asc">Lowest Value</option>
-              <option value="alpha">A–Z Player</option>
-              <option value="gain">Best Gain</option>
-            </select>
-            <div className="view-toggle">
-              <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}><FontAwesomeIcon icon={faGrip}/></button>
-              <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}><FontAwesomeIcon icon={faBars}/></button>
-            </div>
-            <div className="results-lbl">{filtered.length} card{filtered.length!==1?'s':''}</div>
-            {selected.size > 0 && (
-              <div className="bulk-bar">
-                {selected.size} selected
-                <button className="btn btn-sm" style={{background:'#F7F7F7',color:'#555',border:'1px solid #EFEFEF'}} onClick={async()=>{await Promise.all([...selected].map(id=>markSold(id)));setSelected(new Set())}}>
-                  <FontAwesomeIcon icon={faTag}/>Mark Sold
-                </button>
-                <button className="btn btn-sm btn-danger" onClick={async()=>{await Promise.all([...selected].map(id=>supabase.from('cards').delete().eq('id',id)));setSelected(new Set());showToast(`${selected.size} cards removed`);loadData()}}>
-                  <FontAwesomeIcon icon={faTrash}/>Remove
-                </button>
-                <button className="btn btn-sm btn-ghost" onClick={()=>setSelected(new Set())}>
-                  <FontAwesomeIcon icon={faXmark}/>
-                </button>
-              </div>
-            )}
-          </div>
-
-         {/* CARDS */}
-          {filtered.length === 0 ? (
-            <div className="empty-state">
-              <div style={{fontSize:'48px',marginBottom:'16px',color:'#D8D8D8'}}><FontAwesomeIcon icon={faFolderOpen}/></div>
-              <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>{cards.length === 0 ? 'Your vault is empty' : 'No cards found'}</div>
-              <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>{cards.length === 0 ? 'Start building your collection by adding your first card.' : 'Try adjusting your filters.'}</div>
-              <button className="btn btn-primary" onClick={openAdd}>+ Add Your First Card</button>
-            </div>
-          ) : viewMode === 'grid' ? (
-            <div className="cards-grid">
-              {paginated.map((c,i) => {
-                const gain = (c.value||0)-(c.cost||0)
-                const isSold = c.status==='sold'
-                const isSel = selected.has(c.id)
-                return (
-                  <div key={c.id} className={`card-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.03}s`}} onClick={() => setSelectedCard(c)}>
-                    <div className="card-cb" onClick={e=>{e.stopPropagation();toggleSelect(c.id)}}>{isSel?'✓':''}</div>
-                    <div className={`card-status ${statusMap[c.status]||'status-have'}`}>{statusLbl[c.status]||'Owned'}</div>
-                    <div className="card-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
-                      {c.card_image_url
-                        ? <img src={c.card_image_url} alt={c.player} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-                        : <span style={{fontSize:'48px'}}>{sportEmoji[c.sport]||'🃏'}</span>
-                      }
-                      {c.grader && c.grader!=='Raw' && <div className={`grade-chip grade-${c.grader}`}>{c.grader} {c.grade}</div>}
-                    </div>
-                    <div className="card-body">
-                      <div className="card-player">{c.player}</div>
-                      <div className="card-set">
-                        {[c.year, c.brand!=='Unknown'?c.brand:'', c.set_name!=='Unknown'?c.set_name:''].filter(Boolean).join(' ')}
-                        {c.cardnum?` · ${c.cardnum}`:''}
-                      </div>
-                      <div className="card-attrs">
-                        {(c.attrs||[]).map(a => (
-                          <span key={a} className="attr-tag">
-                            {a === 'numbered' && c.print_run ? c.print_run : attrLabel(a)}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="card-fins">
-                        <div><div className="fin-lbl">Cost</div><div className="fin-val">{c.cost?`$${c.cost}`:'-'}</div></div>
-                        <div style={{textAlign:'center'}}><div className="fin-lbl">Value</div><div className="fin-val" style={{color:'#1B6FF0'}}>{c.value?`$${c.value}`:'-'}</div></div>
-                        <div style={{textAlign:'right'}}><div className="fin-lbl">Gain</div><div className={`fin-val ${gain>=0?'fin-pos':'fin-neg'}`}>{c.cost?(gain>=0?'+':'')+`$${Math.abs(gain)}`:'-'}</div></div>
-                      </div>
-                    </div>
-                    <div className="card-actions">
-  <button className="act-btn act-edit" onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
-  <button className="act-btn act-sold" onClick={e=>{e.stopPropagation();markSold(c.id)}}><FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}</button>
-  {c.ebay_listing_url && c.status==='sale' && (
-    <a href={c.ebay_listing_url} target="_blank" rel="noopener noreferrer" className="act-btn" style={{background:'#EBF2FF',color:'#1B6FF0',textDecoration:'none'}} onClick={e=>e.stopPropagation()}>
-      <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
-    </a>
-  )}
-  <button className="act-btn act-rm" onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
-</div>
+{/* TABS 
+<div style={{display:'flex',gap:'4px',background:'#fff',border:'1px solid #EFEFEF',borderRadius:'8px',padding:'4px',boxShadow:'0 1px 3px rgba(0,0,0,.06)'}}>
+  {[
+    { id:'vault', label:'My Vault', count:totalCards },
+    { id:'wants', label:'Want List', count:wants.length },
+  ].map(tab => (
+    <button
+      key={tab.id}
+      onClick={() => setActiveTab(tab.id as 'vault'|'wants')}
+      style={{
+        flex:1, padding:'8px 16px', borderRadius:'6px', border:'none',
+        background:activeTab===tab.id?'#0D0D0D':'transparent',
+        color:activeTab===tab.id?'#fff':'#555',
+        fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:'13px',
+        fontWeight:600, cursor:'pointer', transition:'all .15s',
+        display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
+      }}
+    >
+      {tab.label}
+      <span style={{
+        padding:'1px 7px', borderRadius:'100px', fontSize:'11px', fontWeight:700,
+        background:activeTab===tab.id?'rgba(255,255,255,.2)':'#F7F7F7',
+        color:activeTab===tab.id?'#fff':'#9A9A9A',
+      }}>{tab.count}</span>
+    </button>
+  ))}
+</div>*/}
+{activeTab === 'vault' ? (
+            <>
+              {/* TOOLBAR */}
+              <div className="toolbar">
+                <div className="search-box">
+                  <FontAwesomeIcon icon={faMagnifyingGlass} style={{color:'#9A9A9A',width:'14px'}}/>
+                  <input type="text" placeholder="Search your vault..." value={searchVal} onChange={e=>setSearchVal(e.target.value)}/>
+                </div>
+                <select className="sort-select" value={sortVal} onChange={e=>setSortVal(e.target.value)}>
+                  <option value="date-desc">Newest Added</option>
+                  <option value="date-asc">Oldest Added</option>
+                  <option value="value-desc">Highest Value</option>
+                  <option value="value-asc">Lowest Value</option>
+                  <option value="alpha">A–Z Player</option>
+                  <option value="gain">Best Gain</option>
+                </select>
+                <div className="view-toggle">
+                  <button className={`vbtn${viewMode==='grid'?' on':''}`} onClick={()=>setViewMode('grid')}><FontAwesomeIcon icon={faGrip}/></button>
+                  <button className={`vbtn${viewMode==='list'?' on':''}`} onClick={()=>setViewMode('list')}><FontAwesomeIcon icon={faBars}/></button>
+                </div>
+                <div className="results-lbl">{filtered.length} card{filtered.length!==1?'s':''}</div>
+                {selected.size > 0 && (
+                  <div className="bulk-bar">
+                    {selected.size} selected
+                    <button className="btn btn-sm" style={{background:'#F7F7F7',color:'#555',border:'1px solid #EFEFEF'}} onClick={async()=>{await Promise.all([...selected].map(id=>markSold(id)));setSelected(new Set())}}>
+                      <FontAwesomeIcon icon={faTag}/>Mark Sold
+                    </button>
+                    <button className="btn btn-sm btn-danger" onClick={async()=>{await Promise.all([...selected].map(id=>supabase.from('cards').delete().eq('id',id)));setSelected(new Set());showToast(`${selected.size} cards removed`);loadData()}}>
+                      <FontAwesomeIcon icon={faTrash}/>Remove
+                    </button>
+                    <button className="btn btn-sm btn-ghost" onClick={()=>setSelected(new Set())}>
+                      <FontAwesomeIcon icon={faXmark}/>
+                    </button>
                   </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="cards-list">
-              {paginated.map((c,i) => {
-                const gain = (c.value||0)-(c.cost||0)
-                const isSold = c.status==='sold'
-                const isSel = selected.has(c.id)
-                return (
-                  <div key={c.id} className={`list-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.025}s`}} onClick={() => setSelectedCard(c)}>
-                    <div style={{padding:'0 0 0 12px',cursor:'pointer'}} onClick={e=>{e.stopPropagation();toggleSelect(c.id)}}>
-                      <div className="card-cb" style={{position:'relative',top:0,left:0,opacity:1,width:18,height:18,fontSize:10,background:isSel?'#1B6FF0':'#fff',borderColor:isSel?'#1B6FF0':'#D8D8D8'}}>{isSel?'✓':''}</div>
-                    </div>
-                    <div className="list-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
-                      {c.card_image_url
-                        ? <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-                        : <span>{sportEmoji[c.sport]||'🃏'}</span>
-                      }
-                    </div>
-                    <div className="list-main">
-                      <div className="list-player">{c.player}</div>
-                      <div className="list-set">
-                        {[c.year, c.brand!=='Unknown'?c.brand:'', c.set_name!=='Unknown'?c.set_name:''].filter(Boolean).join(' ')}
-                        {c.cardnum?` · ${c.cardnum}`:''}
+                )}
+              </div>
+
+              {/* CARDS */}
+              {filtered.length === 0 ? (
+                <div className="empty-state">
+                  <div style={{fontSize:'48px',marginBottom:'16px',color:'#D8D8D8'}}><FontAwesomeIcon icon={faFolderOpen}/></div>
+                  <div style={{fontSize:'18px',fontWeight:700,marginBottom:'8px'}}>{cards.length === 0 ? 'Your vault is empty' : 'No cards found'}</div>
+                  <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'24px'}}>{cards.length === 0 ? 'Start building your collection by adding your first card.' : 'Try adjusting your filters.'}</div>
+                  <button className="btn btn-primary" onClick={openAdd}>+ Add Your First Card</button>
+                </div>
+              ) : viewMode === 'grid' ? (
+                <div className="cards-grid">
+                  {paginated.map((c,i) => {
+                    const gain = (c.value||0)-(c.cost||0)
+                    const isSold = c.status==='sold'
+                    const isSel = selected.has(c.id)
+                    return (
+                      <div key={c.id} className={`card-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.03}s`}} onClick={() => setSelectedCard(c)}>
+                        <div className="card-cb" onClick={e=>{e.stopPropagation();toggleSelect(c.id)}}>{isSel?'✓':''}</div>
+                        <div className={`card-status ${statusMap[c.status]||'status-have'}`}>{statusLbl[c.status]||'Owned'}</div>
+                        <div className="card-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
+                          {c.card_image_url
+                            ? <img src={c.card_image_url} alt={c.player} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+                            : <span style={{fontSize:'48px'}}>{sportEmoji[c.sport]||'🃏'}</span>
+                          }
+                          {c.grader && c.grader!=='Raw' && <div className={`grade-chip grade-${c.grader}`}>{c.grader} {c.grade}</div>}
+                        </div>
+                        <div className="card-body">
+                          <div className="card-player">{c.player}</div>
+                          <div className="card-set">
+                            {[c.year, c.brand!=='Unknown'?c.brand:'', c.set_name!=='Unknown'?c.set_name:''].filter(Boolean).join(' ')}
+                            {c.cardnum?` · ${c.cardnum}`:''}
+                          </div>
+                          <div className="card-attrs">
+                            {(c.attrs||[]).map(a => (
+                              <span key={a} className="attr-tag">
+                                {a === 'numbered' && c.print_run ? c.print_run : attrLabel(a)}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="card-fins">
+                            <div><div className="fin-lbl">Cost</div><div className="fin-val">{c.cost?`$${c.cost}`:'-'}</div></div>
+                            <div style={{textAlign:'center'}}><div className="fin-lbl">Value</div><div className="fin-val" style={{color:'#1B6FF0'}}>{c.value?`$${c.value}`:'-'}</div></div>
+                            <div style={{textAlign:'right'}}><div className="fin-lbl">Gain</div><div className={`fin-val ${gain>=0?'fin-pos':'fin-neg'}`}>{c.cost?(gain>=0?'+':'')+`$${Math.abs(gain)}`:'-'}</div></div>
+                          </div>
+                        </div>
+                        <div className="card-actions">
+                          <button className="act-btn act-edit" onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
+                          <button className="act-btn act-sold" onClick={e=>{e.stopPropagation();markSold(c.id)}}><FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}</button>
+                          {c.ebay_listing_url && c.status==='sale' && (
+                            <a href={c.ebay_listing_url} target="_blank" rel="noopener noreferrer" className="act-btn" style={{background:'#EBF2FF',color:'#1B6FF0',textDecoration:'none'}} onClick={e=>e.stopPropagation()}>
+                              <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
+                            </a>
+                          )}
+                          <button className="act-btn act-rm" onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
+                        </div>
                       </div>
-                      <div className="card-attrs" style={{marginTop:'4px'}}>
-                        {(c.attrs||[]).map(a => (
-                          <span key={a} className="attr-tag">
-                            {a === 'numbered' && c.print_run ? c.print_run : attrLabel(a)}
-                          </span>
-                        ))}
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="cards-list">
+                  {paginated.map((c,i) => {
+                    const gain = (c.value||0)-(c.cost||0)
+                    const isSold = c.status==='sold'
+                    const isSel = selected.has(c.id)
+                    return (
+                      <div key={c.id} className={`list-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.025}s`}} onClick={() => setSelectedCard(c)}>
+                        <div style={{padding:'0 0 0 12px',cursor:'pointer'}} onClick={e=>{e.stopPropagation();toggleSelect(c.id)}}>
+                          <div className="card-cb" style={{position:'relative',top:0,left:0,opacity:1,width:18,height:18,fontSize:10,background:isSel?'#1B6FF0':'#fff',borderColor:isSel?'#1B6FF0':'#D8D8D8'}}>{isSel?'✓':''}</div>
+                        </div>
+                        <div className="list-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
+                          {c.card_image_url
+                            ? <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+                            : <span>{sportEmoji[c.sport]||'🃏'}</span>
+                          }
+                        </div>
+                        <div className="list-main">
+                          <div className="list-player">{c.player}</div>
+                          <div className="list-set">
+                            {[c.year, c.brand!=='Unknown'?c.brand:'', c.set_name!=='Unknown'?c.set_name:''].filter(Boolean).join(' ')}
+                            {c.cardnum?` · ${c.cardnum}`:''}
+                          </div>
+                          <div className="card-attrs" style={{marginTop:'4px'}}>
+                            {(c.attrs||[]).map(a => (
+                              <span key={a} className="attr-tag">
+                                {a === 'numbered' && c.print_run ? c.print_run : attrLabel(a)}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="list-meta">
+                          <div><div className="lm-lbl">Grade</div><div className="lm-val" style={{fontSize:'12px'}}>{c.grader&&c.grader!=='Raw'?`${c.grader} ${c.grade}`:'Raw'}</div></div>
+                          <div><div className="lm-lbl">Cost</div><div className="lm-val">{c.cost?`$${c.cost}`:'-'}</div></div>
+                          <div><div className="lm-lbl">Value</div><div className="lm-val" style={{color:'#1B6FF0'}}>{c.value?`$${c.value}`:'-'}</div></div>
+                          <div><div className="lm-lbl">Gain</div><div className={`lm-val ${gain>=0?'fin-pos':'fin-neg'}`}>{c.cost?(gain>=0?'+':'')+`$${Math.abs(gain)}`:'-'}</div></div>
+                        </div>
+                        <div className="list-acts">
+                          <button className="act-btn act-edit" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
+                          <button className="act-btn act-sold" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();markSold(c.id)}}>
+                            <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
+                          </button>
+                          <button className="act-btn act-rm" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="list-meta">
-                      <div><div className="lm-lbl">Grade</div><div className="lm-val" style={{fontSize:'12px'}}>{c.grader&&c.grader!=='Raw'?`${c.grader} ${c.grade}`:'Raw'}</div></div>
-                      <div><div className="lm-lbl">Cost</div><div className="lm-val">{c.cost?`$${c.cost}`:'-'}</div></div>
-                      <div><div className="lm-lbl">Value</div><div className="lm-val" style={{color:'#1B6FF0'}}>{c.value?`$${c.value}`:'-'}</div></div>
-                      <div><div className="lm-lbl">Gain</div><div className={`lm-val ${gain>=0?'fin-pos':'fin-neg'}`}>{c.cost?(gain>=0?'+':'')+`$${Math.abs(gain)}`:'-'}</div></div>
-                    </div>
-                    <div className="list-acts">
-                      <button className="act-btn act-edit" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
-                      <button className="act-btn act-sold" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();markSold(c.id)}}>
-                        <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* PAGINATION */}
+              {totalPages > 1 && (
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 0',borderTop:'1px solid #EFEFEF',marginTop:'8px'}}>
+                  <div style={{fontSize:'13px',color:'#9A9A9A'}}>
+                    Showing <strong style={{color:'#0D0D0D'}}>{((currentPage-1)*CARDS_PER_PAGE)+1}–{Math.min(currentPage*CARDS_PER_PAGE, filtered.length)}</strong> of <strong style={{color:'#0D0D0D'}}>{filtered.length}</strong> cards
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
+                    <button onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} style={{width:'32px',height:'32px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:currentPage===1?'#F7F7F7':'#fff',color:currentPage===1?'#D8D8D8':'#0D0D0D',cursor:currentPage===1?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}>
+                      <FontAwesomeIcon icon={faChevronLeft}/>
+                    </button>
+                    {Array.from({length:totalPages},(_,i)=>i+1).filter(p => p===1 || p===totalPages || Math.abs(p-currentPage)<=1).reduce((acc:number[],p,i,arr)=>{
+                      if(i>0 && p-arr[i-1]>1) acc.push(-1)
+                      acc.push(p)
+                      return acc
+                    },[] as number[]).map((p,i) => p===-1 ? (
+                      <span key={`ellipsis-${i}`} style={{width:'32px',height:'32px',display:'flex',alignItems:'center',justifyContent:'center',color:'#9A9A9A',fontSize:'13px'}}>...</span>
+                    ) : (
+                      <button key={p} onClick={() => setCurrentPage(p)} style={{width:'32px',height:'32px',borderRadius:'6px',border:`1.5px solid ${currentPage===p?'#1B6FF0':'#EFEFEF'}`,background:currentPage===p?'#1B6FF0':'#fff',color:currentPage===p?'#fff':'#0D0D0D',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}>
+                        {p}
                       </button>
-                      <button className="act-btn act-rm" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
-                    </div>
+                    ))}
+                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} style={{width:'32px',height:'32px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:currentPage===totalPages?'#F7F7F7':'#fff',color:currentPage===totalPages?'#D8D8D8':'#0D0D0D',cursor:currentPage===totalPages?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}>
+                      <FontAwesomeIcon icon={faChevronRight}/>
+                    </button>
                   </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* PAGINATION */}
-          {totalPages > 1 && (
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 0',borderTop:'1px solid #EFEFEF',marginTop:'8px'}}>
-              <div style={{fontSize:'13px',color:'#9A9A9A'}}>
-                Showing <strong style={{color:'#0D0D0D'}}>{((currentPage-1)*CARDS_PER_PAGE)+1}–{Math.min(currentPage*CARDS_PER_PAGE, filtered.length)}</strong> of <strong style={{color:'#0D0D0D'}}>{filtered.length}</strong> cards
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
-                <button onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} style={{width:'32px',height:'32px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:currentPage===1?'#F7F7F7':'#fff',color:currentPage===1?'#D8D8D8':'#0D0D0D',cursor:currentPage===1?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}>
-                  <FontAwesomeIcon icon={faChevronLeft}/>
-                </button>
-                {Array.from({length:totalPages},(_,i)=>i+1).filter(p => p===1 || p===totalPages || Math.abs(p-currentPage)<=1).reduce((acc:number[],p,i,arr)=>{
-                  if(i>0 && p-arr[i-1]>1) acc.push(-1)
-                  acc.push(p)
-                  return acc
-                },[] as number[]).map((p,i) => p===-1 ? (
-                  <span key={`ellipsis-${i}`} style={{width:'32px',height:'32px',display:'flex',alignItems:'center',justifyContent:'center',color:'#9A9A9A',fontSize:'13px'}}>...</span>
-                ) : (
-                  <button key={p} onClick={() => setCurrentPage(p)} style={{width:'32px',height:'32px',borderRadius:'6px',border:`1.5px solid ${currentPage===p?'#1B6FF0':'#EFEFEF'}`,background:currentPage===p?'#1B6FF0':'#fff',color:currentPage===p?'#fff':'#0D0D0D',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}>
-                    {p}
-                  </button>
-                ))}
-                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} style={{width:'32px',height:'32px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:currentPage===totalPages?'#F7F7F7':'#fff',color:currentPage===totalPages?'#D8D8D8':'#0D0D0D',cursor:currentPage===totalPages?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:600,transition:'all .15s'}}>
-                  <FontAwesomeIcon icon={faChevronRight}/>
-                </button>
-              </div>
+                </div>
+              )}
+            </>
+          ) : (
+            /* WANT LIST */
+            <div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:'8px',padding:'20px',boxShadow:'0 1px 3px rgba(0,0,0,.06)'}}>
+              {wantsLoading ? (
+                <div style={{textAlign:'center',padding:'48px',color:'#9A9A9A',fontSize:'14px'}}>Loading your want list...</div>
+              ) : wants.length === 0 ? (
+                <div style={{textAlign:'center',padding:'48px'}}>
+                  <div style={{fontSize:'40px',marginBottom:'12px'}}>⭐</div>
+                  <div style={{fontSize:'16px',fontWeight:700,color:'#0D0D0D',marginBottom:'6px'}}>Your want list is empty</div>
+                  <div style={{fontSize:'14px',color:'#9A9A9A',marginBottom:'20px'}}>Search for cards and click the star button to add them to your want list.</div>
+                  <a href="/search" style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'10px 20px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',textDecoration:'none',fontSize:'14px',fontWeight:600,fontFamily:'Plus Jakarta Sans,sans-serif'}}>
+                    Search for cards →
+                  </a>
+                </div>
+              ) : (
+                <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                  <div style={{fontSize:'13px',color:'#9A9A9A',marginBottom:'4px'}}>{wants.length} card{wants.length!==1?'s':''} on your want list</div>
+                  {wants.map((w: any) => (
+                    <div key={w.id} style={{display:'flex',alignItems:'center',gap:'14px',padding:'14px 16px',border:'1px solid #EFEFEF',borderRadius:'8px',transition:'all .15s'}}
+                      onMouseOver={e=>{e.currentTarget.style.borderColor='#D8D8D8';e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,.06)'}}
+                      onMouseOut={e=>{e.currentTarget.style.borderColor='#EFEFEF';e.currentTarget.style.boxShadow='none'}}
+                    >
+                      <div style={{width:'52px',height:'52px',borderRadius:'8px',background:cardBg(w.sport||''),display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,overflow:'hidden'}}>
+                        {w.img
+                          ? <img src={w.img} alt={w.player} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                          : <span style={{fontSize:'24px'}}>{sportEmoji[w.sport]||'🃏'}</span>
+                        }
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:'14px',fontWeight:700,color:'#0D0D0D',marginBottom:'2px'}}>{w.player}</div>
+                        <div style={{fontSize:'12px',color:'#9A9A9A',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                          {[w.year, w.brand, w.set_name].filter(Boolean).join(' ')}
+                          {w.sport ? ` · ${w.sport}` : ''}
+                        </div>
+                      </div>
+                      {w.sport && (
+                        <div style={{padding:'3px 10px',borderRadius:'100px',background:'#F7F7F7',fontSize:'12px',fontWeight:600,color:'#555',whiteSpace:'nowrap',flexShrink:0}}>
+                          {sportEmoji[w.sport]} {w.sport}
+                        </div>
+                      )}
+                      <div style={{display:'flex',gap:'6px',flexShrink:0}}>
+                        <a
+                          href={`/search?q=${encodeURIComponent(w.player)}`}
+                          style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'6px 12px',borderRadius:'6px',background:'#EBF2FF',color:'#1B6FF0',textDecoration:'none',fontSize:'12px',fontWeight:600,fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s'}}
+                          onMouseOver={e=>{e.currentTarget.style.background='#1B6FF0';e.currentTarget.style.color='#fff'}}
+                          onMouseOut={e=>{e.currentTarget.style.background='#EBF2FF';e.currentTarget.style.color='#1B6FF0'}}
+                        >
+                          <FontAwesomeIcon icon={faMagnifyingGlass} style={{fontSize:'10px'}}/>Search
+                        </a>
+                        <button
+                          onClick={async () => {
+                            await supabase.from('wants').delete().eq('id', w.id)
+                            showToast('Removed from want list')
+                            loadWants()
+                          }}
+                          style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'6px 10px',borderRadius:'6px',background:'#FDECEA',color:'#D93025',border:'none',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s'}}
+                          onMouseOver={e=>{e.currentTarget.style.background='#D93025';e.currentTarget.style.color='#fff'}}
+                          onMouseOut={e=>{e.currentTarget.style.background='#FDECEA';e.currentTarget.style.color='#D93025'}}
+                        >
+                          <FontAwesomeIcon icon={faTrash} style={{fontSize:'10px'}}/>Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </main>
       </div>
+      
 
 {/* ADD / EDIT MODAL */}
 {showAdd && (

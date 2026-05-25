@@ -43,6 +43,7 @@ useEffect(() => {
       setDisplayName(data.display_name || '')
       setBio(data.bio || '')
       setIsPublic(data.is_public || false)
+      setEbayUsername(data.ebay_username || '')
     } else {
       // Pre-fill display name from Clerk
       setDisplayName(user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : '')
@@ -62,7 +63,7 @@ useEffect(() => {
     setUsernameAvailable(!data)
     setCheckingUsername(false)
   }
-
+const [ebayUsername, setEbayUsername] = useState('')
   const handleUsernameChange = (val: string) => {
     setUsername(val)
     setUsernameAvailable(null)
@@ -85,6 +86,7 @@ const [activeSection, setActiveSection] = useState('profile')
         display_name: displayName,
         bio,
         is_public: isPublic,
+        ebay_username: ebayUsername,
         updated_at: new Date().toISOString(),
       })
 
@@ -263,6 +265,32 @@ const [activeSection, setActiveSection] = useState('profile')
               />
               <div className="form-hint">{bio.length}/200 characters</div>
             </div>
+
+            <div className="form-group">
+  <label className="form-label">eBay Username</label>
+  <div className="username-wrap">
+    <span className="username-prefix" style={{fontSize:'12px',color:'#9A9A9A',left:'10px'}}>ebay.com/usr/</span>
+    <input
+      className="form-input"
+      style={{paddingLeft:'108px'}}
+      placeholder="your-ebay-username"
+      value={ebayUsername}
+      onChange={e => setEbayUsername(e.target.value.trim())}
+      maxLength={64}
+    />
+  </div>
+  <div className="form-hint">Let other collectors find your eBay listings. Optional but recommended.</div>
+  {ebayUsername && (
+    <a
+      href={`https://www.ebay.com/usr/${ebayUsername}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{display:'inline-flex',alignItems:'center',gap:'6px',marginTop:'6px',padding:'6px 12px',background:'#EBF2FF',borderRadius:'6px',border:'1px solid #C5D8FF',fontSize:'13px',color:'#1B6FF0',fontWeight:600,textDecoration:'none'}}
+    >
+      View your eBay store →
+    </a>
+  )}
+</div>
           </div>
 
           {/* Privacy section */}

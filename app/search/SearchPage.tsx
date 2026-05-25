@@ -123,7 +123,25 @@ function SearchContent() {
       showToast('❌ Something went wrong. Please try again.')
     }
   }
-
+const addToWantList = async (c: any) => {
+  if (!user) { showToast('⚠️ Please sign in to add cards to your want list'); return }
+  try {
+    const { error } = await supabase.from('wants').insert({
+      user_id: user.id,
+      player: c.player,
+      year: String(c.year),
+      brand: c.brand !== 'Unknown' ? c.brand : '',
+      set_name: c.setName || '',
+      sport: c.sport !== 'Unknown' ? c.sport : '',
+      img: c.image || null,
+      status: 'wanted',
+    })
+    if (error) { showToast('❌ Error: ' + error.message); return }
+    showToast(`⭐ ${c.player} added to your want list!`)
+  } catch (e: any) {
+    showToast('❌ Something went wrong. Please try again.')
+  }
+}
   const toggleAttr = (a: string) => setActiveAttrs(prev => prev.includes(a) ? prev.filter(x=>x!==a) : [...prev,a])
 
   const runSearch = async (q: string) => {
@@ -608,9 +626,9 @@ function SearchContent() {
                         <button className="act-btn act-add" onClick={()=>addToVault(c)}>
                           <FontAwesomeIcon icon={faPlus} style={{marginRight:'4px'}}/>Vault
                         </button>
-                        <button className="act-btn act-want" onClick={()=>showToast(`⭐ ${c.player} wishlisted!`)}>
-                          <FontAwesomeIcon icon={faStarRegular}/>
-                        </button>
+                        <button className="act-btn act-want" onClick={()=>addToWantList(c)}>
+  <FontAwesomeIcon icon={faStarRegular}/>
+</button>
                       </div>
                     </div>
                   ))}
