@@ -9,7 +9,7 @@ import {
   faLayerGroup, faChartLine, faMedal, faBoxOpen, faGlobe,
   faLock, faUserPlus, faUserMinus, faGrip, faBars,
   faFootball, faBaseball, faBasketball, faHockeyPuck,
-  faFutbol, faGamepad, faTag, faArrowUpRightFromSquare,faStar, faTrophy, faCrown,faShareNodes 
+  faFutbol, faGamepad, faTag, faArrowUpRightFromSquare,faStar, faTrophy, faCrown,faShareNodes, faShoppingCart,  
 } from '@fortawesome/free-solid-svg-icons'
 import { analytics } from '../../lib/analytics'
 import Footer from '../../components/Footer'
@@ -278,6 +278,18 @@ const [lightboxImage, setLightboxImage] = useState<string|null>(null)
       <div className="vault-display-name">{profile.display_name || profile.username}</div>
       <div className="vault-username">@{profile.username}</div>
       {profile.bio && <div className="vault-bio">{profile.bio}</div>}
+      {profile.ebay_username && (
+  <a
+    href={`https://www.ebay.com/usr/${profile.ebay_username}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'5px 12px',borderRadius:'100px',background:'#EBF2FF',border:'1px solid #C5D8FF',fontSize:'12px',fontWeight:600,color:'#1B6FF0',textDecoration:'none',marginBottom:'10px',transition:'all .15s'}}
+    onMouseOver={e=>{e.currentTarget.style.background='#1B6FF0';e.currentTarget.style.color='#fff'}}
+    onMouseOut={e=>{e.currentTarget.style.background='#EBF2FF';e.currentTarget.style.color='#1B6FF0'}}
+  >
+    🛒 Shop on eBay → @{profile.ebay_username}
+  </a>
+)}
       <div style={{display:'flex',alignItems:'center',gap:'12px',flexWrap:'wrap',marginTop:'8px'}}>
         <div className="vault-meta">
           
