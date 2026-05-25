@@ -14,6 +14,7 @@ import {
   faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft, faGlobe,
   faLock, faGear, faArrowUpRightFromSquare,faStar,
 } from '@fortawesome/free-solid-svg-icons'
+import { useFeatures } from '../lib/useFeatures'
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
@@ -73,6 +74,7 @@ const SPORTS = [
 
 export default function Collection() {
   const { user, isLoaded } = useUser()
+  const { isCollector, isBetaTester } = useFeatures()
   const [cards, setCards]               = useState<Card[]>([])
   const [folders, setFolders]           = useState<Folder[]>([])
   const [loading, setLoading]           = useState(true)
@@ -628,9 +630,14 @@ export default function Collection() {
       <div className="page-header">
         <div className="page-header-inner">
           <div className="breadcrumb">
-            <a href="/">Home</a><span>›</span>
-            <strong style={{color:'#0D0D0D'}}>My Vault</strong>
-          </div>
+  <a href="/">Home</a><span>›</span>
+  <strong style={{color:'#0D0D0D'}}>My Vault</strong>
+  {isBetaTester && (
+    <span style={{display:'inline-flex',alignItems:'center',padding:'2px 8px',borderRadius:'100px',background:'#F2ECFB',color:'#7B4FCA',fontSize:'11px',fontWeight:700,marginLeft:'6px'}}>
+      Beta Tester
+    </span>
+  )}
+</div>
           <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
   {/* Vault / Want List toggle */}
   <div style={{display:'flex',gap:'4px',background:'#F7F7F7',borderRadius:'100px',padding:'3px'}}>
