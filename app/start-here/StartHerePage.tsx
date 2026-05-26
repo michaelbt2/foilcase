@@ -114,7 +114,7 @@ export default function StartHere() {
       <div className="sh-hero">
         <div className="sh-hero-inner">
           <div className="sh-eyebrow">
-            <FontAwesomeIcon icon={faRocket}/>Welcome to foilcase
+            <FontAwesomeIcon icon={faRocket}/>Welcome to Foilcase
           </div>
           <h1 className="sh-hero-title">
             Your trading card collection,<br/><em>finally organized</em>
@@ -164,7 +164,7 @@ export default function StartHere() {
             </div>
             <h2 className="sh-section-title">Your vault is your <em>collection home</em></h2>
             <p className="sh-section-body">
-              Every collector needs a reliable place to keep track of what they own. Your foilcase vault is exactly that — a beautiful, searchable database of every card in your collection. Add cards manually or pull them directly from live eBay listings. Your vault works for any sport, any era, any format.
+              Every collector needs a reliable place to keep track of what they own. Your Foilcase vault is exactly that — a beautiful, searchable database of every card in your collection. Add cards manually or pull them directly from live eBay listings. Your vault works for any sport, any era, any format.
             </p>
             <div className="sh-feature-grid">
               {[
@@ -204,7 +204,7 @@ export default function StartHere() {
             </div>
             <h2 className="sh-section-title">Always know what your collection is <em>worth</em></h2>
             <p className="sh-section-body">
-              Every card you add can have a cost paid and current value attached to it. foilcase automatically calculates your total collection value, your total cost basis, and your overall gain or loss — giving you a real P&L view of your collection like a portfolio.
+              Every card you add can have a cost paid and current value attached to it. Foilcase automatically calculates your total collection value, your total cost basis, and your overall gain or loss — giving you a real P&L view of your collection like a portfolio.
             </p>
             <div className="sh-feature-grid">
               {[
@@ -232,7 +232,7 @@ export default function StartHere() {
             </div>
             <h2 className="sh-section-title">Organize your collection <em>your way</em></h2>
             <p className="sh-section-body">
-              Whether you organize by player, by set, by sport, or by investment tier — foilcase gives you the tools to build a structure that makes sense for how you collect.
+              Whether you organize by player, by set, by sport, or by investment tier — Foilcase gives you the tools to build a structure that makes sense for how you collect.
             </p>
             <div className="sh-step">
               <div className="sh-step-num">1</div>
@@ -379,7 +379,7 @@ export default function StartHere() {
             </div>
             <h2 className="sh-section-title">Level up as your collection <em>grows</em></h2>
             <p className="sh-section-body">
-              foilcase rewards collectors who build serious collections. As you add cards to your vault you'll progress through five tiers — each one representing a deeper commitment to the hobby and unlocking community recognition.
+              Foilcase rewards collectors who build serious collections. As you add cards to your vault you'll progress through five tiers — each one representing a deeper commitment to the hobby and unlocking community recognition.
             </p>
             <div style={{display:'flex',flexDirection:'column',gap:'10px',marginTop:'8px'}}>
               {TIERS.map((tier, i) => (
