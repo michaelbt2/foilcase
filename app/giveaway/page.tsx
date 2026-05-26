@@ -46,9 +46,214 @@ const navItems = [
   { id: 'rules',        label: 'Rules & Eligibility' },
 ]
 
+type FormData = { name: string; email: string; foilcase: string; instagram: string; hasCards: boolean }
+
+type GiveawayCardProps = {
+  g: typeof giveaways[0]
+  formData: FormData
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+  submitting: boolean
+  submitted: boolean
+  submitError: boolean
+  handleSubmit: (e: React.FormEvent) => void
+  setActiveSection: (s: string) => void
+}
+
+const GiveawayCard = ({ g, formData, setFormData, submitting, submitted, submitError, handleSubmit, setActiveSection }: GiveawayCardProps) => {
+  const status = STATUS_CONFIG[g.status]
+  return (
+    <div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:'16px',overflow:'hidden',boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
+
+      {/* Card header */}
+      <div style={{padding:'16px 20px',borderBottom:'1px solid #EFEFEF',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div style={{fontSize:'16px',fontWeight:800,letterSpacing:'-.3px',color:'#0D0D0D'}}>{g.month} Giveaway</div>
+        <div style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'4px 12px',borderRadius:'100px',background:status.bg,color:status.color,fontSize:'12px',fontWeight:700}}>
+          <FontAwesomeIcon icon={status.icon} style={{fontSize:'10px'}}/>
+          {status.label}
+        </div>
+      </div>
+
+      {/* Card body */}
+      <div style={{display:'grid',gridTemplateColumns:'200px 1fr',gap:'0'}}>
+
+        {/* Card image */}
+        <div style={{background:'linear-gradient(135deg,#EBF2FF,#C5D8FF)',display:'flex',alignItems:'center',justifyContent:'center',minHeight:'240px',padding:'20px',borderRight:'1px solid #EFEFEF'}}>
+          {g.card.image ? (
+            <img src={g.card.image} alt={g.card.player} style={{width:'100%',borderRadius:'8px',boxShadow:'0 8px 24px rgba(0,0,0,.2)'}}/>
+          ) : (
+            <div style={{textAlign:'center'}}>
+              <div style={{fontSize:'48px',marginBottom:'12px'}}>🃏</div>
+              <div style={{fontSize:'12px',fontWeight:700,color:'#1B6FF0',textAlign:'center'}}>Card reveal<br/>coming soon</div>
+            </div>
+          )}
+        </div>
+
+        {/* Card details */}
+        <div style={{padding:'20px',display:'flex',flexDirection:'column',gap:'16px'}}>
+
+          {/* Card info */}
+          <div>
+            <div style={{fontSize:'20px',fontWeight:800,letterSpacing:'-.5px',color:'#0D0D0D',marginBottom:'4px'}}>{g.card.player}</div>
+            <div style={{fontSize:'13px',color:'#9A9A9A'}}>
+              {[g.card.year, g.card.brand, g.card.set].filter(v => v && v !== 'TBD').join(' ')}
+            </div>
+            <div style={{display:'flex',gap:'8px',marginTop:'8px',flexWrap:'wrap'}}>
+              {g.card.grade && (
+                <span style={{padding:'3px 10px',borderRadius:'100px',background:'#002FA7',color:'#fff',fontSize:'12px',fontWeight:700}}>{g.card.grade}</span>
+              )}
+              {g.card.value && g.card.value !== 'TBD' && (
+                <span style={{padding:'3px 10px',borderRadius:'100px',background:'#E6F9F0',color:'#00A861',fontSize:'12px',fontWeight:700}}>Est. Value: {g.card.value}</span>
+              )}
+              <span style={{padding:'3px 10px',borderRadius:'100px',background:'#EBF2FF',color:'#1B6FF0',fontSize:'12px',fontWeight:700}}>{g.card.sport}</span>
+            </div>
+          </div>
+
+          {/* Drawing info */}
+          <div style={{display:'flex',flexDirection:'column',gap:'8px',padding:'14px',background:'#F7F7F7',borderRadius:'10px',border:'1px solid #EFEFEF'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',color:'#555'}}>
+              <FontAwesomeIcon icon={faCalendar} style={{color:'#1B6FF0',width:'14px'}}/>
+              <span><strong style={{color:'#0D0D0D'}}>Drawing:</strong> {g.drawingDate}</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',color:'#555'}}>
+              <FontAwesomeIcon icon={faClock} style={{color:'#E8820C',width:'14px'}}/>
+              <span><strong style={{color:'#0D0D0D'}}>Entries close:</strong> {g.entriesCloseDate}</span>
+            </div>
+          </div>
+
+          {/* Winner section */}
+          <div style={{padding:'14px',background:g.winner?'#F2ECFB':'#F7F7F7',borderRadius:'10px',border:`1px solid ${g.winner?'#D4BAF0':'#EFEFEF'}`}}>
+            <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase' as const,letterSpacing:'.08em',color:g.winner?'#7B4FCA':'#9A9A9A',marginBottom:'8px',display:'flex',alignItems:'center',gap:'6px'}}>
+              <FontAwesomeIcon icon={faTrophy}/>Winner
+            </div>
+            {g.winner ? (
+              <div style={{fontSize:'14px',fontWeight:600,color:'#0D0D0D'}}>{g.winner}</div>
+            ) : g.status === 'open' || g.status === 'coming' ? (
+              <div style={{fontSize:'13px',color:'#9A9A9A'}}>Drawing hasn't happened yet — enter for your chance to win!</div>
+            ) : (
+              <div style={{fontSize:'13px',color:'#9A9A9A'}}>Drawing pending — winner will be announced soon.</div>
+            )}
+            {g.embedUrl && (
+              <div style={{marginTop:'12px',borderRadius:'8px',overflow:'hidden',aspectRatio:'16/9'}}>
+                <iframe src={g.embedUrl} style={{width:'100%',height:'100%',border:'none'}} allowFullScreen/>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Entry form */}
+      {g.status === 'open' && (
+        <div style={{borderTop:'1px solid #EFEFEF',padding:'20px',background:'#F7F7F7'}}>
+          <div style={{fontSize:'14px',fontWeight:700,color:'#0D0D0D',marginBottom:'16px',display:'flex',alignItems:'center',gap:'8px'}}>
+            <FontAwesomeIcon icon={faGift} style={{color:'#1B6FF0'}}/>
+            Enter this giveaway
+          </div>
+          {submitted ? (
+            <div style={{textAlign:'center',padding:'24px',background:'#E6F9F0',borderRadius:'10px',border:'1px solid #A8DFC4'}}>
+              <div style={{fontSize:'28px',marginBottom:'8px'}}>🎉</div>
+              <div style={{fontSize:'15px',fontWeight:700,color:'#00A861',marginBottom:'4px'}}>You're entered!</div>
+              <div style={{fontSize:'13px',color:'#555'}}>Good luck! We'll announce the winner on {g.drawingDate}.</div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+              <div style={{display:'flex',flexDirection:'column' as const,gap:'5px'}}>
+                <label style={{fontSize:'11px',fontWeight:700,color:'#555',textTransform:'uppercase' as const,letterSpacing:'.06em'}}>Full Name *</label>
+                <input
+                  style={{padding:'9px 12px',border:'1.5px solid #EFEFEF',borderRadius:'6px',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',color:'#0D0D0D',outline:'none',background:'#fff'}}
+                  placeholder="Your full name"
+                  value={formData.name}
+                  onChange={e => setFormData(p => ({...p, name: e.target.value}))}
+                  required
+                />
+              </div>
+              <div style={{display:'flex',flexDirection:'column' as const,gap:'5px'}}>
+                <label style={{fontSize:'11px',fontWeight:700,color:'#555',textTransform:'uppercase' as const,letterSpacing:'.06em'}}>Email Address *</label>
+                <input
+                  type="email"
+                  style={{padding:'9px 12px',border:'1.5px solid #EFEFEF',borderRadius:'6px',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',color:'#0D0D0D',outline:'none',background:'#fff'}}
+                  placeholder="your@email.com"
+                  value={formData.email}
+                  onChange={e => setFormData(p => ({...p, email: e.target.value}))}
+                  required
+                />
+              </div>
+              <div style={{display:'flex',flexDirection:'column' as const,gap:'5px'}}>
+                <label style={{fontSize:'11px',fontWeight:700,color:'#555',textTransform:'uppercase' as const,letterSpacing:'.06em'}}>Foilcase Username *</label>
+                <div style={{position:'relative'}}>
+                  <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',fontSize:'14px',color:'#9A9A9A',fontWeight:600}}>@</span>
+                  <input
+                    style={{width:'100%',padding:'9px 12px 9px 28px',border:'1.5px solid #EFEFEF',borderRadius:'6px',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',color:'#0D0D0D',outline:'none',background:'#fff',boxSizing:'border-box' as const}}
+                    placeholder="yourcollectorname"
+                    value={formData.foilcase}
+                    onChange={e => setFormData(p => ({...p, foilcase: e.target.value}))}
+                    required
+                  />
+                </div>
+              </div>
+              <div style={{display:'flex',flexDirection:'column' as const,gap:'5px'}}>
+                <label style={{fontSize:'11px',fontWeight:700,color:'#555',textTransform:'uppercase' as const,letterSpacing:'.06em'}}>Instagram Handle <span style={{color:'#9A9A9A',fontWeight:400,textTransform:'none' as const}}>(optional)</span></label>
+                <div style={{position:'relative'}}>
+                  <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',fontSize:'14px',color:'#9A9A9A',fontWeight:600}}>@</span>
+                  <input
+                    style={{width:'100%',padding:'9px 12px 9px 28px',border:'1.5px solid #EFEFEF',borderRadius:'6px',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',color:'#0D0D0D',outline:'none',background:'#fff',boxSizing:'border-box' as const}}
+                    placeholder="yourinstagram"
+                    value={formData.instagram}
+                    onChange={e => setFormData(p => ({...p, instagram: e.target.value}))}
+                  />
+                </div>
+              </div>
+              <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap' as const,gap:'10px'}}>
+                <div style={{fontSize:'12px',color:'#9A9A9A',lineHeight:1.5}}>
+                  By entering you confirm you have read and agree to the <a href="#rules" onClick={()=>setActiveSection('rules')} style={{color:'#1B6FF0',textDecoration:'none'}}>giveaway rules</a>. One entry per person.
+                </div>
+                <div style={{width:'100%',display:'flex',alignItems:'flex-start',gap:'10px',padding:'14px',background:'#EBF2FF',borderRadius:'8px',border:'1px solid #C5D8FF'}}>
+                  <input
+                    type="checkbox"
+                    id="hasCards"
+                    checked={formData.hasCards}
+                    onChange={e => setFormData(p => ({...p, hasCards: e.target.checked}))}
+                    style={{width:'16px',height:'16px',marginTop:'2px',flexShrink:0,cursor:'pointer',accentColor:'#1B6FF0'}}
+                    required
+                  />
+                  <label htmlFor="hasCards" style={{fontSize:'13px',color:'#1B6FF0',fontWeight:600,lineHeight:1.5,cursor:'pointer'}}>
+                    I confirm my public vault has at least 5 cards.{' '}
+                    {formData.foilcase && (
+                      <a
+                        href={`https://foilcase.com/vault/${formData.foilcase}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{color:'#1B6FF0',textDecoration:'underline'}}
+                      >
+                        View my vault →
+                      </a>
+                    )}
+                  </label>
+                </div>
+                <button
+                  type="submit"
+                  disabled={submitting || !formData.hasCards}
+                  style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'10px 24px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',border:'none',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:700,cursor:submitting?'not-allowed':'pointer',opacity:submitting?0.7:1,transition:'all .15s'}}
+                >
+                  <FontAwesomeIcon icon={faGift}/>
+                  {submitting ? 'Submitting...' : 'Enter giveaway'}
+                </button>
+              </div>
+              {submitError && (
+                <div style={{gridColumn:'1/-1',fontSize:'13px',color:'#D93025',padding:'8px 12px',background:'#FDECEA',borderRadius:'6px'}}>
+                  Something went wrong. Please try again or email hello@foilcase.com.
+                </div>
+              )}
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Giveaway() {
   const [activeSection, setActiveSection] = useState('current')
-  const [formData, setFormData] = useState({ name: '', email: '', foilcase: '', instagram: '', hasCards: false })
+  const [formData, setFormData] = useState<FormData>({ name: '', email: '', foilcase: '', instagram: '', hasCards: false })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [submitError, setSubmitError] = useState(false)
@@ -81,198 +286,6 @@ export default function Giveaway() {
     } finally {
       setSubmitting(false)
     }
-  }
-
-  const GiveawayCard = ({ g }: { g: typeof giveaways[0] }) => {
-    const status = STATUS_CONFIG[g.status]
-    return (
-      <div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:'16px',overflow:'hidden',boxShadow:'0 2px 8px rgba(0,0,0,.06)'}}>
-
-        {/* Card header */}
-        <div style={{padding:'16px 20px',borderBottom:'1px solid #EFEFEF',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div style={{fontSize:'16px',fontWeight:800,letterSpacing:'-.3px',color:'#0D0D0D'}}>{g.month} Giveaway</div>
-          <div style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'4px 12px',borderRadius:'100px',background:status.bg,color:status.color,fontSize:'12px',fontWeight:700}}>
-            <FontAwesomeIcon icon={status.icon} style={{fontSize:'10px'}}/>
-            {status.label}
-          </div>
-        </div>
-
-        {/* Card body */}
-        <div style={{display:'grid',gridTemplateColumns:'200px 1fr',gap:'0'}}>
-
-          {/* Card image */}
-          <div style={{background:'linear-gradient(135deg,#EBF2FF,#C5D8FF)',display:'flex',alignItems:'center',justifyContent:'center',minHeight:'240px',padding:'20px',borderRight:'1px solid #EFEFEF'}}>
-            {g.card.image ? (
-              <img src={g.card.image} alt={g.card.player} style={{width:'100%',borderRadius:'8px',boxShadow:'0 8px 24px rgba(0,0,0,.2)'}}/>
-            ) : (
-              <div style={{textAlign:'center'}}>
-                <div style={{fontSize:'48px',marginBottom:'12px'}}>🃏</div>
-                <div style={{fontSize:'12px',fontWeight:700,color:'#1B6FF0',textAlign:'center'}}>Card reveal<br/>coming soon</div>
-              </div>
-            )}
-          </div>
-
-          {/* Card details */}
-          <div style={{padding:'20px',display:'flex',flexDirection:'column',gap:'16px'}}>
-
-            {/* Card info */}
-            <div>
-              <div style={{fontSize:'20px',fontWeight:800,letterSpacing:'-.5px',color:'#0D0D0D',marginBottom:'4px'}}>{g.card.player}</div>
-              <div style={{fontSize:'13px',color:'#9A9A9A'}}>
-                {[g.card.year, g.card.brand, g.card.set].filter(v => v && v !== 'TBD').join(' ')}
-              </div>
-              <div style={{display:'flex',gap:'8px',marginTop:'8px',flexWrap:'wrap'}}>
-                {g.card.grade && (
-                  <span style={{padding:'3px 10px',borderRadius:'100px',background:'#002FA7',color:'#fff',fontSize:'12px',fontWeight:700}}>{g.card.grade}</span>
-                )}
-                {g.card.value && g.card.value !== 'TBD' && (
-                  <span style={{padding:'3px 10px',borderRadius:'100px',background:'#E6F9F0',color:'#00A861',fontSize:'12px',fontWeight:700}}>Est. Value: {g.card.value}</span>
-                )}
-                <span style={{padding:'3px 10px',borderRadius:'100px',background:'#EBF2FF',color:'#1B6FF0',fontSize:'12px',fontWeight:700}}>{g.card.sport}</span>
-              </div>
-            </div>
-
-            {/* Drawing info */}
-            <div style={{display:'flex',flexDirection:'column',gap:'8px',padding:'14px',background:'#F7F7F7',borderRadius:'10px',border:'1px solid #EFEFEF'}}>
-              <div style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',color:'#555'}}>
-                <FontAwesomeIcon icon={faCalendar} style={{color:'#1B6FF0',width:'14px'}}/>
-                <span><strong style={{color:'#0D0D0D'}}>Drawing:</strong> {g.drawingDate}</span>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',color:'#555'}}>
-                <FontAwesomeIcon icon={faClock} style={{color:'#E8820C',width:'14px'}}/>
-                <span><strong style={{color:'#0D0D0D'}}>Entries close:</strong> {g.entriesCloseDate}</span>
-              </div>
-            </div>
-
-            {/* Winner section */}
-            <div style={{padding:'14px',background:g.winner?'#F2ECFB':'#F7F7F7',borderRadius:'10px',border:`1px solid ${g.winner?'#D4BAF0':'#EFEFEF'}`}}>
-              <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase' as const,letterSpacing:'.08em',color:g.winner?'#7B4FCA':'#9A9A9A',marginBottom:'8px',display:'flex',alignItems:'center',gap:'6px'}}>
-                <FontAwesomeIcon icon={faTrophy}/>Winner
-              </div>
-              {g.winner ? (
-                <div style={{fontSize:'14px',fontWeight:600,color:'#0D0D0D'}}>{g.winner}</div>
-              ) : g.status === 'open' || g.status === 'coming' ? (
-                <div style={{fontSize:'13px',color:'#9A9A9A'}}>Drawing hasn't happened yet — enter for your chance to win!</div>
-              ) : (
-                <div style={{fontSize:'13px',color:'#9A9A9A'}}>Drawing pending — winner will be announced soon.</div>
-              )}
-              {g.embedUrl && (
-                <div style={{marginTop:'12px',borderRadius:'8px',overflow:'hidden',aspectRatio:'16/9'}}>
-                  <iframe src={g.embedUrl} style={{width:'100%',height:'100%',border:'none'}} allowFullScreen/>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Entry form */}
-        {g.status === 'open' && (
-          <div style={{borderTop:'1px solid #EFEFEF',padding:'20px',background:'#F7F7F7'}}>
-            <div style={{fontSize:'14px',fontWeight:700,color:'#0D0D0D',marginBottom:'16px',display:'flex',alignItems:'center',gap:'8px'}}>
-              <FontAwesomeIcon icon={faGift} style={{color:'#1B6FF0'}}/>
-              Enter this giveaway
-            </div>
-            {submitted ? (
-              <div style={{textAlign:'center',padding:'24px',background:'#E6F9F0',borderRadius:'10px',border:'1px solid #A8DFC4'}}>
-                <div style={{fontSize:'28px',marginBottom:'8px'}}>🎉</div>
-                <div style={{fontSize:'15px',fontWeight:700,color:'#00A861',marginBottom:'4px'}}>You're entered!</div>
-                <div style={{fontSize:'13px',color:'#555'}}>Good luck! We'll announce the winner on {g.drawingDate}.</div>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
-                <div style={{display:'flex',flexDirection:'column' as const,gap:'5px'}}>
-                  <label style={{fontSize:'11px',fontWeight:700,color:'#555',textTransform:'uppercase' as const,letterSpacing:'.06em'}}>Full Name *</label>
-                  <input
-                    style={{padding:'9px 12px',border:'1.5px solid #EFEFEF',borderRadius:'6px',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',color:'#0D0D0D',outline:'none',background:'#fff'}}
-                    placeholder="Your full name"
-                    value={formData.name}
-                    onChange={e => setFormData(p => ({...p, name: e.target.value}))}
-                    required
-                  />
-                </div>
-                <div style={{display:'flex',flexDirection:'column' as const,gap:'5px'}}>
-                  <label style={{fontSize:'11px',fontWeight:700,color:'#555',textTransform:'uppercase' as const,letterSpacing:'.06em'}}>Email Address *</label>
-                  <input
-                    type="email"
-                    style={{padding:'9px 12px',border:'1.5px solid #EFEFEF',borderRadius:'6px',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',color:'#0D0D0D',outline:'none',background:'#fff'}}
-                    placeholder="your@email.com"
-                    value={formData.email}
-                    onChange={e => setFormData(p => ({...p, email: e.target.value}))}
-                    required
-                  />
-                </div>
-                <div style={{display:'flex',flexDirection:'column' as const,gap:'5px'}}>
-                  <label style={{fontSize:'11px',fontWeight:700,color:'#555',textTransform:'uppercase' as const,letterSpacing:'.06em'}}>Foilcase Username *</label>
-                  <div style={{position:'relative'}}>
-                    <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',fontSize:'14px',color:'#9A9A9A',fontWeight:600}}>@</span>
-                    <input
-                      style={{width:'100%',padding:'9px 12px 9px 28px',border:'1.5px solid #EFEFEF',borderRadius:'6px',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',color:'#0D0D0D',outline:'none',background:'#fff',boxSizing:'border-box' as const}}
-                      placeholder="yourcollectorname"
-                      value={formData.foilcase}
-                      onChange={e => setFormData(p => ({...p, foilcase: e.target.value}))}
-                      required
-                    />
-                  </div>
-                </div>
-                <div style={{display:'flex',flexDirection:'column' as const,gap:'5px'}}>
-                  <label style={{fontSize:'11px',fontWeight:700,color:'#555',textTransform:'uppercase' as const,letterSpacing:'.06em'}}>Instagram Handle <span style={{color:'#9A9A9A',fontWeight:400,textTransform:'none' as const}}>(optional)</span></label>
-                  <div style={{position:'relative'}}>
-                    <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',fontSize:'14px',color:'#9A9A9A',fontWeight:600}}>@</span>
-                    <input
-                      style={{width:'100%',padding:'9px 12px 9px 28px',border:'1.5px solid #EFEFEF',borderRadius:'6px',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',color:'#0D0D0D',outline:'none',background:'#fff',boxSizing:'border-box' as const}}
-                      placeholder="yourinstagram"
-                      value={formData.instagram}
-                      onChange={e => setFormData(p => ({...p, instagram: e.target.value}))}
-                    />
-                  </div>
-                </div>
-                <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap' as const,gap:'10px'}}>
-                  <div style={{fontSize:'12px',color:'#9A9A9A',lineHeight:1.5}}>
-                    By entering you confirm you have read and agree to the <a href="#rules" onClick={()=>setActiveSection('rules')} style={{color:'#1B6FF0',textDecoration:'none'}}>giveaway rules</a>. One entry per person.
-                  </div>
-                  <div style={{gridColumn:'1/-1',display:'flex',alignItems:'flex-start',gap:'10px',padding:'14px',background:'#EBF2FF',borderRadius:'8px',border:'1px solid #C5D8FF'}}>
-  <input
-    type="checkbox"
-    id="hasCards"
-    checked={formData.hasCards}
-    onChange={e => setFormData(p => ({...p, hasCards: e.target.checked}))}
-    style={{width:'16px',height:'16px',marginTop:'2px',flexShrink:0,cursor:'pointer',accentColor:'#1B6FF0'}}
-    required
-  />
-  <label htmlFor="hasCards" style={{fontSize:'13px',color:'#1B6FF0',fontWeight:600,lineHeight:1.5,cursor:'pointer'}}>
-    I confirm my public vault has at least 5 cards.{' '}
-    {formData.foilcase && (
-      <a
-        href={`https://foilcase.com/vault/${formData.foilcase}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{color:'#1B6FF0',textDecoration:'underline'}}
-      >
-        View my vault →
-      </a>
-    )}
-  </label>
-</div>
-                  <button
-                    type="submit"
-                    disabled={submitting || !formData.hasCards}
-                    style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'10px 24px',borderRadius:'100px',background:'#1B6FF0',color:'#fff',border:'none',fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'14px',fontWeight:700,cursor:submitting?'not-allowed':'pointer',opacity:submitting?0.7:1,transition:'all .15s'}}
-                  >
-                    <FontAwesomeIcon icon={faGift}/>
-                    {submitting ? 'Submitting...' : 'Enter Giveaway'}
-                  </button>
-                </div>
-                {submitError && (
-                  <div style={{gridColumn:'1/-1',fontSize:'13px',color:'#D93025',padding:'8px 12px',background:'#FDECEA',borderRadius:'6px'}}>
-                    Something went wrong. Please try again or email hello@foilcase.com.
-                  </div>
-                )}
-              </form>
-            )}
-          </div>
-        )}
-      </div>
-    )
   }
 
   return (
@@ -383,7 +396,7 @@ export default function Giveaway() {
                 },
                 {
                   title: 'Watch for the winner announcement',
-                  desc: 'Winners are selected by random drawing and announced on this page and on Instagram. If you win we\'ll contact you via email within 48 hours.',
+                  desc: "Winners are selected by random drawing and announced on this page and on Instagram. If you win we'll contact you via email within 48 hours.",
                   action: null,
                 },
               ].map((step, i) => (
@@ -413,7 +426,16 @@ export default function Giveaway() {
                 <FontAwesomeIcon icon={faStar} style={{color:'#F5A623'}}/>
                 Current Giveaway
               </div>
-              <GiveawayCard g={currentGiveaway}/>
+              <GiveawayCard
+                g={currentGiveaway}
+                formData={formData}
+                setFormData={setFormData}
+                submitting={submitting}
+                submitted={submitted}
+                submitError={submitError}
+                handleSubmit={handleSubmit}
+                setActiveSection={setActiveSection}
+              />
             </div>
           )}
 
@@ -432,7 +454,19 @@ export default function Giveaway() {
                 </div>
               ) : (
                 <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
-                  {pastGiveaways.map(g => <GiveawayCard key={g.id} g={g}/>)}
+                  {pastGiveaways.map(g => (
+                    <GiveawayCard
+                      key={g.id}
+                      g={g}
+                      formData={formData}
+                      setFormData={setFormData}
+                      submitting={submitting}
+                      submitted={submitted}
+                      submitError={submitError}
+                      handleSubmit={handleSubmit}
+                      setActiveSection={setActiveSection}
+                    />
+                  ))}
                 </div>
               )}
             </div>
