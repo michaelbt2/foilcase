@@ -11,7 +11,7 @@ import {
   faMagnifyingGlass, faLayerGroup, faChartLine, faMedal,
   faFire, faStar, faUsers, faUserPlus, faGlobe, faArrowRight,
   faTrophy, faCrown, faBolt, faFootball, faBaseball, faBasketball,
-  faHockeyPuck, faFutbol, faGamepad, faFilter,
+  faHockeyPuck, faFutbol, faGamepad, faFilter,faUserMinus,
 } from '@fortawesome/free-solid-svg-icons'
 
 function fmtNum(n: number) {
@@ -673,27 +673,42 @@ const [cardSearchSubmitted, setCardSearchSubmitted] = useState(false)
 )}
 
                   {/* Actions */}
-                  <div className="profile-actions">
-                    <Link href={`/vault/${p.username}`} className="btn btn-primary btn-sm" style={{flex:1,justifyContent:'center'}}>
-                      <FontAwesomeIcon icon={faArrowRight}/>View Vault
-                    </Link>
-                    {user && user.id !== p.id && (
-                      <button
-                        className={`btn btn-sm ${following.has(p.id)?'btn-outline':'btn-primary'}`}
-                        onClick={() => toggleFollow(p.id)}
-                        disabled={followLoading === p.id}
-                        style={{flex:1,justifyContent:'center'}}
-                      >
-                        <FontAwesomeIcon icon={faUserPlus}/>
-                        {followLoading === p.id ? '...' : following.has(p.id) ? 'Following' : 'Follow'}
-                      </button>
-                    )}
-                    {!user && (
-                      <Link href="/sign-up" className="btn btn-primary btn-sm" style={{flex:1,justifyContent:'center'}}>
-                        <FontAwesomeIcon icon={faUserPlus}/>Follow
-                      </Link>
-                    )}
-                  </div>
+<div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+  <div style={{display:'flex',gap:'6px'}}>
+    <a
+      href={`/vault/${p.username}`}
+      className="btn btn-primary btn-sm"
+      style={{flex:1,justifyContent:'center'}}
+    >
+      <FontAwesomeIcon icon={faArrowRight}/>View Vault
+    </a>
+    <a
+      href={`/vault/${p.username}?tab=wantlist`}
+      className="btn btn-sm"
+      style={{flex:1,justifyContent:'center',background:'#1B6FF0',border:'1.5px solid #1B6FF0',color:'#fff',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'6px',fontFamily:'Plus Jakarta Sans,sans-serif',fontWeight:600,fontSize:'13px',borderRadius:'100px',padding:'6px 12px'}}
+      onMouseOver={e=>{e.currentTarget.style.background='#1558C0';e.currentTarget.style.borderColor='#1558C0'}}
+      onMouseOut={e=>{e.currentTarget.style.background='#1B6FF0';e.currentTarget.style.borderColor='#1B6FF0'}}
+    >
+      <FontAwesomeIcon icon={faStar} style={{fontSize:'11px'}}/>Want List
+    </a>
+  </div>
+  {user && user.id !== p.id && (
+    <button
+      className="btn btn-sm btn-outline"
+      onClick={() => toggleFollow(p.id)}
+      disabled={followLoading === p.id}
+      style={{width:'100%',justifyContent:'center'}}
+    >
+      <FontAwesomeIcon icon={following.has(p.id) ? faUserMinus : faUserPlus}/>
+      {followLoading === p.id ? '...' : following.has(p.id) ? 'Following' : 'Follow'}
+    </button>
+  )}
+  {!user && (
+    <a href="/sign-up" className="btn btn-sm btn-outline" style={{width:'100%',justifyContent:'center'}}>
+      <FontAwesomeIcon icon={faUserPlus}/>Follow
+    </a>
+  )}
+</div>
                 </div>
               ))}
             </div>
