@@ -447,7 +447,7 @@ const [showBeta, setShowBeta] = useState(false)
         <div style={{position:'relative',zIndex:1}}>
           <div style={{display:'inline-flex',alignItems:'center',gap:'6px',background:'rgba(27,111,240,.2)',color:'#7EB6FF',fontSize:'11px',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',padding:'4px 10px',borderRadius:'100px',marginBottom:'12px'}}>
             <span style={{width:5,height:5,borderRadius:'50%',background:'#7EB6FF',display:'inline-block'}}/>
-            Public Beta
+            Public Beta | Last Updated 5/25/2026
           </div>
           <div style={{fontSize:'33px',fontWeight:800,color:'#fff',letterSpacing:'-.5px',lineHeight:1.15,marginBottom:'8px'}}>
             We're live and getting<br/>better every week
@@ -462,42 +462,41 @@ const [showBeta, setShowBeta] = useState(false)
       <div style={{padding:'24px 28px'}}>
 
         {/* What's working */}
-        <div style={{marginBottom:'20px'}}>
-          <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#555',marginBottom:'10px'}}>What's working now</div>
-          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-            {[
-              'Card vault — add, organize, and track your entire collection',
-              'Live eBay pricing — real sold comps and active listings',
-              'Public vaults — share your collection with the community',
-              'Community — follow collectors, search by player across vaults',
-              'Market — live listings and auctions across all sports & TCG',
-            ].map(item => (
-              <div key={item} style={{display:'flex',alignItems:'flex-start',gap:'8px',fontSize:'14px',color:'#0D0D0D',fontWeight:500}}>
-                <span style={{color:'#00A861',fontWeight:700,flexShrink:0,marginTop:'1px'}}>✓</span>
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
+<div style={{marginBottom:'20px'}}>
+  <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#555',marginBottom:'10px'}}>What's working now</div>
+  <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+    {[
+      'Card vault — add, organize, and track your entire collection',
+      'Live eBay pricing — real sold comps and active listings',
+      'Public vaults — share your collection with the community',
+      'Community — follow collectors, search by player across vaults',
+      'Market — live listings and auctions across all sports & TCG',
+      'Want List — track cards you\'re looking for and share with the community',
+    ].map(item => (
+      <div key={item} style={{display:'flex',alignItems:'flex-start',gap:'8px',fontSize:'14px',color:'#0D0D0D',fontWeight:500}}>
+        <span style={{color:'#00A861',fontWeight:700,flexShrink:0,marginTop:'1px'}}>✓</span>
+        {item}
+      </div>
+    ))}
+  </div>
+</div>
 
-        {/* Coming soon */}
-        <div style={{marginBottom:'24px'}}>
-          <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#9A9A9A',marginBottom:'10px'}}>Coming soon</div>
-          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-            {[
-              'Want List — track cards you\'re looking for',
-              'CSV import — bulk upload your existing collection',
-              'Collection insights — charts, trends, and analytics',
-              'More sports and TCG support',
-            ].map(item => (
-              <div key={item} style={{display:'flex',alignItems:'flex-start',gap:'8px',fontSize:'14px',color:'#0D0D0D',fontWeight:500}}>
-                <span style={{color:'#1B6FF0',fontWeight:700,flexShrink:0,marginTop:'1px'}}>→</span>
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-
+{/* Coming soon */}
+<div style={{marginBottom:'24px'}}>
+  <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'#9A9A9A',marginBottom:'10px'}}>Coming soon</div>
+  <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+    {[
+      'CSV import — bulk upload your existing collection',
+      'Collection insights — charts, trends, and analytics',
+      'More sports and TCG support',
+    ].map(item => (
+      <div key={item} style={{display:'flex',alignItems:'flex-start',gap:'8px',fontSize:'14px',color:'#0D0D0D',fontWeight:500}}>
+        <span style={{color:'#1B6FF0',fontWeight:700,flexShrink:0,marginTop:'1px'}}>→</span>
+        {item}
+      </div>
+    ))}
+  </div>
+</div>
         {/* Actions */}
         <div style={{display:'flex',gap:'10px'}}>
           <Link
@@ -506,7 +505,7 @@ const [showBeta, setShowBeta] = useState(false)
             style={{flex:1,justifyContent:'center',padding:'10px'}}
             onClick={() => setShowBeta(false)}
           >
-            <FontAwesomeIcon icon={faRocket}/>Start your vault free
+            <FontAwesomeIcon icon={faRocket}/>Create your free vault
           </Link>
           <button
             onClick={() => setShowBeta(false)}
