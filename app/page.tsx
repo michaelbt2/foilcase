@@ -14,7 +14,7 @@ import {
   faChartLine,
   faUsers,
   faShield,
-  faMedal,faArrowRight
+  faMedal,faArrowRight, faCheck, faXmark, faStar,
 } from '@fortawesome/free-solid-svg-icons'
 
 export default function Home() {
@@ -137,13 +137,13 @@ const [showBeta, setShowBeta] = useState(false)
           <h1>The trading card vault <em>built for collectors</em></h1>
           <p className="hero-sub">Track your collection, discover every set, and trade with confidence. The definitive database for sports, gaming, and non-sport cards.</p>
           <div className="hero-actions">
-            <Link className="btn btn-primary btn-xl" href="/collection">
-              <FontAwesomeIcon icon={faRocket} style={{marginRight:'6px'}}/>Create your free vault
+            <Link className="btn btn-primary btn-xl" href="/collection" style={{padding:'11px 14px'}}>
+              <FontAwesomeIcon icon={faRocket} style={{marginRight:'6px',}}/>Create your free vault
             </Link>
 <Link 
   className="btn btn-xl" 
   href="/community"
-  style={{background:'transparent',color:'#0D0D0D',border:'1.5px solid #D8D8D8',fontWeight:600}}
+  style={{background:'transparent',color:'#0D0D0D',border:'1.5px solid #D8D8D8',fontWeight:600,padding:'11px 14px'}}
   onMouseOver={e=>{e.currentTarget.style.background='#F7F7F7';e.currentTarget.style.borderColor='#0D0D0D'}}
   onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='#D8D8D8'}}
 >
@@ -334,9 +334,9 @@ const [showBeta, setShowBeta] = useState(false)
     </div>
     <div className="steps">
       {[
-        {icon:faRocket, title:'Create your free vault', desc:'Sign up in seconds with your email or Google account. No credit card required to start tracking your collection.', cta:'Build your vault', href:'/collection'},
+        {icon:faRocket, title:'Create your free vault', desc:'Sign up in seconds with your email or Google account. No credit card required to start tracking your collection.', cta:'Create your vault', href:'/collection'},
         {icon:faMagnifyingGlass, title:'Search and add cards', desc:'Find any card from millions of listings. Add to your vault with condition, grade, and notes in one click.', cta:'Search cards', href:'/search'},
-        {icon:faChartLine, title:'Track, trade, and grow', desc:'Monitor set completion, discover your collection\'s value, and connect with other collectors to find your next great card.', cta:'View market', href:'/market'},
+        {icon:faChartLine, title:'Track, trade, and grow', desc:'Organize your sets, discover your collection\'s value, and connect with other collectors to find your next great card.', cta:'View market', href:'/market'},
       ].map(step => (
         <div className="step" key={step.title}>
           <div className="step-num">
@@ -392,9 +392,7 @@ const [showBeta, setShowBeta] = useState(false)
       <p style={{fontSize:'15px',color:'#9A9A9A',marginBottom:'16px'}}>Join a growing community of collectors tracking their vaults on Foilcase.</p>
       <Link
         href="/community"
-        style={{display:'inline-flex',alignItems:'center',gap:'6px',fontSize:'14px',fontWeight:600,color:'#1B6FF0',textDecoration:'none',padding:'10px 20px',border:'1.5px solid #C5D8FF',borderRadius:'100px',background:'#EBF2FF',transition:'all .15s'}}
-        onMouseOver={e=>{e.currentTarget.style.background='#1B6FF0';e.currentTarget.style.color='#fff';e.currentTarget.style.borderColor='#1B6FF0'}}
-        onMouseOut={e=>{e.currentTarget.style.background='#EBF2FF';e.currentTarget.style.color='#1B6FF0';e.currentTarget.style.borderColor='#C5D8FF'}}
+         className="btn btn-primary btn-lg" style={{padding:'11px 14px'}}
       >
         <FontAwesomeIcon icon={faUsers}/>Browse collectors
         <FontAwesomeIcon icon={faArrowRight} style={{fontSize:'11px'}}/>
@@ -403,10 +401,10 @@ const [showBeta, setShowBeta] = useState(false)
   </div>
 </section>
 
-      {/* PRICING — hidden until subscription tiers are ready
-      <section className="section" id="pricing" style={{background:'#fff'}}>
-      </section>
-      */}
+
+{/* PRICING */}
+
+      
 
       {/* CTA BANNER */}
       <section className="section" style={{background:'#F7F7F7'}}>
@@ -417,10 +415,10 @@ const [showBeta, setShowBeta] = useState(false)
               <p>Join thousands of collectors tracking their collections. Start free!</p>
             </div>
             <div className="cta-actions">
-              <Link className="btn btn-white btn-xl" href="/collection">
+              <Link className="btn btn-white btn-xl" href="/collection" style={{padding:'11px 14px'}}>
                 <FontAwesomeIcon icon={faRocket} style={{marginRight:'6px'}}/>Create your free vault
               </Link>
-              <Link className="btn btn-dim btn-xl" href="/community">
+              <Link className="btn btn-dim btn-xl" href="/community" style={{padding:'11px 14px'}}>
   <FontAwesomeIcon icon={faMagnifyingGlass} style={{marginRight:'6px'}}/>Browse public vaults
 </Link>
             </div>

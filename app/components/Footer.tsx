@@ -5,21 +5,21 @@ const columns = [
   {
     title: 'Explore',
     links: [
+      { label: 'My Vault', href: '/collection' },
       { label: 'Community', href: '/community' },
       { label: 'Market', href: '/market' },
       { label: 'Search', href: '/search' },
-      { label: 'My Vault', href: '/collection' },
       { label: 'Supplies', href: '/supplies' },
     ],
   },
   {
     title: 'Learn',
     links: [
+      { label: 'About Us', href: '/about' },
       { label: 'Start Here', href: '/start-here' },
       { label: 'Learn', href: '/learn' },
       { label: 'FAQ', href: '/faq' },
       { label: 'Changelog', href: '/changelog' },
-      { label: 'About Us', href: '/about' },
       { label: 'Contact', href: '/contact' },
     ],
   },
@@ -150,7 +150,7 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:'24px',borderTop:'1px solid #EFEFEF',fontSize:'13px',color:'#9A9A9A',flexWrap:'wrap',gap:'12px'}}>
-          <div>© 2026 foilcase. All rights reserved.</div>
+          <div>© 2026 Foilcase. All rights reserved.</div>
           <div style={{display:'flex',gap:'16px'}}>
             {[
               {label:'Privacy', href:'/privacy'},
