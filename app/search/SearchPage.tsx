@@ -28,6 +28,7 @@ import {
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 import { analytics } from '../lib/analytics'
 import Footer from '../components/Footer'
+import { ebayAffiliateUrl } from '../lib/ebay'
 
 
 const RECENT_SEARCHES = ['Patrick Mahomes','2024 Prizm Football','Charizard PSA 10','Shohei Ohtani RC','LeBron James']
@@ -620,9 +621,9 @@ const addToWantList = async (c: any) => {
                         </div>
                       </div>
                       <div className="card-actions">
-                        <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="act-btn act-view" onClick={() => analytics.cardViewedOnEbay({player:c.player, sport:c.sport, price:c.price})}>
-                          <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{marginRight:'4px'}}/>eBay
-                        </a>
+                        <a href={ebayAffiliateUrl(c.itemWebUrl)} target="_blank" rel="noopener noreferrer" className="act-btn act-view" onClick={() => analytics.cardViewedOnEbay({player:c.player, sport:c.sport, price:c.price})}>
+  <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{marginRight:'4px'}}/>eBay
+</a>
                         <button className="act-btn act-add" onClick={()=>addToVault(c)}>
                           <FontAwesomeIcon icon={faPlus} style={{marginRight:'4px'}}/>Vault
                         </button>
@@ -700,9 +701,9 @@ const addToWantList = async (c: any) => {
                         )}
                       </div>
                       <div className="list-actions">
-                        <a href={c.itemWebUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'5px'}}>
-                          <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
-                        </a>
+                        <a href={ebayAffiliateUrl(c.itemWebUrl)} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{fontSize:'12px',padding:'5px 12px',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'5px'}}>
+  <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
+</a>
                         <button className="btn btn-primary" style={{fontSize:'12px',padding:'5px 12px',display:'inline-flex',alignItems:'center',gap:'5px'}} onClick={()=>addToVault(c)}>
                           <FontAwesomeIcon icon={faPlus}/>Vault
                         </button>

@@ -9,6 +9,7 @@ import {
   faPen, faShield,
 } from '@fortawesome/free-solid-svg-icons'
 import Footer from '../components/Footer'
+import { ebayUserUrl } from '../lib/ebay'
 
 export default function Settings() {
   const { user, isLoaded } = useUser()
@@ -282,7 +283,7 @@ const [activeSection, setActiveSection] = useState('profile')
   <div className="form-hint">Let other collectors find your eBay listings. Optional but recommended.</div>
   {ebayUsername && (
     <a
-      href={`https://www.ebay.com/usr/${ebayUsername}`}
+      href={ebayUserUrl(ebayUsername)}
       target="_blank"
       rel="noopener noreferrer"
       style={{display:'inline-flex',alignItems:'center',gap:'6px',marginTop:'6px',padding:'6px 12px',background:'#EBF2FF',borderRadius:'6px',border:'1px solid #C5D8FF',fontSize:'13px',color:'#1B6FF0',fontWeight:600,textDecoration:'none'}}

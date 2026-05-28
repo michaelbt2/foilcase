@@ -1,4 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+const CACHE_KEY = 'browse_feed'
+const CACHE_DURATION_MINUTES = 30
 
 let cachedToken: string | null = null
 let tokenExpiry: number = 0
@@ -29,28 +38,16 @@ const FEED_QUERIES = [
   { q: '"Caleb Williams" rookie', sport: 'Football' },
   { q: '"LeBron James"', sport: 'Basketball' },
   { q: '"Victor Wembanyama" prizm', sport: 'Basketball' },
-  { q: '"Stephen Curry" prizm', sport: 'Basketball' },
   { q: '"Shohei Ohtani"', sport: 'Baseball' },
-  { q: '"Juan Soto"', sport: 'Baseball' },
-  { q: '"Ronald Acuna" prizm', sport: 'Baseball' },
   { q: '"Connor McDavid"', sport: 'Hockey' },
-  { q: '"Nathan MacKinnon"', sport: 'Hockey' },
   { q: 'Charizard PSA', sport: 'Pokemon' },
-  { q: 'Pikachu card PSA', sport: 'Pokemon' },
-  { q: 'Lorcana card holo', sport: 'Lorcana' },
-  { q: 'Magic the Gathering Black Lotus', sport: 'Magic' },
-  { q: 'Magic the Gathering PSA graded', sport: 'Magic' },
 ]
 
-// Auction queries for ending-soon section
 const AUCTION_QUERIES = [
   { q: 'PSA football card rookie', sport: 'Football' },
   { q: 'PSA basketball card prizm', sport: 'Basketball' },
   { q: 'PSA baseball card rookie', sport: 'Baseball' },
-  { q: 'PSA hockey card rookie', sport: 'Hockey' },
   { q: 'PSA Charizard pokemon card', sport: 'Pokemon' },
-  { q: 'Lorcana card graded', sport: 'Lorcana' },
-  { q: 'Magic the Gathering PSA graded', sport: 'Magic' },
 ]
 
 function isNotCard(title: string) {
@@ -87,24 +84,41 @@ function parseYear(title: string) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Check cache first
+    const cutoff = new Date(Date.now() - CACHE_DURATION_MINUTES * 60 * 1000).toISOString()
+    const { data: cached } = await supabase
+      .from('search_cache')
+      .select('results, created_at')
+      .eq('query', CACHE_KEY)
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (cached) {
+      return NextResponse.json({
+        ...cached.results,
+        cached: true,
+        cachedAt: cached.created_at,
+      })
+    }
+
+    // Cache miss — call eBay API
     const token = await getEbayToken()
 
-    // Fetch ending-soon graded auctions in parallel with main feed
     const [results, auctionResults] = await Promise.all([
-
-      // Main feed queries
       Promise.all(
         FEED_QUERIES.map(async ({ q, sport }) => {
           const [activeRes, soldRes] = await Promise.all([
-  fetch(
-    `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212&limit=50`,
-    { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
-  ).then(r => r.json()),
-  fetch(
-    `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212,buyingOptions:{FIXED_PRICE},itemEndDate:[${new Date(Date.now() - 30 * 86400000).toISOString()}..${new Date().toISOString()}]&limit=20`,
-    { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
-  ).then(r => r.json()),
-])
+            fetch(
+              `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212&limit=25`,
+              { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
+            ).then(r => r.json()),
+            fetch(
+              `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212,buyingOptions:{FIXED_PRICE},itemEndDate:[${new Date(Date.now() - 30 * 86400000).toISOString()}..${new Date().toISOString()}]&limit=10`,
+              { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
+            ).then(r => r.json()),
+          ])
 
           const active = (activeRes.itemSummaries || []).filter((i: any) => !isNotCard(i.title))
           const sold   = (soldRes.itemSummaries  || []).filter((i: any) => !isNotCard(i.title))
@@ -154,20 +168,19 @@ export async function GET(request: NextRequest) {
         })
       ),
 
-      // Ending-soon graded auctions
       Promise.all(
         AUCTION_QUERIES.map(async ({ q, sport }) => {
           const now = new Date()
           const in2hrs = new Date(now.getTime() + 2 * 3600000)
           const res = await fetch(
-            `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212,buyingOptions:{AUCTION},itemEndDate:[${now.toISOString()}..${in2hrs.toISOString()}]&sort=endTimeSoonest&limit=10`,
+            `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=categoryIds:212,buyingOptions:{AUCTION},itemEndDate:[${now.toISOString()}..${in2hrs.toISOString()}]&sort=endTimeSoonest&limit=5`,
             { headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' } }
           ).then(r => r.json())
 
-          const items = (res.itemSummaries || [])
+          return (res.itemSummaries || [])
             .filter((i: any) => !isNotCard(i.title))
-            .filter((i: any) => parseGrade(i.title) !== null) // graded only
-            .slice(0, 3)
+            .filter((i: any) => parseGrade(i.title) !== null)
+            .slice(0, 2)
             .map((i: any) => ({
               id: i.itemId,
               title: i.title,
@@ -180,18 +193,15 @@ export async function GET(request: NextRequest) {
               endTime: i.itemEndDate || null,
               bidCount: i.bidCount || 0,
             }))
-
-          return items
         })
       ),
     ])
 
-    // Flatten and deduplicate ending-soon auctions
     const endingSoon = auctionResults
       .flat()
       .filter((i: any) => i.endTime)
       .sort((a: any, b: any) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
-      .slice(0, 15)
+      .slice(0, 12)
 
     const allDeals = results
       .flatMap(r => r.deals)
@@ -206,7 +216,7 @@ export async function GET(request: NextRequest) {
     const usedIds = new Set(allRecentSold.map(i => i.id))
     results.forEach(r => {
       r.recentSold.slice(maxPerQuery).forEach((i: any) => {
-        if (!usedIds.has(i.id) && allRecentSold.length < 50) {
+        if (!usedIds.has(i.id) && allRecentSold.length < 40) {
           allRecentSold.push(i)
           usedIds.add(i.id)
         }
@@ -219,13 +229,28 @@ export async function GET(request: NextRequest) {
       dealCount: r.deals.length,
     }))
 
-    return NextResponse.json({
+    const responseData = {
       deals: allDeals,
       recentSold: allRecentSold,
       endingSoon,
       sportSummary,
       generatedAt: new Date().toISOString(),
-    })
+      cached: false,
+    }
+
+    // Store in cache — fire and forget
+    supabase
+      .from('search_cache')
+      .insert({ query: CACHE_KEY, results: responseData })
+      .then(() => {
+        supabase
+          .from('search_cache')
+          .delete()
+          .lt('created_at', new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
+          .then(() => {})
+      })
+
+    return NextResponse.json(responseData)
 
   } catch (error: any) {
     console.error('Browse feed error:', error)

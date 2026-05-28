@@ -12,6 +12,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { analytics } from '../lib/analytics'
 import Footer from '../components/Footer'
+import { ebayAffiliateUrl } from '../lib/ebay'
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
@@ -305,11 +306,11 @@ const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
         return (
           <a
             key={item.id + i}
-  href={item.itemWebUrl}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="sold-item"
-  onClick={() => analytics.auctionClicked({ sport: item.sport, grade: item.grade || 'Unknown' })}
+  href={ebayAffiliateUrl(item.itemWebUrl)}
+target="_blank"
+rel="noopener noreferrer"
+className="sold-item"
+onClick={() => analytics.auctionClicked({ sport: item.sport, grade: item.grade || 'Unknown' })}
             style={{textDecoration:'none',animationDelay:`${i*.03}s`,borderColor:urgent?'#FFBBB7':'#EFEFEF'}}
           >
             <div className="sold-img">
@@ -369,12 +370,12 @@ const filteredEndingSoon = data?.endingSoon?.filter((d: any) =>
                   return (
                     <a
                       key={item.id + i}
-                      href={item.itemWebUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="sold-item"
-                      style={{textDecoration:'none',animationDelay:`${i*.03}s`}}
-                    >
+  href={ebayAffiliateUrl(item.itemWebUrl)}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="sold-item"
+  style={{textDecoration:'none',animationDelay:`${i*.03}s`}}
+>
                       <div className="sold-img">
                         {item.image
                           ? <img src={item.image} alt={item.title}/>

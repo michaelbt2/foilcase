@@ -15,6 +15,7 @@ import {
   faLock, faGear, faArrowUpRightFromSquare,faStar,
 } from '@fortawesome/free-solid-svg-icons'
 import { useFeatures } from '../lib/useFeatures'
+import { ebayAffiliateUrl } from '../lib/ebay'
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
@@ -973,7 +974,7 @@ export default function Collection() {
                           <button className="act-btn act-edit" onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
                           <button className="act-btn act-sold" onClick={e=>{e.stopPropagation();markSold(c.id)}}><FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}</button>
                           {c.ebay_listing_url && c.status==='sale' && (
-                            <a href={c.ebay_listing_url} target="_blank" rel="noopener noreferrer" className="act-btn" style={{background:'#EBF2FF',color:'#1B6FF0',textDecoration:'none'}} onClick={e=>e.stopPropagation()}>
+                            <a href={ebayAffiliateUrl(c.ebay_listing_url)} target="_blank" rel="noopener noreferrer" className="act-btn" style={{background:'#EBF2FF',color:'#1B6FF0',textDecoration:'none'}} onClick={e=>e.stopPropagation()}>
                               <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
                             </a>
                           )}
@@ -1571,7 +1572,7 @@ export default function Collection() {
             <div className="modal-footer">
   <button className="btn btn-ghost" onClick={() => setSelectedCard(null)}>Close</button>
   {selectedCard.ebay_listing_url && selectedCard.status==='sale' && (
-    <a href={selectedCard.ebay_listing_url} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{textDecoration:'none'}}>
+    <a href={ebayAffiliateUrl(selectedCard.ebay_listing_url)} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{textDecoration:'none'}}>
       <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>View on eBay
     </a>
   )}

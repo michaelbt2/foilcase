@@ -1,4 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+const CACHE_DURATION_MINUTES = 15
 
 // ── Token cache ──
 let cachedToken: string | null = null
@@ -214,10 +222,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'player or set query required' }, { status: 400 })
   }
 
-  try {
+try {
     const token = await getEbayToken()
 
-    // Split query intelligently — quoted player name + free keywords
+    // Split query intelligently
     const words = player.trim().split(/\s+/)
     let playerName = player
     let keywords: string[] = []
@@ -225,9 +233,7 @@ export async function GET(request: NextRequest) {
     if (words.length >= 3) {
       const nameSuffixes = ['jr','sr','ii','iii','iv','v']
       let splitAt = 2
-      if (words[2] && nameSuffixes.includes(words[2].toLowerCase())) {
-        splitAt = 3
-      }
+      if (words[2] && nameSuffixes.includes(words[2].toLowerCase())) splitAt = 3
       playerName = words.slice(0, splitAt).join(' ')
       keywords = words.slice(splitAt)
     }
@@ -241,8 +247,29 @@ export async function GET(request: NextRequest) {
     if (sport === 'Basketball') query += ' basketball'
     if (sport === 'Hockey')     query += ' hockey'
 
-    // Fetch active listings and sold comps in parallel
-    const offsets = [0, 50, 100, 150]
+    const cacheKey = `${query}|${sport}|${limit}`.toLowerCase()
+
+    // Check cache first
+    const cutoff = new Date(Date.now() - CACHE_DURATION_MINUTES * 60 * 1000).toISOString()
+    const { data: cached } = await supabase
+      .from('search_cache')
+      .select('results, created_at')
+      .eq('query', cacheKey)
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (cached) {
+      return NextResponse.json({
+        ...cached.results,
+        cached: true,
+        cachedAt: cached.created_at,
+      })
+    }
+
+    // Cache miss — call eBay API
+    const offsets = [0, 50]
 
     const [activeResults, soldResults] = await Promise.all([
       Promise.all(offsets.map(async (offset) => {
@@ -260,7 +287,7 @@ export async function GET(request: NextRequest) {
         return data.itemSummaries || []
       })),
 
-      Promise.all([0, 50].map(async (offset) => {
+      Promise.all([0].map(async (offset) => {
         const now = new Date().toISOString()
         const past = new Date(Date.now() - 90 * 86400000).toISOString()
         const response = await fetch(
@@ -278,20 +305,17 @@ export async function GET(request: NextRequest) {
       }))
     ])
 
-    // Process active listings using playerName for filtering
+    // Process active listings
     const allActive = activeResults.flat()
     const filteredActive = filterRelevantCards(allActive, playerName)
     const deduplicated = deduplicateCards(filteredActive, playerName)
 
-    // Process sold comps using playerName for filtering
+    // Process sold comps
     const allSold = soldResults.flat()
     const filteredSold = filterRelevantCards(allSold, playerName)
 
     // Build sold price map
-    const soldMap = new Map<string, {
-      prices: number[],
-      lastSold: string | null,
-    }>()
+    const soldMap = new Map<string, { prices: number[], lastSold: string | null }>()
 
     for (const item of filteredSold) {
       const parsed = parseCardTitle(item.title, playerName)
@@ -299,18 +323,14 @@ export async function GET(request: NextRequest) {
       const price = parseFloat(item.price?.value || '0')
       if (!price) continue
 
-      if (!soldMap.has(key)) {
-        soldMap.set(key, { prices: [], lastSold: null })
-      }
+      if (!soldMap.has(key)) soldMap.set(key, { prices: [], lastSold: null })
       const entry = soldMap.get(key)!
       entry.prices.push(price)
       const endDate = item.itemEndDate || null
-      if (endDate && (!entry.lastSold || endDate > entry.lastSold)) {
-        entry.lastSold = endDate
-      }
+      if (endDate && (!entry.lastSold || endDate > entry.lastSold)) entry.lastSold = endDate
     }
 
-    // Attach sold data to each deduped card
+    // Attach sold data
     const enriched = deduplicated.map(card => {
       const key = `${card.year}-${card.brand}-${card.setName}-${card.cardNum}-${card.parallel}`.toLowerCase()
       const sold = soldMap.get(key)
@@ -332,23 +352,41 @@ export async function GET(request: NextRequest) {
       return { ...card, soldData: null }
     })
 
-// Sort: cards with sold data first, then by sold count desc, then year desc
-enriched.sort((a, b) => {
-  const aHasSold = a.soldData && a.soldData.soldCount > 1 ? 1 : 0
-  const bHasSold = b.soldData && b.soldData.soldCount > 1 ? 1 : 0
-  if (bHasSold !== aHasSold) return bHasSold - aHasSold
-  if (bHasSold && aHasSold) return b.soldData.soldCount - a.soldData.soldCount
-  if (b.year !== a.year) return parseInt(b.year) - parseInt(a.year)
-  return a.price - b.price
-})
+    // Sort
+    enriched.sort((a, b) => {
+      const aHasSold = a.soldData && a.soldData.soldCount > 1 ? 1 : 0
+      const bHasSold = b.soldData && b.soldData.soldCount > 1 ? 1 : 0
+      if (bHasSold !== aHasSold) return bHasSold - aHasSold
+      if (bHasSold && aHasSold) return b.soldData.soldCount - a.soldData.soldCount
+      if (b.year !== a.year) return parseInt(b.year) - parseInt(a.year)
+      return a.price - b.price
+    })
 
-    return NextResponse.json({
+    const responseData = {
       total: enriched.length,
       ebayTotal: allActive.length,
       soldTotal: allSold.length,
       query,
       cards: enriched.slice(0, limit),
-    })
+      cached: false,
+    }
+
+    // Store in cache (don't await — fire and forget)
+    if (enriched.length > 0) {
+      supabase
+        .from('search_cache')
+        .insert({ query: cacheKey, results: responseData })
+        .then(() => {
+          // Clean up old cache entries older than 1 hour
+          supabase
+            .from('search_cache')
+            .delete()
+            .lt('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
+            .then(() => {})
+        })
+    }
+
+    return NextResponse.json(responseData)
 
   } catch (error: any) {
     console.error('Card search error:', error)

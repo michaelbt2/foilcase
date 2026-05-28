@@ -14,6 +14,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { analytics } from '../../lib/analytics'
 import Footer from '../../components/Footer'
+import { ebayAffiliateUrl, ebayUserUrl } from '../../lib/ebay'
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
@@ -303,7 +304,7 @@ export default function PublicVault() {
             {profile.bio && <div className="vault-bio">{profile.bio}</div>}
             {profile.ebay_username && (
               <a
-                href={`https://www.ebay.com/usr/${profile.ebay_username}`}
+                href={ebayUserUrl(profile.ebay_username)}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'5px 12px',borderRadius:'100px',background:'#EBF2FF',border:'1px solid #C5D8FF',fontSize:'12px',fontWeight:600,color:'#1B6FF0',textDecoration:'none',marginBottom:'10px',transition:'all .15s'}}
@@ -525,7 +526,7 @@ export default function PublicVault() {
                         )}
                         {c.status === 'sale' && c.ebay_listing_url && (
                           <a
-                            href={c.ebay_listing_url}
+                            href={ebayAffiliateUrl(c.ebay_listing_url)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="attr-tag"
@@ -665,7 +666,7 @@ export default function PublicVault() {
                   )}
                   {selectedCard.status === 'sale' && selectedCard.ebay_listing_url && (
                     <a
-                      href={selectedCard.ebay_listing_url}
+                      href={ebayAffiliateUrl(selectedCard.ebay_listing_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{background:'#1B6FF0',color:'#fff',borderRadius:'6px',padding:'8px 12px',fontSize:'12px',fontWeight:700,textAlign:'center',textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px'}}
