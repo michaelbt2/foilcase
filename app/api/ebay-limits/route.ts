@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 
 export async function GET() {
+  // Only available in local development
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'Only available in development' }, { status: 403 })
+  }
+
   try {
     const clientId     = process.env.EBAY_CLIENT_ID!
     const clientSecret = process.env.EBAY_CLIENT_SECRET!
@@ -20,7 +25,6 @@ export async function GET() {
       return NextResponse.json({ error: 'Token failed', details: tokenData })
     }
 
-    // Call Analytics API for buy.browse rate limits
     const limitsResponse = await fetch(
       'https://api.ebay.com/developer/analytics/v1_beta/rate_limit',
       {
@@ -33,36 +37,31 @@ export async function GET() {
     )
 
     const limitsText = await limitsResponse.text()
-
     let limitsData
     try {
       limitsData = JSON.parse(limitsText)
     } catch {
-      return NextResponse.json({
-        status: limitsResponse.status,
-        raw: limitsText,
-      })
+      return NextResponse.json({ status: limitsResponse.status, raw: limitsText })
     }
 
-    // Extract the key numbers
-    const resources = limitsData?.rateLimits?.[0]?.resources || []
-    const summary = resources.map((r: any) => ({
-      name: r.name,
-      rates: r.rates?.map((rate: any) => ({
-        limit: rate.limit,
-        remaining: rate.remaining,
-        used: rate.limit - rate.remaining,
-        percentUsed: Math.round(((rate.limit - rate.remaining) / rate.limit) * 100) + '%',
-        resetsAt: rate.reset,
-        windowSeconds: rate.timeWindow,
-        windowHours: Math.round(rate.timeWindow / 3600),
-      }))
-    }))
+    // Extract just the buy.browse data — the most important one
+    const browseResource = limitsData?.rateLimits
+      ?.find((r: any) => r.apiName === 'Browse')
+      ?.resources
+      ?.find((r: any) => r.name === 'buy.browse')
+
+    const browseRates = browseResource?.rates?.[0]
 
     return NextResponse.json({
       status: limitsResponse.status,
-      summary,
-      raw: limitsData,
+      buy_browse: browseRates ? {
+        limit: browseRates.limit,
+        used: browseRates.count,
+        remaining: browseRates.remaining,
+        percentUsed: Math.round((browseRates.count / browseRates.limit) * 100) + '%',
+        resetsAt: browseRates.reset,
+      } : null,
+      all_limits: limitsData,
     })
 
   } catch (error: any) {
