@@ -83,6 +83,19 @@ function parseYear(title: string) {
 }
 
 export async function GET(request: NextRequest) {
+  // Skip all eBay API calls in development to preserve rate limits
+  if (process.env.NODE_ENV === 'development') {
+    return NextResponse.json({
+      deals: [],
+      recentSold: [],
+      endingSoon: [],
+      sportSummary: [],
+      generatedAt: new Date().toISOString(),
+      cached: false,
+      dev: true,
+    })
+  }
+
   try {
     // Check cache first
     const cutoff = new Date(Date.now() - CACHE_DURATION_MINUTES * 60 * 1000).toISOString()
