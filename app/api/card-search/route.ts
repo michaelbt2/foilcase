@@ -6,7 +6,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const CACHE_DURATION_MINUTES = 15
+const CACHE_DURATION_MINUTES = 60
 
 // ── Token cache ──
 let cachedToken: string | null = null
@@ -211,6 +211,19 @@ function deduplicateCards(items: any[], player: string) {
 
 // ── Main route handler ──
 export async function GET(request: NextRequest) {
+  // Skip eBay calls in development to preserve rate limits
+  if (process.env.NODE_ENV === 'development') {
+    return NextResponse.json({
+      total: 0,
+      ebayTotal: 0,
+      soldTotal: 0,
+      query: '',
+      cards: [],
+      cached: false,
+      dev: true,
+    })
+  }
+
   const searchParams = request.nextUrl.searchParams
   const player  = searchParams.get('player') || ''
   const sport   = searchParams.get('sport') || ''
@@ -222,7 +235,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'player or set query required' }, { status: 400 })
   }
 
-try {
+  try {
     const token = await getEbayToken()
 
     // Split query intelligently
@@ -371,13 +384,12 @@ try {
       cached: false,
     }
 
-    // Store in cache (don't await — fire and forget)
+    // Store in cache — fire and forget
     if (enriched.length > 0) {
       supabase
         .from('search_cache')
         .insert({ query: cacheKey, results: responseData })
         .then(() => {
-          // Clean up old cache entries older than 1 hour
           supabase
             .from('search_cache')
             .delete()
