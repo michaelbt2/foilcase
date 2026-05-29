@@ -384,14 +384,18 @@ export default function Collection() {
     loadData()
   }
 
-  const createFolder = async () => {
-    if (!user) return
-    if (!newFolderName.trim()) { showToast('⚠️ Enter a folder name'); return }
-    await supabase.from('folders').insert({ user_id: user.id, name: newFolderName.trim(), color: 'blue', emoji: '📁' })
-    setNewFolderName('')
-    showToast(`📁 "${newFolderName}" created`)
-    loadData()
+ const createFolder = async () => {
+  if (!user) return
+  if (!newFolderName.trim()) { showToast('⚠️ Enter a folder name'); return }
+  if (!isCollector && folders.length >= 3) {
+    showToast('⚠️ Free plan is limited to 3 folders — upgrade to Collector for unlimited folders')
+    return
   }
+  await supabase.from('folders').insert({ user_id: user.id, name: newFolderName.trim(), color: 'blue', emoji: '📁' })
+  setNewFolderName('')
+  showToast(`📁 "${newFolderName}" created`)
+  loadData()
+}
 
   const deleteFolder = async (id: string) => {
     await supabase.from('folders').delete().eq('id', id)
@@ -727,9 +731,18 @@ export default function Collection() {
                 </div>
               ))}
             </div>
-            <button className="add-folder-btn" onClick={() => setShowFolder(true)}>
-              <FontAwesomeIcon icon={faPlus}/>New Folder
-            </button>
+            <button
+  className="add-folder-btn"
+  onClick={() => setShowFolder(true)}
+  style={{
+    opacity: !isCollector && folders.length >= 3 ? 0.6 : 1,
+    borderColor: !isCollector && folders.length >= 3 ? '#FFBBB7' : '#C5D8FF',
+    color: !isCollector && folders.length >= 3 ? '#D93025' : '#1B6FF0',
+  }}
+>
+  <FontAwesomeIcon icon={!isCollector && folders.length >= 3 ? faLock : faPlus}/>
+  {!isCollector && folders.length >= 3 ? '3 folder limit reached' : 'New Folder'}
+</button>
           </div>
 
           {/* Filters */}
@@ -834,7 +847,51 @@ export default function Collection() {
 
         {/* MAIN */}
         <main className="content">
-
+{/* 100 CARD LIMIT WARNING */}
+{!isCollector && totalCards >= 80 && (
+  <div style={{
+    display:'flex',alignItems:'center',justifyContent:'space-between',
+    gap:'16px',padding:'14px 20px',borderRadius:'10px',flexWrap:'wrap',
+    background: totalCards >= 100 ? '#FDECEA' : '#FEF3E2',
+    border: `1px solid ${totalCards >= 100 ? '#FFBBB7' : '#F5C880'}`,
+  }}>
+    <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+      <div style={{
+        width:'36px',height:'36px',borderRadius:'8px',flexShrink:0,
+        background: totalCards >= 100 ? '#D93025' : '#E8820C',
+        display:'flex',alignItems:'center',justifyContent:'center',
+      }}>
+        <FontAwesomeIcon icon={faLayerGroup} style={{color:'#fff',fontSize:'14px'}}/>
+      </div>
+      <div>
+        <div style={{fontSize:'14px',fontWeight:700,color:'#0D0D0D',marginBottom:'2px'}}>
+          {totalCards >= 100
+            ? 'You\'ve reached the 100 card limit on the free plan'
+            : `You\'re at ${totalCards} of 100 cards — ${100 - totalCards} remaining`
+          }
+        </div>
+        <div style={{fontSize:'12px',color:'#555'}}>
+          {totalCards >= 100
+            ? 'Upgrade to Collector to add unlimited cards to your vault.'
+            : 'Upgrade to Collector for unlimited cards, CSV import, and more.'
+          }
+        </div>
+      </div>
+    </div>
+    <a
+      href="/pricing"
+      style={{
+        display:'inline-flex',alignItems:'center',gap:'6px',
+        padding:'8px 16px',borderRadius:'100px',textDecoration:'none',
+        fontFamily:'Plus Jakarta Sans,sans-serif',fontSize:'13px',fontWeight:700,
+        background: totalCards >= 100 ? '#D93025' : '#E8820C',
+        color:'#fff',whiteSpace:'nowrap' as const,flexShrink:0,
+      }}
+    >
+      Upgrade to Collector →
+    </a>
+  </div>
+)}
           {/* DASH STATS */}
           <div className="dash-stats">
             <div className="dash-card">
@@ -1412,17 +1469,30 @@ export default function Collection() {
         <div className="overlay" onClick={()=>setShowFolder(false)}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-hdr">
-              <div className="modal-hdr-title">Manage Folders</div>
-              <button className="modal-close" onClick={()=>setShowFolder(false)}><FontAwesomeIcon icon={faXmark}/></button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group" style={{marginBottom:'16px'}}>
-                <label className="form-label">New Folder Name</label>
-                <div style={{display:'flex',gap:'8px'}}>
-                  <input className="form-input" style={{flex:1}} placeholder="e.g. PC Cards" value={newFolderName} onChange={e=>setNewFolderName(e.target.value)}/>
-                  <button className="btn btn-primary" onClick={createFolder}>Create</button>
-                </div>
-              </div>
+  <div className="modal-hdr-title">Manage Folders</div>
+  <button className="modal-close" onClick={()=>setShowFolder(false)}><FontAwesomeIcon icon={faXmark}/></button>
+</div>
+<div className="modal-body">
+  {!isCollector && folders.length >= 3 ? (
+    <div style={{padding:'16px',background:'#FEF3E2',borderRadius:'8px',border:'1px solid #F5C880',marginBottom:'16px',display:'flex',alignItems:'center',gap:'12px'}}>
+      <FontAwesomeIcon icon={faLock} style={{color:'#E8820C',flexShrink:0}}/>
+      <div style={{flex:1}}>
+        <div style={{fontSize:'13px',fontWeight:700,color:'#0D0D0D',marginBottom:'2px'}}>3 folder limit reached</div>
+        <div style={{fontSize:'12px',color:'#555'}}>Upgrade to Collector for unlimited folders.</div>
+      </div>
+      <a href="/pricing" style={{padding:'6px 14px',borderRadius:'100px',background:'#E8820C',color:'#fff',textDecoration:'none',fontSize:'12px',fontWeight:700,fontFamily:'Plus Jakarta Sans,sans-serif',whiteSpace:'nowrap' as const}}>
+        Upgrade →
+      </a>
+    </div>
+  ) : (
+    <div className="form-group" style={{marginBottom:'16px'}}>
+      <label className="form-label">New Folder Name</label>
+      <div style={{display:'flex',gap:'8px'}}>
+        <input className="form-input" style={{flex:1}} placeholder="e.g. PC Cards" value={newFolderName} onChange={e=>setNewFolderName(e.target.value)}/>
+        <button className="btn btn-primary" onClick={createFolder}>Create</button>
+      </div>
+    </div>
+  )}
               <div className="form-group">
                 <label className="form-label" style={{marginBottom:'8px'}}>Your Folders</label>
                 <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
