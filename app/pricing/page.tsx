@@ -275,7 +275,7 @@ export default function Pricing() {
             {[
               {
                 q: 'Is the free tier really free forever?',
-                a: 'Yes — the free tier is free forever. No credit card is required to sign up and we will never charge you for the free tier features. We may introduce a paid Collector tier in the future but the free tier will always remain available.',
+                a: 'Yes — the free tier is free forever. No credit card is required to sign up and we will never charge you for the free tier features.',
               },
               {
                 q: 'What happens if I reach the 100 card limit on the free tier?',
@@ -284,10 +284,6 @@ export default function Pricing() {
               {
                 q: 'When will the Collector tier launch?',
                 a: 'We are actively developing the Collector tier features including CSV import/export, collection analytics, and unlimited cards. Join the waitlist above and we will notify you the moment it launches.',
-              },
-              {
-                q: 'Will there be a discount for early supporters?',
-                a: 'Yes — waitlist members will receive a special launch discount when the Collector tier becomes available. Join the waitlist above to secure your spot.',
               },
               {
                 q: 'Can I cancel my Collector subscription at any time?',

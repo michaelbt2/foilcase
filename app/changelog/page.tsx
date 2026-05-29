@@ -7,9 +7,54 @@ export const metadata = {
 }
 
 const releases = [
-  {
+{
     date: 'May 2026',
     entries: [
+      {
+        type: 'new',
+        title: 'Want List',
+        desc: 'Star any card from Search results to add it to your personal Want List. Access your Want List from the new tab toggle in your vault header alongside My Vault.',
+      },
+      {
+        type: 'new',
+        title: 'eBay username on public vault',
+        desc: 'Add your eBay username in Settings and it will appear as a clickable Shop on eBay link on your public vault so other collectors can browse your listings.',
+      },
+      {
+        type: 'new',
+        title: '100 card limit warning for free users',
+        desc: 'Free tier users now see a warning banner when approaching and reaching the 100 card limit with an upgrade prompt. Upgrade to Collector for unlimited cards.',
+      },
+      {
+        type: 'new',
+        title: '3 folder maximum for free users',
+        desc: 'Free tier users are limited to 3 folders. Upgrade to Collector for unlimited folders.',
+      },
+      {
+        type: 'new',
+        title: 'Resources dropdown in navigation',
+        desc: 'Added a Resources dropdown to the main nav containing Learn, Supplies, FAQ, and Changelog — making content pages easier to find.',
+      },
+      {
+        type: 'improved',
+        title: '/learn category filters',
+        desc: 'The category filter pills on the Learn hub now filter articles in real time. Each category shows an article count and a clear filter option appears when active.',
+      },
+      {
+        type: 'new',
+        title: '/learn hub expanded to 11 articles',
+        desc: 'Added three new collector guides — What is Card Grading, How to Store Trading Cards, and the Trading Card Investment Guide.',
+      },
+      {
+        type: 'new',
+        title: 'Recommended Supplies on /learn articles',
+        desc: 'All 11 learn articles now include a Recommended Supplies section at the bottom with products matched to the article topic.',
+      },
+      {
+        type: 'new',
+        title: 'Monthly Giveaway page',
+        desc: 'Launched a monthly giveaway page where collectors can enter to win a free trading card. Includes entry form, rules, eligibility requirements, and winner announcement section.',
+      },
       {
         type: 'new',
         title: 'FAQ page',
@@ -17,73 +62,48 @@ const releases = [
       },
       {
         type: 'new',
-        title: 'Pricing page with Collector tier waitlist',
-        desc: 'Introduced the /pricing page showing Free and Collector tier features. Collectors can join the waitlist to be notified when the paid tier launches.',
+        title: 'Pricing page',
+        desc: 'Introduced the Pricing page showing Free and Collector tier features with a monthly and annual billing toggle. Join the waitlist to be notified when the Collector tier launches.',
       },
       {
         type: 'new',
-        title: 'Legal pages — complete foundation',
-        desc: 'Launched Cookie Policy, Acceptable Use Policy, DMCA & Copyright Policy, and Affiliate Disclosure pages. Foilcase now has a complete legal foundation.',
+        title: 'Legal pages',
+        desc: 'Published Terms of Service, Privacy Policy, Cookie Policy, Acceptable Use Policy, DMCA & Copyright Policy, and Affiliate Disclosure.',
       },
       {
         type: 'new',
-        title: 'Terms of Service',
-        desc: 'Published comprehensive Terms of Service covering user accounts, content standards, acceptable use, third party services, affiliate links, and dispute resolution.',
-      },
-      {
-        type: 'new',
-        title: '/supplies page with Amazon affiliate products',
-        desc: 'Launched a curated supplies page with 17 hand-picked products for collectors across storage, organization, grading, display, and shipping categories.',
+        title: 'Supplies page',
+        desc: 'Launched a curated supplies page with hand-picked products for collectors across storage, organization, grading, display, and shipping categories.',
       },
       {
         type: 'new',
         title: 'Contact page',
-        desc: 'Added a contact page with a Formspree-powered form for general inquiries, feedback, and privacy requests.',
-      },
-      {
-        type: 'new',
-        title: '/welcome landing page',
-        desc: 'Built a dedicated landing page for the eBay flyer campaign at foilcase.com/welcome with a focused hero, feature highlights, and a clear vault CTA.',
-      },
-      {
-        type: 'new',
-        title: '/learn content hub — 8 articles',
-        desc: 'Launched the Foilcase knowledge hub with 8 collector guides covering card valuation, grading companies, rookie cards, organization, selling on eBay, Charizard values, Mahomes rookie cards, and Panini Prizm.',
+        desc: 'Added a contact page for general inquiries, feedback, and privacy requests.',
       },
       {
         type: 'improved',
-        title: 'Search page — major improvements',
-        desc: 'Added sport filter pills, real personalized recent searches from your history, a sold comps summary card above results, an improved empty state with trending suggestions, and a smarter search dropdown.',
+        title: 'Search — major improvements',
+        desc: 'Added sport filter pills, personalized recent searches, a sold comps summary card above results, an improved empty state with trending suggestions, and a smarter search dropdown.',
       },
       {
         type: 'improved',
         title: 'Community collector cards',
-        desc: 'Collector cards now show a 2-line bio snippet. Removed redundant tier badge and @handle to create a cleaner, more readable card layout.',
+        desc: 'Collector cards now show a 2-line bio snippet with a cleaner, more readable layout.',
       },
       {
         type: 'improved',
         title: 'Collection page sidebar',
-        desc: 'Grading, Status, and Date Added filters now collapse by default to reduce visual clutter and bring the Collector Essentials section into view sooner.',
+        desc: 'Filters now collapse by default to reduce visual clutter and bring the Collector Essentials section into view sooner.',
       },
       {
         type: 'new',
-        title: 'Amazon affiliate integration',
-        desc: 'Added Collector Essentials product recommendations to the collection page sidebar with real Amazon affiliate links and product thumbnails.',
+        title: 'Collector Essentials sidebar',
+        desc: 'Added recommended collector supplies to the collection page sidebar with curated product recommendations.',
       },
       {
         type: 'new',
-        title: 'Mobile camera capture for card uploads',
-        desc: 'Card image uploads now open the rear camera directly on mobile devices, making it faster to photograph and add cards to your vault.',
-      },
-      {
-        type: 'new',
-        title: 'Beta modal with Learn More',
-        desc: 'The "Now in public beta" pill on the homepage is now clickable and opens a modal explaining what is working now and what is coming soon.',
-      },
-      {
-        type: 'new',
-        title: 'Privacy Policy',
-        desc: 'Published a comprehensive Privacy Policy generated with Termly covering data collection, usage, sharing, retention, and user rights.',
+        title: 'Mobile camera capture',
+        desc: 'Card image uploads now open the rear camera directly on mobile devices making it faster to photograph and add cards to your vault.',
       },
     ],
   },
