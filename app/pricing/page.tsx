@@ -239,7 +239,7 @@ export default function Pricing() {
         </div>
 
         {/* WAITLIST */}
-        <div className="waitlist-section" id="waitlist">
+        <div className="waitlist-section" id="waitlist" style={{scrollMarginTop:'80px'}}>
           {submitted ? (
             <>
               <div style={{fontSize:'32px',marginBottom:'12px'}}>🎉</div>

@@ -402,9 +402,130 @@ const [showBeta, setShowBeta] = useState(false)
 </section>
 
 
-{/* PRICING */}
+{/* PRICING START */}
+<section className="section" id="pricing">
+  <div className="section-inner">
+    <div style={{textAlign:'center',marginBottom:'48px'}}>
+      <div className="section-eyebrow">Pricing</div>
+      <h2 className="section-title">Free for all. <em>Collector tier coming soon</em></h2>
+      <p className="section-sub" style={{margin:'0 auto'}}>Foilcase is free to use. A paid Collector tier is coming with advanced features — join the waitlist to be first in line.</p>
+    </div>
 
-      
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'20px',maxWidth:'760px',margin:'0 auto 48px'}}>
+
+      {/* FREE */}
+      <div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:'16px',overflow:'hidden',boxShadow:'0 1px 3px rgba(0,0,0,.06)'}}>
+        <div style={{padding:'28px 28px 24px'}}>
+          <div style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'3px 10px',borderRadius:'100px',fontSize:'11px',fontWeight:700,background:'#F7F7F7',color:'#555',marginBottom:'12px'}}>
+            <FontAwesomeIcon icon={faBolt} style={{fontSize:'9px'}}/>Free
+          </div>
+          <div style={{fontSize:'22px',fontWeight:800,letterSpacing:'-.5px',color:'#0D0D0D',marginBottom:'6px'}}>Free</div>
+          <div style={{fontSize:'14px',color:'#555',lineHeight:1.5,marginBottom:'20px'}}>Everything you need to start tracking your collection.</div>
+          <div style={{display:'flex',alignItems:'flex-end',gap:'4px',marginBottom:'4px'}}>
+            <div style={{fontSize:'42px',fontWeight:800,color:'#0D0D0D',letterSpacing:'-2px',lineHeight:1}}>$0</div>
+            <div style={{fontSize:'14px',color:'#555',marginBottom:'6px'}}>/month</div>
+          </div>
+          <div style={{fontSize:'12px',color:'#555',marginBottom:'16px'}}>Free forever — no credit card required</div>
+          <a href="/sign-up" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',width:'100%',padding:'12px',borderRadius:'100px',fontSize:'14px',fontWeight:700,cursor:'pointer',background:'#F7F7F7',color:'#0D0D0D',textDecoration:'none',transition:'all .2s',fontFamily:'Plus Jakarta Sans,sans-serif'}}
+            onMouseOver={e=>{e.currentTarget.style.background='#EFEFEF'}}
+            onMouseOut={e=>{e.currentTarget.style.background='#F7F7F7'}}
+          >
+            <FontAwesomeIcon icon={faRocket}/>Create your free vault
+          </a>
+        </div>
+        <div style={{padding:'0 28px 28px'}}>
+          <hr style={{border:'none',borderTop:'1px solid #EFEFEF',margin:'0 0 20px'}}/>
+          <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+            {[
+              {label:'Up to 100 cards in your vault', included:true},
+              {label:'Up to 3 folders', included:true},
+              {label:'Live eBay pricing and sold comps', included:true},
+              {label:'Live market data and auctions', included:true},
+              {label:'Search across public vaults', included:true},
+              {label:'Public or private vault', included:true},
+              {label:'Card image uploads', included:true},
+              {label:'Community — follow collectors', included:true},
+              {label:'Want List', included:true},
+              {label:'CSV import/export', included:false},
+              {label:'Collection analytics and insights', included:false},
+            ].map(f => (
+              <div key={f.label} style={{display:'flex',alignItems:'flex-start',gap:'10px',fontSize:'14px',color:f.included?'#0D0D0D':'#D8D8D8'}}>
+                <div style={{width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:'1px',fontSize:'9px',background:f.included?'#E6F9F0':'#F7F7F7',color:f.included?'#00A861':'#D8D8D8'}}>
+                  <FontAwesomeIcon icon={f.included ? faCheck : faXmark}/>
+                </div>
+                {f.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* COLLECTOR */}
+      <div style={{background:'#fff',border:'2px solid #1B6FF0',borderRadius:'16px',overflow:'hidden',boxShadow:'0 8px 32px rgba(27,111,240,.15)'}}>
+        <div style={{padding:'28px 28px 24px'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}}>
+            <div style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'3px 10px',borderRadius:'100px',fontSize:'11px',fontWeight:700,background:'#EBF2FF',color:'#1B6FF0'}}>
+              <FontAwesomeIcon icon={faStar} style={{fontSize:'9px'}}/>Collector
+            </div>
+            <div style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'3px 10px',borderRadius:'100px',fontSize:'11px',fontWeight:700,background:'#FEF3E2',color:'#E8820C'}}>
+              Coming Soon
+            </div>
+          </div>
+          <div style={{fontSize:'22px',fontWeight:800,letterSpacing:'-.5px',color:'#0D0D0D',marginBottom:'6px'}}>Collector</div>
+          <div style={{fontSize:'14px',color:'#555',lineHeight:1.5,marginBottom:'20px'}}>For serious collectors who want unlimited tracking and deep insights.</div>
+          <div style={{display:'flex',alignItems:'flex-end',gap:'4px',marginBottom:'4px'}}>
+            <div style={{fontSize:'42px',fontWeight:800,color:'#1B6FF0',letterSpacing:'-2px',lineHeight:1}}>$4.99</div>
+            <div style={{fontSize:'14px',color:'#555',marginBottom:'6px'}}>/month</div>
+          </div>
+          <div style={{fontSize:'12px',color:'#555',marginBottom:'16px'}}>or $39.99/year — save 33%</div>
+          <a href="/pricing#waitlist" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',width:'100%',padding:'12px',borderRadius:'100px',fontSize:'14px',fontWeight:700,cursor:'pointer',background:'#0D0D0D',color:'#fff',textDecoration:'none',transition:'all .2s',fontFamily:'Plus Jakarta Sans,sans-serif'}}
+            onMouseOver={e=>{e.currentTarget.style.background='#333'}}
+            onMouseOut={e=>{e.currentTarget.style.background='#0D0D0D'}}
+          >
+            <FontAwesomeIcon icon={faStar}/>Join the waitlist
+          </a>
+        </div>
+        <div style={{padding:'0 28px 28px'}}>
+          <hr style={{border:'none',borderTop:'1px solid #EFEFEF',margin:'0 0 20px'}}/>
+          <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+            {[
+              'Unlimited cards in your vault',
+              'Unlimited folders',
+              'Live eBay pricing and sold comps',
+              'Live market data and auctions',
+              'Search across public vaults',
+              'Public or private vault',
+              'Card image uploads',
+              'Community — follow collectors',
+              'Want List',
+              'CSV import/export',
+              'Collection analytics and insights',
+            ].map(f => (
+              <div key={f} style={{display:'flex',alignItems:'flex-start',gap:'10px',fontSize:'14px',color:'#0D0D0D'}}>
+                <div style={{width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:'1px',fontSize:'9px',background:'#E6F9F0',color:'#00A861'}}>
+                  <FontAwesomeIcon icon={faCheck}/>
+                </div>
+                {f}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style={{textAlign:'center'}}>
+      <a href="/pricing" style={{display:'inline-flex',alignItems:'center',gap:'6px',fontSize:'14px',fontWeight:600,color:'#1B6FF0',textDecoration:'none'}}
+        onMouseOver={e=>{e.currentTarget.style.textDecoration='underline'}}
+        onMouseOut={e=>{e.currentTarget.style.textDecoration='none'}}
+      >
+        View full pricing details →
+      </a>
+    </div>
+
+  </div>
+</section>
+      {/* PRICING END */}
 
       {/* CTA BANNER */}
       <section className="section" style={{background:'#F7F7F7'}}>
