@@ -1,12 +1,8 @@
-import { Metadata } from 'next'
+'use client'
+import { useState } from 'react'
 import Nav from '../components/Nav'
 import Footer from '../components/Footer'
 import Link from 'next/link'
-
-export const metadata: Metadata = {
-  title: 'Learn — Trading Card Collecting Guides & Resources | Foilcase',
-  description: 'Free guides and resources for trading card collectors. Learn how to value, organize, grade, and sell your card collection.',
-}
 
 const articles = [
   {
@@ -74,32 +70,33 @@ const articles = [
     date: 'May 2026',
   },
   {
-  slug: 'what-is-card-grading',
-  title: 'What is Card Grading? Complete Beginner\'s Guide',
-  description: 'Everything you need to know about professional card grading — what it is, how it works, which company to choose, and whether it\'s worth it.',
-  category: 'Grading',
-  readTime: '10 min',
-  date: 'May 2026',
-},
-{
-  slug: 'how-to-store-trading-cards',
-  title: 'How to Store Trading Cards — Complete Guide',
-  description: 'The complete guide to storing trading cards properly — from penny sleeves to graded slabs, environmental conditions, and common mistakes to avoid.',
-  category: 'Getting Started',
-  readTime: '9 min',
-  date: 'May 2026',
-},
-{
-  slug: 'trading-card-investment-guide',
-  title: 'Trading Card Investment Guide — Is it Worth It?',
-  description: 'A comprehensive guide to investing in trading cards — what makes a good investment, strategies, risks, and how to research the market.',
-  category: 'Valuing Cards',
-  readTime: '12 min',
-  date: 'May 2026',
-},
+    slug: 'what-is-card-grading',
+    title: 'What is Card Grading? Complete Beginner\'s Guide',
+    description: 'Everything you need to know about professional card grading — what it is, how it works, which company to choose, and whether it\'s worth it.',
+    category: 'Grading',
+    readTime: '10 min',
+    date: 'May 2026',
+  },
+  {
+    slug: 'how-to-store-trading-cards',
+    title: 'How to Store Trading Cards — Complete Guide',
+    description: 'The complete guide to storing trading cards properly — from penny sleeves to graded slabs, environmental conditions, and common mistakes to avoid.',
+    category: 'Getting Started',
+    readTime: '9 min',
+    date: 'May 2026',
+  },
+  {
+    slug: 'trading-card-investment-guide',
+    title: 'Trading Card Investment Guide — Is it Worth It?',
+    description: 'A comprehensive guide to investing in trading cards — what makes a good investment, strategies, risks, and how to research the market.',
+    category: 'Valuing Cards',
+    readTime: '12 min',
+    date: 'May 2026',
+  },
 ]
 
 const categories = [
+  { label: 'All', color: '#0D0D0D', bg: '#F7F7F7' },
   { label: 'Getting Started', color: '#1B6FF0', bg: '#EBF2FF' },
   { label: 'Grading', color: '#7B4FCA', bg: '#F2ECFB' },
   { label: 'Valuing Cards', color: '#00A861', bg: '#E6F9F0' },
@@ -109,6 +106,14 @@ const categories = [
 ]
 
 export default function LearnHub() {
+  const [activeCategory, setActiveCategory] = useState('All')
+
+  const filtered = activeCategory === 'All'
+    ? articles
+    : articles.filter(a => a.category === activeCategory)
+
+  const activeCat = categories.find(c => c.label === activeCategory)
+
   return (
     <>
       <style>{`
@@ -119,13 +124,18 @@ export default function LearnHub() {
         .learn-title{font-size:clamp(28px,5vw,46px);font-weight:800;color:#fff;letter-spacing:-1.5px;line-height:1.08;margin-bottom:16px}
         .learn-title em{font-style:italic;color:#7EB6FF}
         .learn-sub{font-size:16px;color:rgba(255,255,255,.6);line-height:1.7}
-        .learn-layout{max-width:1100px;margin:0 auto;padding:48px 24px}
-        .learn-categories{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px}
-        .learn-category{padding:6px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Plus Jakarta Sans',sans-serif}
+        .learn-pills-bar{background:#fff;border-bottom:1px solid #EFEFEF;padding:14px 0}
+        .learn-pills-inner{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+        .learn-pill{display:inline-flex;align-items:center;padding:6px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid transparent;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s}
+        .learn-pill:hover{opacity:.85}
+        .learn-layout{max-width:1100px;margin:0 auto;padding:40px 24px}
+        .learn-results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+        .learn-results-count{font-size:14px;color:#9A9A9A}
+        .learn-results-count strong{color:#0D0D0D}
         .learn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
         .learn-card{background:#fff;border:1px solid #EFEFEF;border-radius:12px;padding:24px;text-decoration:none;transition:all .2s;display:block;box-shadow:0 1px 3px rgba(0,0,0,.06)}
         .learn-card:hover{border-color:#D8D8D8;box-shadow:0 8px 28px rgba(0,0,0,.10);transform:translateY(-2px)}
-        .learn-card-category{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#1B6FF0;margin-bottom:10px}
+        .learn-card-category{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
         .learn-card-title{font-size:18px;font-weight:800;letter-spacing:-.3px;color:#0D0D0D;margin-bottom:8px;line-height:1.25}
         .learn-card-desc{font-size:14px;color:#555;line-height:1.6;margin-bottom:16px}
         .learn-card-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#9A9A9A}
@@ -144,34 +154,87 @@ export default function LearnHub() {
         </div>
       </div>
 
+      {/* PILLS BAR */}
+      <div className="learn-pills-bar">
+        <div className="learn-pills-inner">
+          {categories.map(c => {
+            const isActive = activeCategory === c.label
+            return (
+              <button
+                key={c.label}
+                className="learn-pill"
+                onClick={() => setActiveCategory(c.label)}
+                style={{
+                  background: isActive ? c.color : '#fff',
+                  color: isActive ? '#fff' : '#555',
+                  borderColor: isActive ? c.color : '#EFEFEF',
+                }}
+              >
+                {c.label}
+                {c.label !== 'All' && (
+                  <span style={{
+                    marginLeft:'6px',
+                    fontSize:'11px',
+                    fontWeight:700,
+                    padding:'1px 6px',
+                    borderRadius:'100px',
+                    background: isActive ? 'rgba(255,255,255,.25)' : '#F7F7F7',
+                    color: isActive ? '#fff' : '#9A9A9A',
+                  }}>
+                    {articles.filter(a => a.category === c.label).length}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* MAIN */}
       <div className="learn-layout">
 
-        {/* Categories */}
-        <div className="learn-categories">
-          {categories.map(c => (
-            <span key={c.label} className="learn-category" style={{background:c.bg,color:c.color}}>
-              {c.label}
-            </span>
-          ))}
+        {/* Results header */}
+        <div className="learn-results-header">
+          <div className="learn-results-count">
+            <strong>{filtered.length}</strong> article{filtered.length !== 1 ? 's' : ''}
+            {activeCategory !== 'All' && <> in <strong>{activeCategory}</strong></>}
+          </div>
+          {activeCategory !== 'All' && (
+            <button
+              onClick={() => setActiveCategory('All')}
+              style={{fontSize:'13px',fontWeight:600,color:'#1B6FF0',background:'none',border:'none',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}}
+            >
+              Clear filter ×
+            </button>
+          )}
         </div>
 
         {/* Articles grid */}
         <div className="learn-grid">
-          {articles.map(a => (
-            <Link key={a.slug} href={`/learn/${a.slug}`} className="learn-card">
-              <div className="learn-card-category">{a.category}</div>
-              <div className="learn-card-title">{a.title}</div>
-              <div className="learn-card-desc">{a.description}</div>
-              <div className="learn-card-meta">
-                <span>{a.readTime} read</span>
-                <div className="learn-card-dot"/>
-                <span>{a.date}</span>
-              </div>
-            </Link>
-          ))}
+          {filtered.length === 0 ? (
+            <div className="learn-empty">
+              <div style={{fontSize:'32px',marginBottom:'12px'}}>📚</div>
+              <div style={{fontSize:'16px',fontWeight:700,color:'#0D0D0D',marginBottom:'6px'}}>No articles in this category yet</div>
+              <div style={{fontSize:'14px',color:'#9A9A9A'}}>Check back soon — we're adding new guides regularly.</div>
+            </div>
+          ) : (
+            filtered.map(a => {
+              const cat = categories.find(c => c.label === a.category)
+              return (
+                <Link key={a.slug} href={`/learn/${a.slug}`} className="learn-card">
+                  <div className="learn-card-category" style={{color: cat?.color || '#1B6FF0'}}>{a.category}</div>
+                  <div className="learn-card-title">{a.title}</div>
+                  <div className="learn-card-desc">{a.description}</div>
+                  <div className="learn-card-meta">
+                    <span>{a.readTime} read</span>
+                    <div className="learn-card-dot"/>
+                    <span>{a.date}</span>
+                  </div>
+                </Link>
+              )
+            })
+          )}
         </div>
-
       </div>
 
       <Footer />
