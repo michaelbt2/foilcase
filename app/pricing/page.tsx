@@ -3,16 +3,25 @@ import { useState } from 'react'
 import Nav from '../components/Nav'
 import Footer from '../components/Footer'
 import Link from 'next/link'
+import { useUser } from '@clerk/nextjs'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faCheck, faXmark, faRocket, faLayerGroup, faChartLine,
-  faFileExport, faFolder, faStar, faHeadset, faBolt, faTag,
+  faCheck, faXmark, faRocket, faStar, faBolt, faTag, faSpinner,
 } from '@fortawesome/free-solid-svg-icons'
 
+// Set to true when ready to accept payments
+const STRIPE_LIVE = false
+
+const PRICE_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || ''
+const PRICE_ANNUAL = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || ''
+
 export default function Pricing() {
+  const { user } = useUser()
   const [annual, setAnnual] = useState(false)
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
 
   const handleWaitlist = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,6 +39,33 @@ export default function Pricing() {
     }
   }
 
+  const handleCheckout = async () => {
+    if (!user) {
+      window.location.href = '/sign-in?redirect=/pricing'
+      return
+    }
+    setCheckoutLoading(true)
+    setCheckoutError(null)
+    try {
+      const priceId = annual ? PRICE_ANNUAL : PRICE_MONTHLY
+      const res = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          userEmail: user.emailAddresses[0]?.emailAddress,
+          priceId,
+        }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      window.location.href = data.url
+    } catch (error: any) {
+      setCheckoutError('Something went wrong. Please try again or contact hello@foilcase.com.')
+      setCheckoutLoading(false)
+    }
+  }
+
   const freeFeatures = [
     { label: 'Up to 100 cards in your vault', included: true },
     { label: 'Up to 3 folders', included: true },
@@ -38,7 +74,8 @@ export default function Pricing() {
     { label: 'Card image uploads', included: true },
     { label: 'Community access — follow collectors', included: true },
     { label: 'Search across public vaults', included: true },
-    { label: 'Market intelligence page', included: true },
+    { label: 'Live market data and auctions', included: true },
+    { label: 'Want List', included: true },
     { label: 'CSV import/export', included: false },
     { label: 'Unlimited cards', included: false },
     { label: 'Unlimited folders', included: false },
@@ -57,7 +94,8 @@ export default function Pricing() {
     { label: 'Card image uploads', included: true },
     { label: 'Community access — follow collectors', included: true },
     { label: 'Search across public vaults', included: true },
-    { label: 'Market intelligence page', included: true },
+    { label: 'Live market data and auctions', included: true },
+    { label: 'Want List', included: true },
     { label: 'CSV import/export', included: true },
     { label: 'Collection analytics and insights', included: true },
     { label: 'Card value history tracking', included: true },
@@ -142,8 +180,6 @@ export default function Pricing() {
           </div>
           <h1 className="pricing-title">Simple pricing for <em>serious collectors</em></h1>
           <p className="pricing-sub">Start free and upgrade when you're ready. No hidden fees, no surprises.</p>
-
-          {/* Billing toggle */}
           <div className="billing-toggle">
             <button className={`billing-btn${!annual?' on':' off'}`} onClick={() => setAnnual(false)}>Monthly</button>
             <button className={`billing-btn${annual?' on':' off'}`} onClick={() => setAnnual(true)}>
@@ -196,9 +232,11 @@ export default function Pricing() {
                 <div className="pricing-card-badge badge-collector" style={{margin:0}}>
                   <FontAwesomeIcon icon={faStar} style={{fontSize:'9px'}}/>Collector
                 </div>
-                <div className="pricing-card-badge badge-soon" style={{margin:0}}>
-                  Coming Soon
-                </div>
+                {!STRIPE_LIVE && (
+                  <div className="pricing-card-badge badge-soon" style={{margin:0}}>
+                    Coming Soon
+                  </div>
+                )}
               </div>
               <div className="pricing-card-name">Collector</div>
               <div className="pricing-card-desc">For serious collectors who want unlimited tracking and deep insights.</div>
@@ -213,13 +251,35 @@ export default function Pricing() {
               ) : (
                 <div style={{fontSize:'12px',color:'#9A9A9A',marginBottom:'16px'}}>or $39.99/year and save 33%</div>
               )}
-              <button
-  className="pricing-cta cta-waitlist"
-  style={{border:'none',width:'100%'}}
-  onClick={() => document.getElementById('waitlist')?.scrollIntoView({behavior:'smooth'})}
->
-  <FontAwesomeIcon icon={faStar}/>Join the waitlist
-</button>
+
+              {STRIPE_LIVE ? (
+                <>
+                  <button
+                    className="pricing-cta cta-collector"
+                    style={{border:'none',width:'100%'}}
+                    onClick={handleCheckout}
+                    disabled={checkoutLoading}
+                  >
+                    {checkoutLoading
+                      ? <><FontAwesomeIcon icon={faSpinner} spin/>Processing...</>
+                      : <><FontAwesomeIcon icon={faStar}/>{user ? 'Upgrade to Collector' : 'Get started'}</>
+                    }
+                  </button>
+                  {checkoutError && (
+                    <div style={{fontSize:'12px',color:'#D93025',marginTop:'8px',textAlign:'center'}}>
+                      {checkoutError}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <button
+                  className="pricing-cta cta-waitlist"
+                  style={{border:'none',width:'100%'}}
+                  onClick={() => document.getElementById('waitlist')?.scrollIntoView({behavior:'smooth'})}
+                >
+                  <FontAwesomeIcon icon={faStar}/>Join the waitlist
+                </button>
+              )}
             </div>
             <div className="pricing-card-body">
               <hr className="pricing-divider"/>
@@ -238,35 +298,46 @@ export default function Pricing() {
 
         </div>
 
-        {/* WAITLIST */}
-        <div className="waitlist-section" id="waitlist" style={{scrollMarginTop:'80px'}}>
-          {submitted ? (
-            <>
-              <div style={{fontSize:'32px',marginBottom:'12px'}}>🎉</div>
-              <div className="waitlist-title">You're on the list!</div>
-              <p className="waitlist-sub">We'll email you as soon as the Collector tier launches. Thanks for your interest in supporting foilcase.</p>
-            </>
-          ) : (
-            <>
-              <div className="pricing-card-badge badge-collector" style={{marginBottom:'16px',display:'inline-flex'}}>
-                <FontAwesomeIcon icon={faStar} style={{fontSize:'9px'}}/>Collector tier — coming soon
-              </div>
-              <div className="waitlist-title">Be first to know when Collector launches</div>
-              <p className="waitlist-sub">Join the waitlist and we'll notify you the moment the Collector tier is available. Early waitlist members will receive a special launch discount.</p>
-              <form className="waitlist-form" onSubmit={handleWaitlist}>
-                <input
-                  className="waitlist-input"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                />
-                <button type="submit" className="waitlist-btn">Join waitlist</button>
-              </form>
-            </>
-          )}
-        </div>
+        {/* WAITLIST — only shown when Stripe is not live */}
+        {!STRIPE_LIVE && (
+          <div className="waitlist-section" id="waitlist" style={{scrollMarginTop:'80px'}}>
+            {submitted ? (
+              <>
+                <div style={{fontSize:'32px',marginBottom:'12px'}}>🎉</div>
+                <div className="waitlist-title">You're on the list!</div>
+                <p className="waitlist-sub">We'll email you as soon as the Collector tier launches. Thanks for your interest in supporting foilcase.</p>
+              </>
+            ) : (
+              <>
+                <div className="pricing-card-badge badge-collector" style={{marginBottom:'16px',display:'inline-flex'}}>
+                  <FontAwesomeIcon icon={faStar} style={{fontSize:'9px'}}/>Collector tier — coming soon
+                </div>
+                <div className="waitlist-title">Be first to know when Collector launches</div>
+                <p className="waitlist-sub">Join the waitlist and we'll notify you the moment the Collector tier is available.</p>
+                <form className="waitlist-form" onSubmit={handleWaitlist}>
+                  <input
+                    className="waitlist-input"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                  />
+                  <button type="submit" className="waitlist-btn">Join waitlist</button>
+                </form>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* SUCCESS MESSAGE — shown after upgrade */}
+        {STRIPE_LIVE && (
+          <div style={{background:'#E6F9F0',border:'1px solid #A8DFC4',borderRadius:'16px',padding:'32px',textAlign:'center',marginBottom:'48px'}}>
+            <div style={{fontSize:'32px',marginBottom:'12px'}}>🎉</div>
+            <div style={{fontSize:'20px',fontWeight:800,color:'#0D0D0D',marginBottom:'8px'}}>Ready to upgrade?</div>
+            <p style={{fontSize:'15px',color:'#555',marginBottom:'0'}}>Click the Upgrade button above to get started. You'll be redirected to our secure payment page powered by Stripe.</p>
+          </div>
+        )}
 
         {/* FAQ */}
         <div className="faq-section">
@@ -283,15 +354,15 @@ export default function Pricing() {
               },
               {
                 q: 'When will the Collector tier launch?',
-                a: 'We are actively developing the Collector tier features including CSV import/export, collection analytics, and unlimited cards. Join the waitlist above and we will notify you the moment it launches.',
+                a: 'We are actively developing the Collector tier. Join the waitlist above and we will notify you the moment it launches.',
               },
               {
                 q: 'Can I cancel my Collector subscription at any time?',
                 a: 'Yes — you can cancel your Collector subscription at any time. Monthly subscribers can cancel before their next billing date. Annual subscribers can cancel and will retain access until the end of their paid year.',
               },
               {
-                q: 'What payment methods will you accept?',
-                a: 'We plan to accept all major credit and debit cards through Stripe, a secure payment processor. We may add additional payment methods based on user demand.',
+                q: 'What payment methods do you accept?',
+                a: 'We accept all major credit and debit cards through Stripe, a secure and PCI-compliant payment processor.',
               },
               {
                 q: 'Will my data be safe if I downgrade from Collector to Free?',
