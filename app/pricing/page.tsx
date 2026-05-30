@@ -249,7 +249,7 @@ export default function Pricing() {
               {annual ? (
                 <div className="pricing-amount-save">$39.99/year — you save $19.89</div>
               ) : (
-                <div style={{fontSize:'12px',color:'#9A9A9A',marginBottom:'16px'}}>or $39.99/year and save 33%</div>
+                <div style={{fontSize:'12px',color:'#9A9A9A',marginBottom:'16px'}}>or $39.99/year — save 33%</div>
               )}
 
               {STRIPE_LIVE ? (
