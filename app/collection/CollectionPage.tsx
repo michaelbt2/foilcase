@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { supabase } from '../lib/supabase'
 import Nav from '../components/Nav'
@@ -16,7 +16,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useFeatures } from '../lib/useFeatures'
 import { ebayAffiliateUrl } from '../lib/ebay'
-import { useSearchParams } from 'next/navigation'
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
@@ -117,19 +116,19 @@ export default function Collection() {
   const [imageTab, setImageTab] = useState<'front'|'back'>('front')
   const [uploadBackLoading, setUploadBackLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'vault'|'wants'>('vault')
-  const searchParams = useSearchParams()
-const [showUpgradeBanner, setShowUpgradeBanner] = useState(false)
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(false)
 
 useEffect(() => {
-  if (searchParams.get('upgraded') === 'true') {
-    setShowUpgradeBanner(true)
-    // Clean up the URL without reloading
-    window.history.replaceState({}, '', '/collection')
-    // Auto dismiss after 8 seconds
-    const timer = setTimeout(() => setShowUpgradeBanner(false), 45000)
-    return () => clearTimeout(timer)
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('upgraded') === 'true') {
+      setShowUpgradeBanner(true)
+      window.history.replaceState({}, '', '/collection')
+      const timer = setTimeout(() => setShowUpgradeBanner(false), 15000)
+      return () => clearTimeout(timer)
+    }
   }
-}, [searchParams])
+}, [])
   const [wants, setWants] = useState<any[]>([])
   const [wantsLoading, setWantsLoading] = useState(false)
 
