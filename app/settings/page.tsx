@@ -5,30 +5,35 @@ import { supabase } from '../lib/supabase'
 import Nav from '../components/Nav'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faUser, faLock, faGlobe, faCheck, faXmark, faLayerGroup,
-  faPen, faShield,
+  faUser, faLock, faGlobe, faCheck, faXmark,
+  faStar, faRocket, faSpinner,
 } from '@fortawesome/free-solid-svg-icons'
 import Footer from '../components/Footer'
 import { ebayUserUrl } from '../lib/ebay'
+import { useFeatures } from '../lib/useFeatures'
 
 export default function Settings() {
   const { user, isLoaded } = useUser()
+  const { isCollector, plan, subscriptionStatus, planExpiresAt } = useFeatures()
   const [username, setUsername]       = useState('')
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio]                 = useState('')
   const [isPublic, setIsPublic]       = useState(false)
+  const [ebayUsername, setEbayUsername] = useState('')
   const [loading, setLoading]         = useState(true)
   const [saving, setSaving]           = useState(false)
   const [usernameAvailable, setUsernameAvailable] = useState<boolean|null>(null)
   const [checkingUsername, setCheckingUsername]   = useState(false)
   const [originalUsername, setOriginalUsername]   = useState('')
   const [toast, setToast]             = useState<string|null>(null)
+  const [activeSection, setActiveSection] = useState('profile')
+  const [portalLoading, setPortalLoading] = useState(false)
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2800) }
 
-useEffect(() => {
-  if (isLoaded && user) loadProfile()
-}, [isLoaded, user?.id])
+  useEffect(() => {
+    if (isLoaded && user) loadProfile()
+  }, [isLoaded, user?.id])
 
   const loadProfile = async () => {
     if (!user) return
@@ -46,7 +51,6 @@ useEffect(() => {
       setIsPublic(data.is_public || false)
       setEbayUsername(data.ebay_username || '')
     } else {
-      // Pre-fill display name from Clerk
       setDisplayName(user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : '')
     }
     setLoading(false)
@@ -64,20 +68,19 @@ useEffect(() => {
     setUsernameAvailable(!data)
     setCheckingUsername(false)
   }
-const [ebayUsername, setEbayUsername] = useState('')
+
   const handleUsernameChange = (val: string) => {
     setUsername(val)
     setUsernameAvailable(null)
     const timer = setTimeout(() => checkUsername(val), 600)
     return () => clearTimeout(timer)
   }
-const [activeSection, setActiveSection] = useState('profile')
+
   const saveProfile = async () => {
     if (!user) return
     if (!username) { showToast('⚠️ Username is required'); return }
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) { showToast('⚠️ Username must be 3-20 characters, letters, numbers and underscores only'); return }
     if (usernameAvailable === false && username !== originalUsername) { showToast('⚠️ That username is already taken'); return }
-
     setSaving(true)
     const { error } = await supabase
       .from('profiles')
@@ -90,7 +93,6 @@ const [activeSection, setActiveSection] = useState('profile')
         ebay_username: ebayUsername,
         updated_at: new Date().toISOString(),
       })
-
     if (error) {
       showToast('❌ Error saving: ' + error.message)
     } else {
@@ -98,6 +100,29 @@ const [activeSection, setActiveSection] = useState('profile')
       showToast('✅ Settings saved!')
     }
     setSaving(false)
+  }
+
+  const handleManageSubscription = async () => {
+    if (!user) return
+    setPortalLoading(true)
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      window.location.href = data.url
+    } catch (error: any) {
+      showToast('❌ Could not open billing portal. Please contact hello@foilcase.com.')
+      setPortalLoading(false)
+    }
+  }
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return null
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
   }
 
   if (!isLoaded || loading) {
@@ -168,6 +193,11 @@ const [activeSection, setActiveSection] = useState('profile')
         .btn-primary{background:#1B6FF0;color:#fff}
         .btn-primary:hover{background:#0A4DBF}
         .btn-primary:disabled{background:#9A9A9A;cursor:not-allowed}
+        .btn-secondary{background:#F7F7F7;color:#0D0D0D}
+        .btn-secondary:hover{background:#EFEFEF}
+        .plan-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;font-size:12px;font-weight:700}
+        .plan-badge-free{background:#F7F7F7;color:#555}
+        .plan-badge-collector{background:#EBF2FF;color:#1B6FF0}
         .toast{position:fixed;bottom:24px;right:24px;z-index:999;background:#0D0D0D;color:#fff;border-radius:8px;padding:12px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.25);animation:toastIn .3s cubic-bezier(.34,1.56,.64,1)}
         @keyframes toastIn{from{transform:translateY(80px);opacity:0}to{transform:translateY(0);opacity:1}}
         @media(max-width:700px){.settings-layout{grid-template-columns:1fr}.settings-nav{position:static}}
@@ -188,172 +218,261 @@ const [activeSection, setActiveSection] = useState('profile')
 
         {/* Settings nav */}
         <aside className="settings-nav">
-  {[
-    { id:'profile', icon:faUser, label:'Profile' },
-    { id:'privacy', icon:faLock, label:'Privacy' },
-  ].map(item => (
-    <div
-      key={item.id}
-      className={`settings-nav-item${activeSection===item.id?' active':''}`}
-      onClick={() => setActiveSection(item.id)}
-    >
-      <FontAwesomeIcon icon={item.icon} style={{width:'14px'}}/>
-      {item.label}
-    </div>
-  ))}
-</aside>
+          {[
+            { id:'profile', icon:faUser, label:'Profile' },
+            { id:'privacy', icon:faLock, label:'Privacy' },
+            { id:'subscription', icon:faStar, label:'Subscription' },
+          ].map(item => (
+            <div
+              key={item.id}
+              className={`settings-nav-item${activeSection===item.id?' active':''}`}
+              onClick={() => setActiveSection(item.id)}
+            >
+              <FontAwesomeIcon icon={item.icon} style={{width:'14px'}}/>
+              {item.label}
+            </div>
+          ))}
+        </aside>
 
         {/* Settings content */}
         <div>
 
           {/* Profile section */}
-<div className="settings-card" id="profile">
-  <div className="settings-card-title">Public Profile</div>
-            <div className="settings-card-desc">This is how other collectors will see you on Foilcase. Choose a unique username to get your own vault URL.</div>
+          {activeSection === 'profile' && (
+            <div className="settings-card">
+              <div className="settings-card-title">Public Profile</div>
+              <div className="settings-card-desc">This is how other collectors will see you on Foilcase. Choose a unique username to get your own vault URL.</div>
 
-            <div className="form-group">
-              <label className="form-label">Username <span style={{color:'#D93025'}}>*</span></label>
-              <div className="username-wrap">
-                <span className="username-prefix">@</span>
-                <input
-                  className="form-input username-input"
-                  placeholder="yourcollectorname"
-                  value={username}
-                  onChange={e => handleUsernameChange(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))}
-                  maxLength={20}
-                />
-                <div className="username-status">
-                  {checkingUsername && <span style={{fontSize:'12px',color:'#9A9A9A'}}>checking...</span>}
-                  {!checkingUsername && usernameAvailable === true && <FontAwesomeIcon icon={faCheck} style={{color:'#00A861'}}/>}
-                  {!checkingUsername && usernameAvailable === false && username !== originalUsername && <FontAwesomeIcon icon={faXmark} style={{color:'#D93025'}}/>}
+              <div className="form-group">
+                <label className="form-label">Username <span style={{color:'#D93025'}}>*</span></label>
+                <div className="username-wrap">
+                  <span className="username-prefix">@</span>
+                  <input
+                    className="form-input username-input"
+                    placeholder="yourcollectorname"
+                    value={username}
+                    onChange={e => handleUsernameChange(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))}
+                    maxLength={20}
+                  />
+                  <div className="username-status">
+                    {checkingUsername && <span style={{fontSize:'12px',color:'#9A9A9A'}}>checking...</span>}
+                    {!checkingUsername && usernameAvailable === true && <FontAwesomeIcon icon={faCheck} style={{color:'#00A861'}}/>}
+                    {!checkingUsername && usernameAvailable === false && username !== originalUsername && <FontAwesomeIcon icon={faXmark} style={{color:'#D93025'}}/>}
+                  </div>
                 </div>
+                <div className="form-hint">
+                  {username && !/^[a-zA-Z0-9_]{3,20}$/.test(username)
+                    ? <span style={{color:'#D93025'}}>3–20 characters, letters, numbers and underscores only</span>
+                    : 'Letters, numbers and underscores only · 3–20 characters'
+                  }
+                </div>
+                {username && usernameAvailable !== false && username.length >= 3 && (
+                  <div className="vault-url">
+                    <FontAwesomeIcon icon={faGlobe}/>
+                    foilcase.com/vault/{username || 'username'}
+                  </div>
+                )}
               </div>
-              <div className="form-hint">
-                {username && !/^[a-zA-Z0-9_]{3,20}$/.test(username)
-                  ? <span style={{color:'#D93025'}}>3–20 characters, letters, numbers and underscores only</span>
-                  : 'Letters, numbers and underscores only · 3–20 characters'
-                }
+
+              <div className="form-group">
+                <label className="form-label">Display Name</label>
+                <input
+                  className="form-input"
+                  placeholder="Your name or collector alias"
+                  value={displayName}
+                  onChange={e => setDisplayName(e.target.value)}
+                  maxLength={50}
+                />
+                <div className="form-hint">Shown on your public vault page</div>
               </div>
-              {username && usernameAvailable !== false && username.length >= 3 && (
-                <div className="vault-url">
+
+              <div className="form-group">
+                <label className="form-label">Bio</label>
+                <textarea
+                  className="form-input"
+                  placeholder="Tell other collectors about yourself and what you collect..."
+                  value={bio}
+                  onChange={e => setBio(e.target.value)}
+                  maxLength={200}
+                  style={{minHeight:'80px',resize:'vertical'}}
+                />
+                <div className="form-hint">{bio.length}/200 characters</div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">eBay Username</label>
+                <div className="username-wrap">
+                  <span className="username-prefix" style={{fontSize:'12px',color:'#9A9A9A',left:'10px'}}>ebay.com/usr/</span>
+                  <input
+                    className="form-input"
+                    style={{paddingLeft:'108px'}}
+                    placeholder="your-ebay-username"
+                    value={ebayUsername}
+                    onChange={e => setEbayUsername(e.target.value.trim())}
+                    maxLength={64}
+                  />
+                </div>
+                <div className="form-hint">Let other collectors find your eBay listings. Optional but recommended.</div>
+                {ebayUsername && (
+                  <a
+                    href={ebayUserUrl(ebayUsername)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{display:'inline-flex',alignItems:'center',gap:'6px',marginTop:'6px',padding:'6px 12px',background:'#EBF2FF',borderRadius:'6px',border:'1px solid #C5D8FF',fontSize:'13px',color:'#1B6FF0',fontWeight:600,textDecoration:'none'}}
+                  >
+                    View your eBay store →
+                  </a>
+                )}
+              </div>
+
+              <div style={{display:'flex',justifyContent:'flex-end',marginTop:'8px'}}>
+                <button className="btn btn-primary" onClick={saveProfile} disabled={saving}>
+                  {saving ? 'Saving...' : <><FontAwesomeIcon icon={faCheck}/>Save Settings</>}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Privacy section */}
+          {activeSection === 'privacy' && (
+            <div className="settings-card">
+              <div className="settings-card-title">Vault Privacy</div>
+              <div className="settings-card-desc">Control who can see your card collection. You can change this at any time.</div>
+
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <div className="toggle-label">
+                    <FontAwesomeIcon icon={isPublic ? faGlobe : faLock} style={{marginRight:'6px',color:isPublic?'#1B6FF0':'#9A9A9A'}}/>
+                    {isPublic ? 'Public vault' : 'Private vault'}
+                  </div>
+                  <div className="toggle-desc">
+                    {isPublic
+                      ? 'Anyone can browse your collection at your vault URL. Cards marked For Trade are visible to other collectors.'
+                      : 'Only you can see your collection. Enable to share your vault with other collectors.'
+                    }
+                  </div>
+                </div>
+                <button
+                  className={`toggle-switch ${isPublic?'on':'off'}`}
+                  onClick={() => setIsPublic(p => !p)}
+                >
+                  <div className={`toggle-knob ${isPublic?'on':'off'}`}></div>
+                </button>
+              </div>
+
+              {isPublic && username && (
+                <div className="vault-url" style={{marginTop:'12px'}}>
                   <FontAwesomeIcon icon={faGlobe}/>
-                  foilcase.com/vault/{username || 'username'}
+                  Your public vault: <strong>foilcase.com/vault/{username}</strong>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(`https://foilcase.com/vault/${username}`); showToast('📋 Link copied!') }}
+                    style={{marginLeft:'auto',fontSize:'12px',color:'#1B6FF0',background:'none',border:'none',cursor:'pointer',fontWeight:600,fontFamily:'Plus Jakarta Sans,sans-serif'}}
+                  >Copy link</button>
+                </div>
+              )}
+
+              {isPublic && !username && (
+                <div style={{marginTop:'12px',padding:'10px 14px',background:'#FEF3E2',borderRadius:'6px',border:'1px solid #F5C880',fontSize:'13px',color:'#E8820C',fontWeight:500}}>
+                  ⚠️ Set a username above to get your public vault URL
+                </div>
+              )}
+
+              <div style={{display:'flex',justifyContent:'flex-end',marginTop:'24px'}}>
+                <button className="btn btn-primary" onClick={saveProfile} disabled={saving}>
+                  {saving ? 'Saving...' : <><FontAwesomeIcon icon={faCheck}/>Save Settings</>}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Subscription section */}
+          {activeSection === 'subscription' && (
+            <div className="settings-card">
+              <div className="settings-card-title">Subscription</div>
+              <div className="settings-card-desc">Manage your Foilcase plan and billing.</div>
+
+              {/* Current plan */}
+              <div style={{padding:'20px',background:'#F7F7F7',borderRadius:'8px',border:'1px solid #EFEFEF',marginBottom:'20px'}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
+                  <div style={{fontSize:'13px',fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'.07em'}}>Current Plan</div>
+                  <div className={`plan-badge ${isCollector ? 'plan-badge-collector' : 'plan-badge-free'}`}>
+                    <FontAwesomeIcon icon={isCollector ? faStar : faRocket} style={{fontSize:'10px'}}/>
+                    {isCollector ? 'Collector' : 'Free'}
+                  </div>
+                </div>
+
+                {isCollector ? (
+                  <>
+                    <div style={{fontSize:'15px',color:'#0D0D0D',fontWeight:600,marginBottom:'4px'}}>
+                      Foilcase Collector
+                    </div>
+                    {subscriptionStatus === 'canceling' && planExpiresAt && (
+                      <div style={{fontSize:'13px',color:'#E8820C',marginBottom:'4px'}}>
+                        ⚠️ Cancels on {formatDate(planExpiresAt)} — you'll keep access until then
+                      </div>
+                    )}
+                    {subscriptionStatus === 'active' && planExpiresAt && (
+                      <div style={{fontSize:'13px',color:'#9A9A9A'}}>
+                        Renews on {formatDate(planExpiresAt)}
+                      </div>
+                    )}
+                    {subscriptionStatus === 'past_due' && (
+                      <div style={{fontSize:'13px',color:'#D93025'}}>
+                        ⚠️ Payment past due — please update your payment method
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div style={{fontSize:'15px',color:'#0D0D0D',fontWeight:600,marginBottom:'4px'}}>
+                      Foilcase Free
+                    </div>
+                    <div style={{fontSize:'13px',color:'#9A9A9A'}}>
+                      Up to 100 cards and 3 folders. Upgrade for unlimited access.
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Action buttons */}
+              {isCollector ? (
+                <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleManageSubscription}
+                    disabled={portalLoading}
+                    style={{width:'100%',justifyContent:'center'}}
+                  >
+                    {portalLoading
+                      ? <><FontAwesomeIcon icon={faSpinner} spin/>Opening billing portal...</>
+                      : 'Manage Subscription & Billing →'
+                    }
+                  </button>
+                  <div style={{fontSize:'12px',color:'#9A9A9A',textAlign:'center'}}>
+                    Update payment method, view invoices, or cancel your subscription through our secure billing portal powered by Stripe.
+                  </div>
+                </div>
+              ) : (
+                <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+                  <a
+                    href="/pricing"
+                    className="btn btn-primary"
+                    style={{width:'100%',justifyContent:'center',textDecoration:'none'}}
+                  >
+                    <FontAwesomeIcon icon={faStar}/>Upgrade to Collector
+                  </a>
+                  <div style={{fontSize:'12px',color:'#9A9A9A',textAlign:'center'}}>
+                    Unlimited cards, unlimited folders, CSV import/export, and collection analytics.
+                  </div>
                 </div>
               )}
             </div>
+          )}
 
-            <div className="form-group">
-              <label className="form-label">Display Name</label>
-              <input
-                className="form-input"
-                placeholder="Your name or collector alias"
-                value={displayName}
-                onChange={e => setDisplayName(e.target.value)}
-                maxLength={50}
-              />
-              <div className="form-hint">Shown on your public vault page</div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Bio</label>
-              <textarea
-                className="form-input"
-                placeholder="Tell other collectors about yourself and what you collect..."
-                value={bio}
-                onChange={e => setBio(e.target.value)}
-                maxLength={200}
-                style={{minHeight:'80px',resize:'vertical'}}
-              />
-              <div className="form-hint">{bio.length}/200 characters</div>
-            </div>
-
-            <div className="form-group">
-  <label className="form-label">eBay Username</label>
-  <div className="username-wrap">
-    <span className="username-prefix" style={{fontSize:'12px',color:'#9A9A9A',left:'10px'}}>ebay.com/usr/</span>
-    <input
-      className="form-input"
-      style={{paddingLeft:'108px'}}
-      placeholder="your-ebay-username"
-      value={ebayUsername}
-      onChange={e => setEbayUsername(e.target.value.trim())}
-      maxLength={64}
-    />
-  </div>
-  <div className="form-hint">Let other collectors find your eBay listings. Optional but recommended.</div>
-  {ebayUsername && (
-    <a
-      href={ebayUserUrl(ebayUsername)}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{display:'inline-flex',alignItems:'center',gap:'6px',marginTop:'6px',padding:'6px 12px',background:'#EBF2FF',borderRadius:'6px',border:'1px solid #C5D8FF',fontSize:'13px',color:'#1B6FF0',fontWeight:600,textDecoration:'none'}}
-    >
-      View your eBay store →
-    </a>
-  )}
-</div>
-          </div>
-
-          {/* Privacy section */}
-<div className="settings-card" id="privacy">
-  <div className="settings-card-title">Vault Privacy</div>
-            <div className="settings-card-desc">Control who can see your card collection. You can change this at any time.</div>
-
-            <div className="toggle-row">
-              <div className="toggle-info">
-                <div className="toggle-label">
-                  <FontAwesomeIcon icon={isPublic ? faGlobe : faLock} style={{marginRight:'6px',color:isPublic?'#1B6FF0':'#9A9A9A'}}/>
-                  {isPublic ? 'Public vault' : 'Private vault'}
-                </div>
-                <div className="toggle-desc">
-                  {isPublic
-                    ? 'Anyone can browse your collection at your vault URL. Cards marked For Trade are visible to other collectors.'
-                    : 'Only you can see your collection. Enable to share your vault with other collectors.'
-                  }
-                </div>
-              </div>
-              <button
-                className={`toggle-switch ${isPublic?'on':'off'}`}
-                onClick={() => setIsPublic(p => !p)}
-              >
-                <div className={`toggle-knob ${isPublic?'on':'off'}`}></div>
-              </button>
-            </div>
-
-            {isPublic && username && (
-              <div className="vault-url" style={{marginTop:'12px'}}>
-                <FontAwesomeIcon icon={faGlobe}/>
-                Your public vault: <strong>foilcase.com/vault/{username}</strong>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(`https://foilcase.com/vault/${username}`); showToast('📋 Link copied!') }}
-                  style={{marginLeft:'auto',fontSize:'12px',color:'#1B6FF0',background:'none',border:'none',cursor:'pointer',fontWeight:600,fontFamily:'Plus Jakarta Sans,sans-serif'}}
-                >Copy link</button>
-              </div>
-            )}
-
-            {isPublic && !username && (
-              <div style={{marginTop:'12px',padding:'10px 14px',background:'#FEF3E2',borderRadius:'6px',border:'1px solid #F5C880',fontSize:'13px',color:'#E8820C',fontWeight:500}}>
-                ⚠️ Set a username above to get your public vault URL
-              </div>
-            )}
-          </div>
-
-          {/* Save button */}
-          <div style={{display:'flex',justifyContent:'flex-end'}}>
-            <button
-              className="btn btn-primary"
-              onClick={saveProfile}
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : <><FontAwesomeIcon icon={faCheck}/>Save Settings</>}
-            </button>
-          </div>
         </div>
       </div>
 
-      {toast && (
-        <div className="toast">{toast}</div>
-      )}
+      {toast && <div className="toast">{toast}</div>}
       <Footer />
     </>
   )
