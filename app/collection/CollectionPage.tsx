@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { supabase } from '../lib/supabase'
 import Nav from '../components/Nav'
@@ -16,6 +16,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useFeatures } from '../lib/useFeatures'
 import { ebayAffiliateUrl } from '../lib/ebay'
+import { useSearchParams } from 'next/navigation'
 
 const sportEmoji: Record<string,string> = {
   Football:'🏈', Baseball:'⚾', Basketball:'🏀',
@@ -116,6 +117,19 @@ export default function Collection() {
   const [imageTab, setImageTab] = useState<'front'|'back'>('front')
   const [uploadBackLoading, setUploadBackLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'vault'|'wants'>('vault')
+  const searchParams = useSearchParams()
+const [showUpgradeBanner, setShowUpgradeBanner] = useState(false)
+
+useEffect(() => {
+  if (searchParams.get('upgraded') === 'true') {
+    setShowUpgradeBanner(true)
+    // Clean up the URL without reloading
+    window.history.replaceState({}, '', '/collection')
+    // Auto dismiss after 8 seconds
+    const timer = setTimeout(() => setShowUpgradeBanner(false), 45000)
+    return () => clearTimeout(timer)
+  }
+}, [searchParams])
   const [wants, setWants] = useState<any[]>([])
   const [wantsLoading, setWantsLoading] = useState(false)
 
@@ -630,6 +644,65 @@ export default function Collection() {
 `}</style>
 
       <Nav />
+
+{/* UPGRADE SUCCESS BANNER */}
+{showUpgradeBanner && (
+  <div style={{
+    background:'linear-gradient(135deg,#1B6FF0,#0A4DBF)',
+    padding:'16px 24px',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'space-between',
+    gap:'16px',
+    flexWrap:'wrap' as const,
+  }}>
+    <div style={{display:'flex',alignItems:'center',gap:'16px'}}>
+      <div style={{
+        width:'44px',height:'44px',borderRadius:'12px',
+        background:'rgba(255,255,255,.2)',
+        display:'flex',alignItems:'center',justifyContent:'center',
+        flexShrink:0,fontSize:'22px',
+      }}>
+        🎉
+      </div>
+      <div>
+        <div style={{fontSize:'16px',fontWeight:800,color:'#fff',marginBottom:'2px'}}>
+          Welcome to Foilcase Collector!
+        </div>
+        <div style={{fontSize:'13px',color:'rgba(255,255,255,.8)'}}>
+          Your account has been upgraded. Unlimited cards, unlimited folders, and all Collector features are now active.
+        </div>
+      </div>
+    </div>
+    <div style={{display:'flex',alignItems:'center',gap:'12px',flexShrink:0}}>
+      <a
+        href="/collection"
+        style={{
+          padding:'8px 20px',borderRadius:'100px',
+          background:'rgba(255,255,255,.2)',
+          color:'#fff',textDecoration:'none',
+          fontSize:'13px',fontWeight:700,
+          fontFamily:'Plus Jakarta Sans,sans-serif',
+          border:'1px solid rgba(255,255,255,.3)',
+          transition:'all .15s',
+        }}
+      >
+        Start adding cards →
+      </a>
+      <button
+        onClick={() => setShowUpgradeBanner(false)}
+        style={{
+          background:'none',border:'none',cursor:'pointer',
+          color:'rgba(255,255,255,.7)',fontSize:'18px',
+          display:'flex',alignItems:'center',justifyContent:'center',
+          padding:'4px',
+        }}
+      >
+        <FontAwesomeIcon icon={faXmark}/>
+      </button>
+    </div>
+  </div>
+)}
 
       {/* PAGE HEADER */}
       <div className="page-header">
