@@ -10,7 +10,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 
 // Set to true when ready to accept payments
-const STRIPE_LIVE = true
+const STRIPE_LIVE = false
 
 const PRICE_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || ''
 const PRICE_ANNUAL = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || ''
