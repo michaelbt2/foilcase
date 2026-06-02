@@ -35,6 +35,16 @@ export default function Settings() {
     if (isLoaded && user) loadProfile()
   }, [isLoaded, user?.id])
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('tab') === 'subscription') {
+        setActiveSection('subscription')
+        window.history.replaceState({}, '', '/settings')
+      }
+    }
+  }, [])
+
   const loadProfile = async () => {
     if (!user) return
     setLoading(true)

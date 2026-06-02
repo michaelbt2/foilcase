@@ -315,6 +315,7 @@ useEffect(() => {
   const folderCount = (fid: string) => cards.filter(c => c.folder_id === fid).reduce((s,c)=>s+(c.qty||1),0)
 
   const openAdd = () => {
+    setEditingId(null)
     setForm({ player:'', year:'', brand:'', set_name:'', sport:'', cardnum:'', folder_id:'', qty:'1', condition:'', cost:'', value:'', notes:'', card_image_url:'', print_run:'', ebay_listing_url:'', card_image_back_url:'', sold_price:'' })
     setImageTab('front')
     setFormAttrs([])
