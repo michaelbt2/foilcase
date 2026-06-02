@@ -61,40 +61,29 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription
         let userId = subscription.metadata?.supabase_user_id
 
-        console.log('🔍 subscription.metadata:', subscription.metadata)
-        console.log('🔍 subscription.customer:', subscription.customer)
-
         // Fallback — look up user by stripe_customer_id
         if (!userId) {
           const customerId = subscription.customer as string
-          const { data: profile, error } = await supabase
+          const { data: profile } = await supabase
             .from('profiles')
             .select('id')
             .eq('stripe_customer_id', customerId)
             .single()
-          console.log('🔍 profile lookup:', profile, 'error:', error)
           if (profile) userId = profile.id
         }
-
-        console.log('🔍 userId:', userId)
 
         if (!userId) break
 
         const cancelAt = (subscription as any).cancel_at
-const currentPeriodEnd = (subscription as any).current_period_end 
-  || subscription.items?.data?.[0]?.current_period_end
-
-const periodEnd = cancelAt
-  ? new Date(cancelAt * 1000).toISOString()
-  : currentPeriodEnd
-    ? new Date(currentPeriodEnd * 1000).toISOString()
-    : null
+        const currentPeriodEnd = (subscription as any).current_period_end
+          || subscription.items?.data?.[0]?.current_period_end
+        const periodEnd = cancelAt
+          ? new Date(cancelAt * 1000).toISOString()
+          : currentPeriodEnd
+            ? new Date(currentPeriodEnd * 1000).toISOString()
+            : null
         const status = subscription.status
         const cancelAtPeriodEnd = subscription.cancel_at_period_end || !!(subscription as any).cancel_at
-
-        console.log('🔍 cancelAtPeriodEnd:', cancelAtPeriodEnd, 'cancel_at:', (subscription as any).cancel_at)
-        console.log('🔍 status:', status)
-        console.log('🔍 About to update Supabase...')
 
         await supabase
           .from('profiles')
@@ -105,7 +94,6 @@ const periodEnd = cancelAt
           })
           .eq('id', userId)
 
-        console.log('🔍 Supabase update complete')
         console.log(`🔄 Subscription updated for user ${userId}: ${status}, canceling: ${cancelAtPeriodEnd}`)
         break
       }
