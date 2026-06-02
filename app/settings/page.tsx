@@ -398,8 +398,13 @@ export default function Settings() {
           {/* Subscription section */}
           {activeSection === 'subscription' && (
             <div className="settings-card">
-              <div className="settings-card-title">Subscription</div>
-              <div className="settings-card-desc">Manage your Foilcase plan and billing.</div>
+              <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'4px'}}>
+  <div className="settings-card-title" style={{margin:0}}>Subscription</div>
+  <div style={{display:'inline-flex',alignItems:'center',padding:'3px 10px',borderRadius:'100px',fontSize:'11px',fontWeight:700,background:'#FEF3E2',color:'#E8820C'}}>
+    Coming Soon
+  </div>
+</div>
+<div className="settings-card-desc">Manage your Foilcase plan and billing.</div>
 
               {/* Current plan */}
               <div style={{padding:'20px',background:'#F7F7F7',borderRadius:'8px',border:'1px solid #EFEFEF',marginBottom:'20px'}}>
