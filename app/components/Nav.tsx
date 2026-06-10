@@ -99,6 +99,23 @@ export default function Nav() {
         .nav-dropdown-label{font-size:13px;font-weight:600;color:#0D0D0D}
         .nav-dropdown-desc{font-size:11px;color:#9A9A9A}
       `}</style>
+
+
+
+      {/* OUTAGE BANNER */}
+      <div style={{
+        background:'#E8820C',
+        color:'#fff',
+        textAlign:'center',
+        padding:'10px 24px',
+        fontSize:'13px',
+        fontWeight:600,
+        fontFamily:'Plus Jakarta Sans,sans-serif',
+        lineHeight:1.5,
+      }}>
+        🔧 We are aware of a service disruption affecting some features and are actively working to resolve it. We apologize for the inconvenience.
+      </div>
+
       <nav className="nav">
         <div className="nav-inner">
           <Link className="nav-logo" href="/">
