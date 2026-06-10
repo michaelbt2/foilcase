@@ -51,9 +51,24 @@ export default function RootLayout({
           <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
         </head>
         <body>
-          <AmplitudeProvider/>
+         <AmplitudeProvider/>
           <Analytics />
           <SpeedInsights />
+          {/* OUTAGE BANNER — remove when Supabase is restored */}
+          <div style={{
+            background:'#E8820C',
+            color:'#fff',
+            textAlign:'center',
+            padding:'10px 24px',
+            fontSize:'13px',
+            fontWeight:600,
+            fontFamily:'Plus Jakarta Sans,sans-serif',
+            lineHeight:1.5,
+            position:'relative',
+            zIndex:999,
+          }}>
+            🔧 We are aware of a service disruption affecting some features and are actively working to resolve it. We apologize for the inconvenience.
+          </div>
           {children}
         </body>
       </html>

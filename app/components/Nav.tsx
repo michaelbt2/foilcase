@@ -102,19 +102,7 @@ export default function Nav() {
 
 
 
-      {/* OUTAGE BANNER */}
-      <div style={{
-        background:'#E8820C',
-        color:'#fff',
-        textAlign:'center',
-        padding:'10px 24px',
-        fontSize:'13px',
-        fontWeight:600,
-        fontFamily:'Plus Jakarta Sans,sans-serif',
-        lineHeight:1.5,
-      }}>
-        🔧 We are aware of a service disruption affecting some features and are actively working to resolve it. We apologize for the inconvenience.
-      </div>
+    
 
       <nav className="nav">
         <div className="nav-inner">
