@@ -7,7 +7,37 @@ export const metadata = {
 }
 
 const releases = [
-{
+  {
+    date: 'June 2026',
+    entries: [
+      {
+        type: 'new',
+        title: 'Google sign-in',
+        desc: 'Collectors can now create an account and sign in with a single click using Google. No form to fill out — just click and start building your vault.',
+      },
+      {
+        type: 'new',
+        title: 'Subscription management in Settings',
+        desc: 'Added a Subscription section to the Settings page showing your current plan status, renewal date, and a direct link to manage billing through the Stripe customer portal.',
+      },
+      {
+        type: 'improved',
+        title: 'Add Card after Edit bug fix',
+        desc: 'Fixed a bug where clicking Add Card after editing an existing card would open an Edit modal instead of a blank Add Card form.',
+      },
+      {
+        type: 'improved',
+        title: 'Search and market page performance',
+        desc: 'Implemented Supabase caching for search results and the market feed — dramatically reducing load times for repeat searches and improving reliability.',
+      },
+      {
+        type: 'improved',
+        title: 'Pricing page updates',
+        desc: 'Updated the Free and Collector tier feature lists to better reflect what is available today. Added Live market data and auctions and Want List to the free tier.',
+      },
+    ],
+  },
+  {
     date: 'May 2026',
     entries: [
       {
