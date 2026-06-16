@@ -740,9 +740,19 @@ useEffect(() => {
   <button className="btn btn-sm" style={{background:'#F7F7F7',color:'#0D0D0D',border:'1.5px solid #D8D8D8',display:'inline-flex',alignItems:'center',gap:'6px'}} onClick={() => setShowFolder(true)}>
     <FontAwesomeIcon icon={faPlus} style={{color:'#9A9A9A'}}/>New Folder
   </button>
-  <button className="btn btn-primary" onClick={openAdd}>
-    <FontAwesomeIcon icon={faPlus}/>Add Card
-  </button>
+  {!isCollector && totalCards >= 100 ? (
+    <a
+      href="/pricing"
+      className="btn"
+      style={{background:'#FDECEA',color:'#D93025',border:'1.5px solid #FFBBB7',display:'inline-flex',alignItems:'center',gap:'6px',textDecoration:'none'}}
+    >
+      <FontAwesomeIcon icon={faLock}/>Card limit reached
+    </a>
+  ) : (
+    <button className="btn btn-primary" onClick={openAdd}>
+      <FontAwesomeIcon icon={faPlus}/>Add Card
+    </button>
+  )}
 </div>
         </div>
       </div>
