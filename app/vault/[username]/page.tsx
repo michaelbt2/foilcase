@@ -117,7 +117,7 @@ export default function PublicVault() {
 
     const { data: cardsData } = await supabase
       .from('cards').select('*').eq('user_id', profileData.id)
-      .neq('status', 'sold').order('created_at', { ascending: false })
+      .neq('status', 'sold').order('pinned', { ascending: false }).order('created_at', { ascending: false })
 
     setCards(cardsData || [])
 

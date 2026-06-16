@@ -12,7 +12,7 @@ import {
   faRotateLeft, faShield, faRightToBracket, faUserPlus, faFootball, faBaseball, faUpload,
   faBasketball, faHockeyPuck, faFutbol, faGamepad, faCheck, faFlagCheckered, faChevronLeft, faChevronRight,
   faHandFist, faGolfBallTee, faPersonRunning, faChevronDown, faChevronUp, faArrowRightArrowLeft, faGlobe,
-  faLock, faGear, faArrowUpRightFromSquare,faStar,
+  faLock, faGear, faArrowUpRightFromSquare,faStar,faThumbTack,
 } from '@fortawesome/free-solid-svg-icons'
 import { useFeatures } from '../lib/useFeatures'
 import { ebayAffiliateUrl } from '../lib/ebay'
@@ -28,6 +28,7 @@ interface Card {
   qty:number; condition:string; cost:number; value:number; attrs:string[];
   notes:string; created_at:string; img:string; user_id:string; card_image_url:string;
   print_run:string; ebay_listing_url:string; card_image_back_url:string; sold_price:number;
+  pinned:boolean;
 }
 interface Folder { id:string; name:string; color:string; emoji:string; user_id:string }
 
@@ -292,6 +293,9 @@ useEffect(() => {
     if (activeFolder !== 'all' && c.folder_id !== activeFolder) return false
     return true
   }).sort((a,b) => {
+    // Pinned cards always sort to top
+    if (a.pinned && !b.pinned) return -1
+    if (!a.pinned && b.pinned) return 1
     if (sortVal === 'date-desc') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     if (sortVal === 'date-asc')  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     if (sortVal === 'value-desc') return (b.value||0) - (a.value||0)
@@ -420,6 +424,15 @@ useEffect(() => {
 
   const toggleAttr = (a: string) => setFormAttrs(prev => prev.includes(a)?prev.filter(x=>x!==a):[...prev,a])
   const toggleSelect = (id: string) => setSelected(prev => { const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n })
+  const togglePin = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const card = cards.find(c => c.id === id)
+    if (!card) return
+    const newPinned = !card.pinned
+    await supabase.from('cards').update({ pinned: newPinned }).eq('id', id)
+    showToast(newPinned ? '📌 Card pinned to top' : '📌 Card unpinned')
+    loadData()
+  }
   const gradeScores = (g: string) => g==='BGS'
     ? ['10','9.5','9','8.5','8','7.5','7','6.5','6','5','4']
     : ['10','9','8','7','6','5','4','3','2','1','A']
@@ -1083,6 +1096,11 @@ useEffect(() => {
                     return (
                       <div key={c.id} className={`card-tile${isSold?' sold-card':''}${isSel?' sel':''}`} style={{animationDelay:`${i*.03}s`}} onClick={() => setSelectedCard(c)}>
                         <div className="card-cb" onClick={e=>{e.stopPropagation();toggleSelect(c.id)}}>{isSel?'✓':''}</div>
+                       {c.pinned && (
+                          <div style={{position:'absolute',top:'10px',left:'36px',zIndex:10,width:'20px',height:'20px',background:'#1B6FF0',borderRadius:'4px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                            <FontAwesomeIcon icon={faThumbTack} style={{color:'#fff',fontSize:'10px'}}/>
+                          </div>
+                        )}
                         <div className={`card-status ${statusMap[c.status]||'status-have'}`}>{statusLbl[c.status]||'Owned'}</div>
                         <div className="card-img" style={{background:c.card_image_url?'#000':cardBg(c.sport)}}>
                           {c.card_image_url
@@ -1113,6 +1131,14 @@ useEffect(() => {
                         <div className="card-actions">
                           <button className="act-btn act-edit" onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
                           <button className="act-btn act-sold" onClick={e=>{e.stopPropagation();markSold(c.id)}}><FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}</button>
+                          <button
+                            className="act-btn"
+                            onClick={e=>togglePin(c.id,e)}
+                            style={{background:c.pinned?'#EBF2FF':'#F7F7F7',color:c.pinned?'#1B6FF0':'#555',flex:'0 0 36px'}}
+                            title={c.pinned?'Unpin card':'Pin to top'}
+                          >
+                            <FontAwesomeIcon icon={faThumbTack}/>
+                          </button>
                           {c.ebay_listing_url && c.status==='sale' && (
                             <a href={ebayAffiliateUrl(c.ebay_listing_url)} target="_blank" rel="noopener noreferrer" className="act-btn" style={{background:'#EBF2FF',color:'#1B6FF0',textDecoration:'none'}} onClick={e=>e.stopPropagation()}>
                               <FontAwesomeIcon icon={faArrowUpRightFromSquare}/>eBay
@@ -1165,6 +1191,14 @@ useEffect(() => {
                           <button className="act-btn act-edit" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();openEdit(c.id)}}><FontAwesomeIcon icon={faPen}/>Edit</button>
                           <button className="act-btn act-sold" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();markSold(c.id)}}>
                             <FontAwesomeIcon icon={isSold?faRotateLeft:faTag}/>{isSold?'Mark Owned':'Mark Sold'}
+                          </button>
+                          <button
+                            className="act-btn"
+                            style={{flex:'none',padding:'6px 10px',background:c.pinned?'#EBF2FF':'#F7F7F7',color:c.pinned?'#1B6FF0':'#555'}}
+                            onClick={e=>togglePin(c.id,e)}
+                            title={c.pinned?'Unpin card':'Pin to top'}
+                          >
+                            <FontAwesomeIcon icon={faThumbTack}/>
                           </button>
                           <button className="act-btn act-rm" style={{flex:'none',padding:'6px 10px'}} onClick={e=>{e.stopPropagation();setRemovingId(c.id);setShowConfirm(true)}}><FontAwesomeIcon icon={faTrash}/></button>
                         </div>
