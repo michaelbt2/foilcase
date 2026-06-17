@@ -3,7 +3,7 @@ import { MetadataRoute } from 'next'
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://foilcase.com'
 
-  const articles = [
+const articles = [
   'how-to-value-your-trading-card-collection',
   'psa-vs-bgs-vs-sgc-grading-comparison',
   'what-is-a-rookie-card',
@@ -15,6 +15,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   'what-is-card-grading',
   'how-to-store-trading-cards',
   'trading-card-investment-guide',
+  'most-expensive-pokemon-cards',
+  'psa-grading-cost-turnaround-time',
+  'how-to-ship-trading-cards',
 ]
 
   return [

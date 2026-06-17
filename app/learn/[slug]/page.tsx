@@ -12,6 +12,9 @@ import PaniniPrizmCollectorsGuide from '../articles/panini-prizm-collectors-guid
 import WhatIsCardGrading from '../articles/what-is-card-grading'
 import HowToStoreCards from '../articles/how-to-store-trading-cards'
 import TradingCardInvestmentGuide from '../articles/trading-card-investment-guide'
+import MostExpensivePokemonCards from '../articles/most-expensive-pokemon-cards'
+import PSAGradingCostTurnaroundTime from '../articles/psa-grading-cost-turnaround-time'
+import HowToShipTradingCards from '../articles/how-to-ship-trading-cards'
 
 const articles: Record<string, any> = {
   'how-to-value-your-trading-card-collection': {
@@ -112,6 +115,33 @@ const articles: Record<string, any> = {
   date: 'May 2026',
   slug: 'trading-card-investment-guide',
   component: TradingCardInvestmentGuide,
+},
+'most-expensive-pokemon-cards': {
+  title: 'Most Expensive Pokémon Cards Ever Sold',
+  description: 'A complete guide to the most valuable Pokémon cards ever sold — from the 1999 Base Set 1st Edition Charizard to rare trophy cards worth millions.',
+  category: 'TCG',
+  readTime: '10 min',
+  date: 'June 2026',
+  slug: 'most-expensive-pokemon-cards',
+  component: MostExpensivePokemonCards,
+},
+'psa-grading-cost-turnaround-time': {
+  title: 'PSA Grading Cost and Turnaround Time — 2025 Guide',
+  description: 'Everything you need to know about PSA grading costs, current turnaround times, and how to choose the right service level for your cards.',
+  category: 'Grading',
+  readTime: '9 min',
+  date: 'June 2026',
+  slug: 'psa-grading-cost-turnaround-time',
+  component: PSAGradingCostTurnaroundTime,
+},
+'how-to-ship-trading-cards': {
+  title: 'How to Ship Trading Cards Safely — Complete Guide',
+  description: 'The complete guide to shipping trading cards safely — from basic raw card shipping to sending high-value graded slabs across the country.',
+  category: 'Getting Started',
+  readTime: '8 min',
+  date: 'June 2026',
+  slug: 'how-to-ship-trading-cards',
+  component: HowToShipTradingCards,
 },
 }
 
