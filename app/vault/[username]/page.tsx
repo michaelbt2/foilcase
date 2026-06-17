@@ -490,11 +490,11 @@ export default function PublicVault() {
             ) : (
               <div className="cards-list">
                 {filtered.map((c,i) => (
-                  <div key={c.id} className="list-tile" style={{animationDelay:`${i*.025}s`}}>
+                  <div key={c.id} className="list-tile" style={{animationDelay:`${i*.025}s`,cursor:'pointer'}} onClick={() => setSelectedCard(c)}>
                     <div
                       className="list-img"
                       style={{background:c.card_image_url?'#000':cardBg(c.sport),cursor:c.card_image_url?'zoom-in':'default',position:'relative'}}
-                      onClick={()=>{ if(c.card_image_url) setLightboxImage(c.card_image_url) }}
+                      onClick={e=>{ e.stopPropagation(); if(c.card_image_url) setLightboxImage(c.card_image_url) }}
                     >
                       {c.card_image_url
                         ? <img src={c.card_image_url} alt={c.player} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
@@ -544,7 +544,7 @@ export default function PublicVault() {
                     )}
                     <div style={{padding:'0 14px',flexShrink:0}}>
                       <button
-                        onClick={() => setSelectedCard(c)}
+                        onClick={e=>{e.stopPropagation();setSelectedCard(c)}}
                         style={{padding:'6px 12px',borderRadius:'6px',border:'1.5px solid #EFEFEF',background:'#fff',fontSize:'11px',fontWeight:600,color:'#555',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',transition:'all .15s',whiteSpace:'nowrap'}}
                         onMouseOver={e=>{e.currentTarget.style.borderColor='#1B6FF0';e.currentTarget.style.color='#1B6FF0'}}
                         onMouseOut={e=>{e.currentTarget.style.borderColor='#EFEFEF';e.currentTarget.style.color='#555'}}
