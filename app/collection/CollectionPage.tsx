@@ -246,9 +246,16 @@ useEffect(() => {
     if (file.size > 5 * 1024 * 1024) { showToast('⚠️ Image must be under 5MB'); return }
     setUploadLoading(true)
     try {
+      const imageCompression = (await import('browser-image-compression')).default
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.4,
+        maxWidthOrHeight: 1000,
+        useWebWorker: true,
+        fileType: file.type,
+      })
       const ext = file.name.split('.').pop()
       const fileName = `${user.id}/${Date.now()}.${ext}`
-      const { error } = await supabase.storage.from('card-images').upload(fileName, file, { cacheControl: '3600', upsert: false })
+      const { error } = await supabase.storage.from('card-images').upload(fileName, compressed, { cacheControl: '3600', upsert: false, contentType: file.type })
       if (error) { showToast('❌ Upload failed: ' + error.message); return }
       const { data } = supabase.storage.from('card-images').getPublicUrl(fileName)
       setForm(p => ({...p, card_image_url: data.publicUrl}))
@@ -266,9 +273,16 @@ useEffect(() => {
     if (file.size > 5 * 1024 * 1024) { showToast('⚠️ Image must be under 5MB'); return }
     setUploadBackLoading(true)
     try {
+      const imageCompression = (await import('browser-image-compression')).default
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.4,
+        maxWidthOrHeight: 1000,
+        useWebWorker: true,
+        fileType: file.type,
+      })
       const ext = file.name.split('.').pop()
       const fileName = `${user.id}/back-${Date.now()}.${ext}`
-      const { error } = await supabase.storage.from('card-images').upload(fileName, file, { cacheControl: '3600', upsert: false })
+      const { error } = await supabase.storage.from('card-images').upload(fileName, compressed, { cacheControl: '3600', upsert: false, contentType: file.type })
       if (error) { showToast('❌ Upload failed: ' + error.message); return }
       const { data } = supabase.storage.from('card-images').getPublicUrl(fileName)
       setForm(p => ({...p, card_image_back_url: data.publicUrl}))
